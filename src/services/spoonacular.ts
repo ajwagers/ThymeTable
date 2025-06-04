@@ -1,8 +1,16 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { SpoonacularRecipe } from '../types';
 
 const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
 const BASE_URL = 'https://api.spoonacular.com/recipes';
+
+const handleSpoonacularError = (error: AxiosError) => {
+  if (error.response?.status === 402) {
+    console.error('Spoonacular API quota exceeded or invalid API key. Please check your API key or upgrade your plan.');
+    throw new Error('API quota exceeded or invalid key. Please try again later.');
+  }
+  throw error;
+};
 
 export const getRandomRecipes = async (mealType: string, category: 'main' | 'side' = 'main'): Promise<SpoonacularRecipe[]> => {
   try {
@@ -33,6 +41,9 @@ export const getRandomRecipes = async (mealType: string, category: 'main' | 'sid
       dishTypes: recipe.dishTypes || [],
     }));
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      handleSpoonacularError(error);
+    }
     console.error('Error fetching random recipes:', error);
     return [];
   }
@@ -64,6 +75,9 @@ export const getRecipeDetails = async (recipeId: number): Promise<SpoonacularRec
       })),
     };
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      handleSpoonacularError(error);
+    }
     console.error('Error fetching recipe details:', error);
     return null;
   }
