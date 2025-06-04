@@ -25,19 +25,18 @@ function GroceryListPage() {
       // Helper function to clean ingredient names
       const cleanIngredientName = (name: string) => {
         return name
-          .replace(/^\d+(\s*\/\s*\d+)?\s*(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|cans?|cloves?)\s*(of\s+)?/i, '')
+          // Remove any amount and unit from the name since we'll display it separately
+          .replace(/^\d+(\s*\/\s*\d+)?\s*(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|cans?|cloves?|inches|liters|tablespoons)\s*(of\s+)?/i, '')
           .replace(/^\d+(\s*\/\s*\d+)?\s+/, '')
           .replace(/^[•\-\*\.]\s*/, '') // Remove bullet points, dashes, asterisks, and periods from the start
           .replace(/\./g, '') // Remove all periods from the string
+          .replace(/\s*-\s*.*$/, '') // Remove anything after a dash including the dash
           .trim()
           .toLowerCase();
       };
 
-      // Collect all meals from the week
-      const meals = days.flatMap(day => day.meals);
-
       // Process each meal's ingredients
-      meals.forEach((meal: Meal) => {
+      days.flatMap(day => day.meals).forEach((meal: Meal) => {
         if (meal.ingredients) {
           meal.ingredients.forEach(ingredient => {
             const cleanName = cleanIngredientName(ingredient.name);
