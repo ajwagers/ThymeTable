@@ -53,7 +53,7 @@ function GroceryListPage() {
         }
       });
 
-      // Convert to array and sort alphabetically
+      // Convert to array and sort alphabetically by name
       const sortedList = Object.values(ingredients).sort((a, b) => 
         a.name.localeCompare(b.name)
       );
@@ -105,11 +105,10 @@ function GroceryListPage() {
                 onChange={() => toggleItem(index)}
                 className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
-              <span className={`flex-1 capitalize ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                {item.name}
-              </span>
-              <span className={`text-sm font-medium ${item.checked ? 'text-gray-400' : 'text-primary-600'}`}>
-                {item.amount} {item.unit}
+              <span className={`flex-1 ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                <span className="font-medium">{item.amount} {item.unit}</span>
+                {' '}
+                <span className="capitalize">{item.name}</span>
               </span>
             </div>
           ))}
