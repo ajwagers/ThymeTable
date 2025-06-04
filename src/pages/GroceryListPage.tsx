@@ -27,7 +27,8 @@ function GroceryListPage() {
         return name
           .replace(/^\d+(\s*\/\s*\d+)?\s*(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|cans?|cloves?)\s*(of\s+)?/i, '')
           .replace(/^\d+(\s*\/\s*\d+)?\s+/, '')
-          .replace(/^[•\-\*]\s*/, '') // Remove bullet points, dashes, and asterisks from the start
+          .replace(/^[•\-\*\.]\s*/, '') // Remove bullet points, dashes, asterisks, and periods from the start
+          .replace(/\./g, '') // Remove all periods from the string
           .trim()
           .toLowerCase();
       };
@@ -107,9 +108,7 @@ function GroceryListPage() {
                 className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className={`flex-1 ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                <span className="font-medium">{item.amount} {item.unit}</span>
-                {' - '}
-                <span className="capitalize">{item.name}</span>
+                {item.amount} {item.unit} - {item.name}
               </span>
             </div>
           ))}
