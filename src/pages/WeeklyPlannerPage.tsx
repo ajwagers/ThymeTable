@@ -16,7 +16,16 @@ function WeeklyPlannerPage() {
   } = useMealPlanState();
 
   return (
-    <div>
+    <div className="relative">
+      {isAutofilling && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mb-4"></div>
+            <p className="text-gray-600 font-medium">Generating your meal plan...</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-medium text-gray-800 px-1">Weekly Meal Plan</h2>
         <div className="flex gap-2">

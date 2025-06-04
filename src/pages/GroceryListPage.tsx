@@ -8,7 +8,7 @@ interface GroceryItem {
   name: string;
   amount: string;
   unit: string;
-  recipes: string[];
+  checked: boolean;
 }
 
 function GroceryListPage() {
@@ -46,13 +46,8 @@ function GroceryListPage() {
                 name: cleanName,
                 amount: adjustQuantity(ingredient.amount, meal.servings, recipeId),
                 unit: ingredient.unit,
-                recipes: [meal.name]
+                checked: false
               };
-            } else {
-              // Add recipe name if not already included
-              if (!ingredients[cleanName].recipes.includes(meal.name)) {
-                ingredients[cleanName].recipes.push(meal.name);
-              }
             }
           });
         }
@@ -67,8 +62,16 @@ function GroceryListPage() {
     }
   }, [adjustQuantity]);
 
+  const toggleItem = (index: number) => {
+    setGroceryList(prev => 
+      prev.map((item, i) => 
+        i === index ? { ...item, checked: !item.checked } : item
+      )
+    );
+  };
+
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
+    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
         <button 
           onClick={() => navigate('/')}
@@ -90,31 +93,26 @@ function GroceryListPage() {
           <p className="text-sm mt-2">Add some meals to your weekly plan to generate a grocery list.</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="grid gap-4">
-            {groceryList.map((item, index) => (
-              <div 
-                key={index}
-                className="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary-100 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-800 capitalize">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Used in: {item.recipes.join(', ')}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-medium text-primary-600">
-                      {item.amount} {item.unit}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-2">
+          {groceryList.map((item, index) => (
+            <div 
+              key={index}
+              className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <input
+                type="checkbox"
+                checked={item.checked}
+                onChange={() => toggleItem(index)}
+                className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className={`flex-1 capitalize ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                {item.name}
+              </span>
+              <span className={`text-sm font-medium ${item.checked ? 'text-gray-400' : 'text-primary-600'}`}>
+                {item.amount} {item.unit}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
