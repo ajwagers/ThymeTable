@@ -17,7 +17,7 @@ function GroceryListPage() {
   const [groceryList, setGroceryList] = React.useState<GroceryItem[]>([]);
 
   React.useEffect(() => {
-    const savedMealPlan = localStorage.getItem('mealPlan'); // Assuming mealPlan is stored here
+    const savedMealPlan = localStorage.getItem('mealPlan');
 
     if (savedMealPlan) {
       const days: Day[] = JSON.parse(savedMealPlan);
@@ -26,13 +26,10 @@ function GroceryListPage() {
       // Helper function to clean ingredient names
       const cleanIngredientName = (name: string) => {
         return name
-          // Remove measurements and quantities more thoroughly
-          .replace(/^[\d\s\/\-.(]+\s*(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|cans?|cloves?|inches|liters|tablespoons?|cup|g|ml|l)\s*(of\s+)?/i, '')
-          .replace(/^[\d\s\/\-.()]+/, '') // Remove any remaining numbers at start
-          .replace(/^[•\-\*\.]\s*/, '') // Remove bullet points, dashes, asterisks, and periods from the start
-          .replace(/\./g, '') // Remove all periods from the string
-          .replace(/\s*-\s*.*$/, '') // Remove anything after a dash including the dash
-          .replace(/\([^)]*\)/g, '') // Remove parenthetical text
+          .replace(/\([^)]*\)/g, '') // Remove parenthetical text first
+          .replace(/,.*$/, '') // Remove everything after the first comma
+          .replace(/^[•\-\*\.]\s*/, '') // Remove bullet points, dashes, asterisks from start
+          .replace(/\./g, '') // Remove all periods
           .trim()
           .toLowerCase();
       };
@@ -42,28 +39,28 @@ function GroceryListPage() {
         if (meal.ingredients) {
           meal.ingredients.forEach((ingredient) => {
             const cleanName = cleanIngredientName(ingredient.name);
-            const unit = ingredient.unit ? ingredient.unit.toLowerCase().trim() : ''; // Normalize unit
-            const key = `${cleanName}-${unit}`; // Use a compound key: name-unit
+            const unit = ingredient.unit.toLowerCase().trim();
+            const key = `${cleanName}-${unit}`; // Compound key of name-unit
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
             const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
-            const adjustedAmount = parseFloat(adjustedAmountStr); // Attempt to parse the adjusted amount
+            const adjustedAmount = parseFloat(adjustedAmountStr);
 
             if (key in ingredients) {
-              // If ingredient with same name AND unit exists, try to combine amounts
               const existingAmountStr = ingredients[key].amount;
               const existingAmount = parseFloat(existingAmountStr);
 
-              // Only combine if BOTH existing and new amounts are valid numbers
               if (!isNaN(existingAmount) && !isNaN(adjustedAmount)) {
+                // Both amounts are numbers, we can add them
                 ingredients[key].amount = (existingAmount + adjustedAmount).toString();
               } else {
-                // If either is not a number, we cannot sum. Keep the latest amount string.
+                // If either is not a number, keep the latest amount string
                 ingredients[key].amount = adjustedAmountStr;
               }
             } else {
               ingredients[key] = {
-                name: cleanName, // Store the clean name
-                unit: ingredient.unit,
+                name: cleanName,
+                amount: adjustedAmountStr,
+                unit,
                 checked: false
               };
             }
@@ -71,10 +68,9 @@ function GroceryListPage() {
         }
       });
 
-      // Convert the aggregated map values to an array and sort alphabetically by name
-      const sortedList = Object.values(ingredients).sort((a, b) => 
-        a.name.localeCompare(b.name)
-      );
+      // Convert to array and sort alphabetically
+      const sortedList = Object.values(ingredients)
+        .sort((a, b) => a.name.localeCompare(b.name));
 
       setGroceryList(sortedList);
     }
@@ -124,12 +120,7 @@ function GroceryListPage() {
                 className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className={`flex-1 ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                {item.amount && item.unit 
-                  ? `${item.amount} ${item.unit} ${item.name}`
-                  : item.amount
-                  ? `${item.amount} ${item.name}`
-                  : item.name
-                }
+                {item.amount} {item.unit} {item.name}
               </span>
             </div>
           ))}
