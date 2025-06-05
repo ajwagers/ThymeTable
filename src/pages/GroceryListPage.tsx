@@ -110,7 +110,7 @@ function GroceryListPage() {
                 className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className={`flex-1 ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                {item.amount} | {item.unit} | {item.name}
+                {item.amount} "---" {item.unit} "---" {item.name}
               </span>
             </div>
           ))}
