@@ -23,24 +23,14 @@ function GroceryListPage() {
       const days: Day[] = JSON.parse(savedMealPlan);
       const ingredients: Record<string, GroceryItem> = {};
 
-      // Helper function to clean ingredient names
-      const cleanIngredientName = (name: string) => {
-        return name
-          .replace(/\([^)]*\)/g, '') // Remove parenthetical text first
-          .replace(/,.*$/, '') // Remove everything after the first comma
-          .replace(/^[•\-\*\.]\s*/, '') // Remove bullet points, dashes, asterisks from start
-          .replace(/\./g, '') // Remove all periods
-          .trim()
-          .toLowerCase();
-      };
-
       // Process each meal's ingredients
       days.flatMap(day => day.meals).forEach((meal: Meal) => {
         if (meal.ingredients) {
           meal.ingredients.forEach((ingredient) => {
-            const cleanName = cleanIngredientName(ingredient.name);
+            // Use the original name from Spoonacular, just trimmed and lowercased for consistency
+            const name = ingredient.name.trim().toLowerCase();
             const unit = ingredient.unit.toLowerCase().trim();
-            const key = `${cleanName}-${unit}`; // Compound key of name-unit
+            const key = `${name}-${unit}`; // Compound key of name-unit
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
             const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
             const adjustedAmount = parseFloat(adjustedAmountStr);
@@ -58,7 +48,7 @@ function GroceryListPage() {
               }
             } else {
               ingredients[key] = {
-                name: cleanName,
+                name,
                 amount: adjustedAmountStr,
                 unit,
                 checked: false
