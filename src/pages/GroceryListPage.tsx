@@ -42,11 +42,17 @@ function GroceryListPage() {
           meal.ingredients.forEach(ingredient => {
             const cleanName = cleanIngredientName(ingredient.name);
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
+            const adjustedAmount = adjustQuantity(ingredient.amount, meal.servings, recipeId);
             
-            if (!ingredients[cleanName]) {
+            if (cleanName in ingredients) {
+              // If ingredient exists, try to combine amounts
+              const existingAmount = parseFloat(ingredients[cleanName].amount) || 0;
+              const newAmount = parseFloat(adjustedAmount) || 0;
+              ingredients[cleanName].amount = (existingAmount + newAmount).toString();
+            } else {
               ingredients[cleanName] = {
                 name: cleanName,
-                amount: adjustQuantity(ingredient.amount, meal.servings, recipeId),
+                amount: adjustedAmount,
                 unit: ingredient.unit,
                 checked: false
               };
@@ -108,9 +114,12 @@ function GroceryListPage() {
                 className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className={`flex-1 ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                {/* Only show the amount and unit once */}
-                {item.amount && `${item.amount} `}{item.unit && `${item.unit} `}
-                {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                {item.amount && item.unit 
+                  ? `${item.amount} ${item.unit} ${item.name}`
+                  : item.amount
+                  ? `${item.amount} ${item.name}`
+                  : item.name
+                }
               </span>
             </div>
           ))}
