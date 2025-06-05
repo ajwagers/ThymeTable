@@ -5,15 +5,35 @@ const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
 const BASE_URL = 'https://api.spoonacular.com/recipes';
 
 const handleSpoonacularError = (error: AxiosError) => {
-  if (error.response?.status === 402) {
-    console.error('Spoonacular API quota exceeded or invalid API key. Please check your API key or upgrade your plan.');
-    throw new Error('API quota exceeded or invalid key. Please try again later.');
+  if (!API_KEY) {
+    throw new Error('Spoonacular API key is missing. Please check your environment variables.');
   }
-  throw error;
+
+  if (error.response?.status === 402) {
+    throw new Error('Spoonacular API quota exceeded. Please try again later.');
+  }
+
+  if (error.response?.status === 401) {
+    throw new Error('Invalid Spoonacular API key. Please check your API key.');
+  }
+
+  if (error.code === 'ECONNABORTED') {
+    throw new Error('Request timed out. Please check your internet connection and try again.');
+  }
+
+  if (error.message === 'Network Error') {
+    throw new Error('Network error occurred. Please check your internet connection and try again.');
+  }
+
+  throw new Error(`API Error: ${error.message}`);
 };
 
 export const getRandomRecipes = async (mealType: string, category: 'main' | 'side' = 'main'): Promise<SpoonacularRecipe[]> => {
   try {
+    if (!API_KEY) {
+      throw new Error('Spoonacular API key is missing');
+    }
+
     const tags = [mealType];
     
     if (category === 'side') {
@@ -28,6 +48,7 @@ export const getRandomRecipes = async (mealType: string, category: 'main' | 'sid
         number: 10,
         tags: tags.join(','),
       },
+      timeout: 10000, // 10 second timeout
     });
 
     return response.data.recipes.map((recipe: any) => ({
@@ -44,17 +65,21 @@ export const getRandomRecipes = async (mealType: string, category: 'main' | 'sid
     if (axios.isAxiosError(error)) {
       handleSpoonacularError(error);
     }
-    console.error('Error fetching random recipes:', error);
-    return [];
+    throw new Error(`Failed to fetch random recipes: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
 export const getRecipeDetails = async (recipeId: number): Promise<SpoonacularRecipe | null> => {
   try {
+    if (!API_KEY) {
+      throw new Error('Spoonacular API key is missing');
+    }
+
     const response = await axios.get(`${BASE_URL}/${recipeId}/information`, {
       params: {
         apiKey: API_KEY,
       },
+      timeout: 10000, // 10 second timeout
     });
 
     const recipe = response.data;
@@ -78,7 +103,6 @@ export const getRecipeDetails = async (recipeId: number): Promise<SpoonacularRec
     if (axios.isAxiosError(error)) {
       handleSpoonacularError(error);
     }
-    console.error('Error fetching recipe details:', error);
-    return null;
+    throw new Error(`Failed to fetch recipe details: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
