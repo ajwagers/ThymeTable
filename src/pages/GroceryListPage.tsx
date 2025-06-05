@@ -17,7 +17,8 @@ function GroceryListPage() {
   const [groceryList, setGroceryList] = React.useState<GroceryItem[]>([]);
 
   React.useEffect(() => {
-    const savedMealPlan = localStorage.getItem('mealPlan');
+    const savedMealPlan = localStorage.getItem('mealPlan'); // Assuming mealPlan is stored here
+
     if (savedMealPlan) {
       const days: Day[] = JSON.parse(savedMealPlan);
       const ingredients: Record<string, GroceryItem> = {};
@@ -39,20 +40,29 @@ function GroceryListPage() {
       // Process each meal's ingredients
       days.flatMap(day => day.meals).forEach((meal: Meal) => {
         if (meal.ingredients) {
-          meal.ingredients.forEach(ingredient => {
+          meal.ingredients.forEach((ingredient) => {
             const cleanName = cleanIngredientName(ingredient.name);
+            const unit = ingredient.unit ? ingredient.unit.toLowerCase().trim() : ''; // Normalize unit
+            const key = `${cleanName}-${unit}`; // Use a compound key: name-unit
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
-            const adjustedAmount = adjustQuantity(ingredient.amount, meal.servings, recipeId);
-            
-            if (cleanName in ingredients) {
-              // If ingredient exists, try to combine amounts
-              const existingAmount = parseFloat(ingredients[cleanName].amount) || 0;
-              const newAmount = parseFloat(adjustedAmount) || 0;
-              ingredients[cleanName].amount = (existingAmount + newAmount).toString();
+            const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
+            const adjustedAmount = parseFloat(adjustedAmountStr); // Attempt to parse the adjusted amount
+
+            if (key in ingredients) {
+              // If ingredient with same name AND unit exists, try to combine amounts
+              const existingAmountStr = ingredients[key].amount;
+              const existingAmount = parseFloat(existingAmountStr);
+
+              // Only combine if BOTH existing and new amounts are valid numbers
+              if (!isNaN(existingAmount) && !isNaN(adjustedAmount)) {
+                ingredients[key].amount = (existingAmount + adjustedAmount).toString();
+              } else {
+                // If either is not a number, we cannot sum. Keep the latest amount string.
+                ingredients[key].amount = adjustedAmountStr;
+              }
             } else {
-              ingredients[cleanName] = {
-                name: cleanName,
-                amount: adjustedAmount,
+              ingredients[key] = {
+                name: cleanName, // Store the clean name
                 unit: ingredient.unit,
                 checked: false
               };
@@ -61,7 +71,7 @@ function GroceryListPage() {
         }
       });
 
-      // Convert to array and sort alphabetically by name
+      // Convert the aggregated map values to an array and sort alphabetically by name
       const sortedList = Object.values(ingredients).sort((a, b) => 
         a.name.localeCompare(b.name)
       );
