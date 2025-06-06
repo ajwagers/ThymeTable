@@ -89,11 +89,11 @@ function GroceryListPage() {
   const getCleanedIngredientName = (originalName: string): string => {
     let cleaned = originalName.trim();
     
-    // Define all units that should be removed
+    // Define all units that should be removed (including new ones)
     const units = [
-      'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
-      'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
-      'bags?', 'bag', 'servings?', 'serving'
+      'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'T', 'teaspoons?', 'tsp', 't',
+      'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'g', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
+      'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inch', 'inches'
     ].join('|');
     
     // Remove common patterns at the beginning of ingredient names
@@ -142,7 +142,9 @@ function GroceryListPage() {
       'flat leaf', 'italian', 'regular', 'large', 'small', 'medium',
       'baby', 'young', 'mature', 'ripe', 'unripe',
       'boneless', 'skinless', 'bone-in', 'skin-on',
-      'juice of.*?', 'wedges', 'drizzle of'
+      'juice of.*?', 'wedges', 'drizzle of', 'nice', 'creamy', 'one',
+      'well rinsed', 'coarsely', 'on the bias', 'peeled', 'finely minced',
+      'thick', 'to taste', 'freshly ground', 'granulated', 'sea', 'himalayan', 'kosher'
     ];
     
     // Remove descriptors
@@ -172,6 +174,30 @@ function GroceryListPage() {
     normalized = normalized.replace(/\bonions?\b/g, 'onion');
     normalized = normalized.replace(/\bshallots?\b/g, 'shallot');
     
+    // Feta cheese variations
+    normalized = normalized.replace(/\bfeta cheese\b/g, 'feta');
+    normalized = normalized.replace(/\bcrumbled\b/g, '');
+    
+    // Garlic variations
+    normalized = normalized.replace(/\bgarlic cloves?\b/g, 'garlic');
+    normalized = normalized.replace(/\bcloves? garlic\b/g, 'garlic');
+    
+    // Ginger variations
+    normalized = normalized.replace(/\bginger.*?minced\b/g, 'ginger');
+    normalized = normalized.replace(/\binch.*?ginger\b/g, 'ginger');
+    
+    // Salt variations - normalize all salt types to just "salt"
+    normalized = normalized.replace(/\b(kosher|sea|himalayan)\s+salt\b/g, 'salt');
+    normalized = normalized.replace(/\bsalt\s*&\s*pepper\b/g, 'salt and pepper');
+    normalized = normalized.replace(/\bsalt\s*(and|&)\s*(black\s+)?pepper\b/g, 'salt and pepper');
+    normalized = normalized.replace(/\bsalt\s*(and|&)\s*freshly\s+ground\s+pepper\b/g, 'salt and pepper');
+    normalized = normalized.replace(/\bsalt\s*(and|&)\s*pepper.*?taste\b/g, 'salt and pepper');
+    normalized = normalized.replace(/\bsalt.*?pepper.*?season\b/g, 'salt and pepper');
+    normalized = normalized.replace(/\bsalt.*?fresh\s+ground\s+pepper.*?garlic\b/g, 'salt and pepper');
+    
+    // Leek variations
+    normalized = normalized.replace(/\bleeks?\b/g, 'leek');
+    
     // Clean up multiple spaces
     normalized = normalized.replace(/\s+/g, ' ').trim();
     
@@ -183,7 +209,7 @@ function GroceryListPage() {
     const unitMap: Record<string, string> = {
       // Volume
       'cup': 'cup', 'cups': 'cup',
-      'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp',
+      'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp', 'T': 'tbsp',
       'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp', 't': 'tsp',
       'ml': 'ml', 'milliliter': 'ml', 'milliliters': 'ml',
       'liter': 'liter', 'liters': 'liter', 'l': 'liter',
@@ -206,6 +232,9 @@ function GroceryListPage() {
       'bag': 'bag', 'bags': 'bag',
       'leaf': 'leaf', 'leaves': 'leaf',
       'serving': 'serving', 'servings': 'serving',
+      
+      // Size descriptors that were being treated as units
+      'large': '', 'medium': '', 'small': '',
       
       // Empty unit stays empty (for count-based ingredients)
       '': '',
@@ -252,8 +281,23 @@ function GroceryListPage() {
       ['onion', 'onions', 'yellow onion', 'white onion'],
       ['shallot', 'shallots'],
       
-      // Common ingredient variations
+      // Feta cheese variations
+      ['feta', 'feta cheese'],
+      
+      // Garlic variations
       ['garlic', 'garlic clove', 'garlic cloves'],
+      
+      // Ginger variations
+      ['ginger'],
+      
+      // Salt and pepper variations
+      ['salt', 'kosher salt', 'sea salt', 'himalayan salt'],
+      ['salt and pepper', 'salt & pepper', 'salt and black pepper', 'salt and freshly ground pepper'],
+      
+      // Leek variations
+      ['leek', 'leeks'],
+      
+      // Common ingredient variations
       ['carrot', 'carrots'],
       ['celery', 'celery stalk', 'celery stalks'],
       ['tomato', 'tomatoes', 'plum tomato', 'plum tomatoes'],
@@ -428,7 +472,7 @@ function GroceryListPage() {
         .map(item => ({
           name: item.name,
           amount: toFraction(item.amount),
-          unit: item.unit,
+          unit: normalizeUnit(item.unit), // Apply final unit normalization
           checked: false
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
