@@ -56,12 +56,20 @@ function GroceryListPage() {
   const getCleanedIngredientName = (originalName: string): string => {
     let cleaned = originalName.trim();
     
+    // Define all units that should be removed
+    const units = [
+      'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
+      'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head'
+    ].join('|');
+    
     // Remove common patterns at the beginning of ingredient names
     // This handles cases like "2 pounds regular chicken wings" or "1/2 cup brown sugar"
-    cleaned = cleaned.replace(/^[\d\s\/]+\s*(pounds?|lbs?|ounces?|oz|cups?|tablespoons?|tbsp|teaspoons?|tsp|cans?|cloves?|ml|liters?|grams?|kg|block|blocks?)\s*/i, '');
+    const leadingPattern = new RegExp(`^[\\d\\s\\/]+\\s*(${units})\\s*`, 'i');
+    cleaned = cleaned.replace(leadingPattern, '');
     
     // Remove patterns like "& ½ cups" or "½ cup" that appear in the middle
-    cleaned = cleaned.replace(/\s*[&\+]?\s*[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+\s*(pounds?|lbs?|ounces?|oz|cups?|tablespoons?|tbsp|teaspoons?|tsp|cans?|cloves?|ml|liters?|grams?|kg|block|blocks?)\s*/gi, ' ');
+    const embeddedPattern = new RegExp(`\\s*[&\\+]?\\s*[\\d\\s\\/½¼¾⅓⅔⅛⅜⅝⅞]+\\s*(${units})\\s*`, 'gi');
+    cleaned = cleaned.replace(embeddedPattern, ' ');
     
     // Remove standalone fractions and numbers that might be left over
     cleaned = cleaned.replace(/\s*[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+\s*/g, ' ');
