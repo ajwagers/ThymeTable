@@ -92,7 +92,8 @@ function GroceryListPage() {
     // Define all units that should be removed
     const units = [
       'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
-      'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head'
+      'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
+      'bags?', 'bag'
     ].join('|');
     
     // Remove common patterns at the beginning of ingredient names
@@ -179,9 +180,10 @@ function GroceryListPage() {
       'can': 'can', 'cans': 'can',
       'block': 'block', 'blocks': 'block',
       'cube': 'cube', 'cubes': 'cube',
+      'bag': 'bag', 'bags': 'bag',
       
-      // Special cases
-      '': 'unit', // Empty unit becomes 'unit'
+      // Empty unit stays empty (for count-based ingredients)
+      '': '',
     };
     
     const normalized = unit.toLowerCase().trim();
@@ -213,6 +215,7 @@ function GroceryListPage() {
       ['celery', 'celery stalk', 'celery stalks'],
       ['tomato', 'tomatoes', 'plum tomato', 'plum tomatoes'],
       ['bell pepper', 'bell peppers', 'red bell pepper', 'green bell pepper'],
+      ['broccoli florets', 'broccoli flowerets'],
       
       // Oils and fats
       ['olive oil', 'extra virgin olive oil'],
@@ -436,7 +439,7 @@ function GroceryListPage() {
                 className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className={`flex-1 ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                {item.amount} {item.unit} {item.name}
+                {item.amount} {item.unit && item.unit.trim() !== '' ? `${item.unit} ` : ''}{item.name}
               </span>
             </div>
           ))}
