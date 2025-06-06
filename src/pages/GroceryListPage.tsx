@@ -16,6 +16,97 @@ function GroceryListPage() {
   const { adjustQuantity } = useServings();
   const [groceryList, setGroceryList] = React.useState<GroceryItem[]>([]);
 
+  // Helper function to convert decimal to fraction (copied from ServingsContext)
+  const toFraction = (decimal: number): string => {
+    if (decimal === Math.floor(decimal)) {
+      return decimal.toString();
+    }
+
+    // Convert to nearest third or eighth
+    const thirds = Math.round(decimal * 3) / 3;
+    const eighths = Math.round(decimal * 8) / 8;
+
+    // Use whichever is closer
+    const useThirds = Math.abs(decimal - thirds) < Math.abs(decimal - eighths);
+    const rounded = useThirds ? thirds : eighths;
+
+    // Extract whole number and fractional parts
+    const whole = Math.floor(rounded);
+    const fraction = rounded - whole;
+
+    // Convert to fraction string
+    let fractionStr = '';
+    if (useThirds) {
+      if (Math.abs(fraction - 1/3) < 0.01) fractionStr = '1/3';
+      else if (Math.abs(fraction - 2/3) < 0.01) fractionStr = '2/3';
+    } else {
+      if (Math.abs(fraction - 1/8) < 0.01) fractionStr = '1/8';
+      else if (Math.abs(fraction - 1/4) < 0.01) fractionStr = '1/4';
+      else if (Math.abs(fraction - 3/8) < 0.01) fractionStr = '3/8';
+      else if (Math.abs(fraction - 1/2) < 0.01) fractionStr = '1/2';
+      else if (Math.abs(fraction - 5/8) < 0.01) fractionStr = '5/8';
+      else if (Math.abs(fraction - 3/4) < 0.01) fractionStr = '3/4';
+      else if (Math.abs(fraction - 7/8) < 0.01) fractionStr = '7/8';
+    }
+
+    return whole > 0 ? `${whole} ${fractionStr}` : fractionStr;
+  };
+
+  // Helper function to clean ingredient names by removing specific amount and unit
+  const getCleanedIngredientName = (originalName: string, amount: number, unit: string): string => {
+    const amountStr = toFraction(amount);
+    const trimmedName = originalName.trim();
+    
+    // Create variations of the unit (singular, plural, abbreviations)
+    const unitVariations = [
+      unit,
+      unit + 's', // plural
+      unit.replace(/s$/, ''), // remove trailing 's' if present
+    ];
+    
+    // Add common abbreviations
+    const abbreviations: Record<string, string[]> = {
+      'tablespoon': ['tbsp', 'tablespoons'],
+      'tablespoons': ['tbsp', 'tablespoon'],
+      'teaspoon': ['tsp', 'teaspoons'],
+      'teaspoons': ['tsp', 'teaspoon'],
+      'cup': ['cups'],
+      'cups': ['cup'],
+      'ounce': ['oz', 'ounces'],
+      'ounces': ['oz', 'ounce'],
+      'pound': ['lb', 'lbs', 'pounds'],
+      'pounds': ['lb', 'lbs', 'pound'],
+      'can': ['cans'],
+      'cans': ['can'],
+      'clove': ['cloves'],
+      'cloves': ['clove'],
+    };
+    
+    if (abbreviations[unit.toLowerCase()]) {
+      unitVariations.push(...abbreviations[unit.toLowerCase()]);
+    }
+    
+    // Try to remove the specific amount and unit from the beginning
+    for (const unitVar of unitVariations) {
+      // Pattern: amount + unit + optional "of" + rest
+      const pattern = new RegExp(`^${amountStr}\\s+${unitVar}\\s*(of\\s+)?`, 'i');
+      const cleaned = trimmedName.replace(pattern, '').trim();
+      
+      if (cleaned !== trimmedName && cleaned.length > 0) {
+        return cleaned.toLowerCase();
+      }
+    }
+    
+    // Fallback: use generic cleaning if specific removal didn't work
+    const genericCleaned = trimmedName
+      .replace(/^\d+(\s*\/\s*\d+)?\s*(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|cans?|cloves?)\s*(of\s+)?/i, '')
+      .replace(/^\d+(\s*\/\s*\d+)?\s+/, '') // Remove any remaining numbers at the start
+      .trim()
+      .toLowerCase();
+    
+    return genericCleaned || trimmedName.toLowerCase();
+  };
+
   React.useEffect(() => {
     const savedMealPlan = localStorage.getItem('mealPlan');
 
@@ -27,10 +118,10 @@ function GroceryListPage() {
       days.flatMap(day => day.meals).forEach((meal: Meal) => {
         if (meal.ingredients) {
           meal.ingredients.forEach((ingredient) => {
-            // Use the original name from Spoonacular, just trimmed and lowercased for consistency
-            const name = ingredient.name.trim().toLowerCase();
+            // Use the new cleaning function to get a clean ingredient name
+            const cleanName = getCleanedIngredientName(ingredient.name, ingredient.amount, ingredient.unit);
             const unit = ingredient.unit.toLowerCase().trim();
-            const key = `${name}-${unit}`; // Compound key of name-unit
+            const key = `${cleanName}-${unit}`; // Compound key of name-unit
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
             const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
             const adjustedAmount = parseFloat(adjustedAmountStr);
@@ -48,7 +139,7 @@ function GroceryListPage() {
               }
             } else {
               ingredients[key] = {
-                name,
+                name: cleanName,
                 amount: adjustedAmountStr,
                 unit,
                 checked: false
@@ -110,7 +201,7 @@ function GroceryListPage() {
                 className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className={`flex-1 ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                {item.amount} "---" {item.unit} "---" {item.name}
+                {item.amount} {item.unit} {item.name}
               </span>
             </div>
           ))}
