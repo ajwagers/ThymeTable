@@ -52,59 +52,37 @@ function GroceryListPage() {
     return whole > 0 ? `${whole} ${fractionStr}` : fractionStr;
   };
 
-  // Helper function to clean ingredient names by removing specific amount and unit
-  const getCleanedIngredientName = (originalName: string, amount: number, unit: string): string => {
-    const amountStr = toFraction(amount);
-    const trimmedName = originalName.trim();
+  // Helper function to clean ingredient names by removing embedded amounts and units
+  const getCleanedIngredientName = (originalName: string): string => {
+    let cleaned = originalName.trim();
     
-    // Create variations of the unit (singular, plural, abbreviations)
-    const unitVariations = [
-      unit,
-      unit + 's', // plural
-      unit.replace(/s$/, ''), // remove trailing 's' if present
-    ];
+    // Remove common patterns at the beginning of ingredient names
+    // This handles cases like "2 pounds regular chicken wings" or "1/2 cup brown sugar"
+    cleaned = cleaned.replace(/^[\d\s\/]+\s*(pounds?|lbs?|ounces?|oz|cups?|tablespoons?|tbsp|teaspoons?|tsp|cans?|cloves?|ml|liters?|grams?|kg|block|blocks?)\s*/i, '');
     
-    // Add common abbreviations
-    const abbreviations: Record<string, string[]> = {
-      'tablespoon': ['tbsp', 'tablespoons'],
-      'tablespoons': ['tbsp', 'tablespoon'],
-      'teaspoon': ['tsp', 'teaspoons'],
-      'teaspoons': ['tsp', 'teaspoon'],
-      'cup': ['cups'],
-      'cups': ['cup'],
-      'ounce': ['oz', 'ounces'],
-      'ounces': ['oz', 'ounce'],
-      'pound': ['lb', 'lbs', 'pounds'],
-      'pounds': ['lb', 'lbs', 'pound'],
-      'can': ['cans'],
-      'cans': ['can'],
-      'clove': ['cloves'],
-      'cloves': ['clove'],
-    };
+    // Remove patterns like "& ½ cups" or "½ cup" that appear in the middle
+    cleaned = cleaned.replace(/\s*[&\+]?\s*[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+\s*(pounds?|lbs?|ounces?|oz|cups?|tablespoons?|tbsp|teaspoons?|tsp|cans?|cloves?|ml|liters?|grams?|kg|block|blocks?)\s*/gi, ' ');
     
-    if (abbreviations[unit.toLowerCase()]) {
-      unitVariations.push(...abbreviations[unit.toLowerCase()]);
-    }
+    // Remove standalone fractions and numbers that might be left over
+    cleaned = cleaned.replace(/\s*[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+\s*/g, ' ');
     
-    // Try to remove the specific amount and unit from the beginning
-    for (const unitVar of unitVariations) {
-      // Pattern: amount + unit + optional "of" + rest
-      const pattern = new RegExp(`^${amountStr}\\s+${unitVar}\\s*(of\\s+)?`, 'i');
-      const cleaned = trimmedName.replace(pattern, '').trim();
-      
-      if (cleaned !== trimmedName && cleaned.length > 0) {
-        return cleaned.toLowerCase();
-      }
-    }
+    // Remove measurement indicators like "(5ml)" or ". (5ml)"
+    cleaned = cleaned.replace(/\s*\.?\s*\([^)]*\)/g, '');
     
-    // Fallback: use generic cleaning if specific removal didn't work
-    const genericCleaned = trimmedName
-      .replace(/^\d+(\s*\/\s*\d+)?\s*(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|cans?|cloves?)\s*(of\s+)?/i, '')
-      .replace(/^\d+(\s*\/\s*\d+)?\s+/, '') // Remove any remaining numbers at the start
-      .trim()
-      .toLowerCase();
+    // Remove extra periods and dashes
+    cleaned = cleaned.replace(/\s*\.\s*/g, ' ');
+    cleaned = cleaned.replace(/\s*-\s*/g, ' ');
     
-    return genericCleaned || trimmedName.toLowerCase();
+    // Remove "of" at the beginning if it remains
+    cleaned = cleaned.replace(/^of\s+/i, '');
+    
+    // Clean up multiple spaces and trim
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+    
+    // Remove any remaining leading/trailing punctuation
+    cleaned = cleaned.replace(/^[,\-\.\s]+|[,\-\.\s]+$/g, '');
+    
+    return cleaned.toLowerCase() || originalName.toLowerCase();
   };
 
   React.useEffect(() => {
@@ -119,7 +97,7 @@ function GroceryListPage() {
         if (meal.ingredients) {
           meal.ingredients.forEach((ingredient) => {
             // Use the new cleaning function to get a clean ingredient name
-            const cleanName = getCleanedIngredientName(ingredient.name, ingredient.amount, ingredient.unit);
+            const cleanName = getCleanedIngredientName(ingredient.name);
             const unit = ingredient.unit.toLowerCase().trim();
             const key = `${cleanName}-${unit}`; // Compound key of name-unit
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
