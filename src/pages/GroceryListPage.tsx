@@ -96,8 +96,8 @@ function GroceryListPage() {
       'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inch', 'inches'
     ].join('|');
     
-    // Add standalone t, T, g with word boundaries to be more precise
-    const standaloneUnits = '\\bt\\b|\\bT\\b|\\bg\\b';
+    // Add standalone t, T, g, c with word boundaries to be more precise
+    const standaloneUnits = '\\bt\\b|\\bT\\b|\\bg\\b|\\bc\\b';
     const allUnits = `${units}|${standaloneUnits}`;
     
     // Remove common patterns at the beginning of ingredient names
@@ -109,8 +109,9 @@ function GroceryListPage() {
     const embeddedPattern = new RegExp(`\\s*[&\\+]?\\s*[\\d\\s\\/½¼¾⅓⅔⅛⅜⅝⅞]+\\s*(${allUnits})\\s*`, 'gi');
     cleaned = cleaned.replace(embeddedPattern, ' ');
     
-    // Remove standalone fractions and numbers that might be left over
-    cleaned = cleaned.replace(/\s*[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+\s*/g, ' ');
+    // Remove standalone fractions and numbers that might be left over, BUT preserve % symbols and numbers that are part of product names
+    // This regex is more careful to not remove numbers that are followed by % or are clearly part of product names
+    cleaned = cleaned.replace(/\s*(?<!\w)[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+(?!%|\w)\s*/g, ' ');
     
     // Remove measurement indicators like "(5ml)" or ". (5ml)"
     cleaned = cleaned.replace(/\s*\.?\s*\([^)]*\)/g, '');
@@ -246,10 +247,11 @@ function GroceryListPage() {
     
     const normalized = unit.toLowerCase().trim();
     
-    // Handle standalone t, T, g with exact matching
+    // Handle standalone t, T, g, c with exact matching
     if (normalized === 't') return 'tsp';
     if (normalized === 'T') return 'tbsp';
     if (normalized === 'g') return 'g';
+    if (normalized === 'c') return 'cup';
     
     return unitMap[normalized] || normalized;
   };
