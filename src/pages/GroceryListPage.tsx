@@ -126,14 +126,191 @@ function GroceryListPage() {
     return cleaned.toLowerCase() || originalName.toLowerCase();
   };
 
+  // Helper function to normalize ingredient names for better matching
+  const normalizeIngredientName = (name: string): string => {
+    let normalized = name.toLowerCase().trim();
+    
+    // Remove common descriptors and preparation methods
+    const descriptorsToRemove = [
+      'fresh', 'dried', 'frozen', 'canned', 'organic', 'raw', 'cooked',
+      'chopped', 'diced', 'sliced', 'minced', 'crushed', 'grated', 'shredded',
+      'cut into.*?dice', 'cut into.*?pieces', 'finely chopped', 'roughly chopped',
+      'plus extra for garnish', 'for garnish', 'extra for.*?', 'divided',
+      'low sodium', 'reduced sodium', 'unsalted', 'salted',
+      'extra virgin', 'virgin', 'light', 'dark', 'heavy', 'thick',
+      'flat leaf', 'italian', 'regular', 'large', 'small', 'medium',
+      'baby', 'young', 'mature', 'ripe', 'unripe'
+    ];
+    
+    // Remove descriptors
+    descriptorsToRemove.forEach(descriptor => {
+      const regex = new RegExp(`\\b${descriptor}\\b`, 'gi');
+      normalized = normalized.replace(regex, ' ');
+    });
+    
+    // Clean up multiple spaces
+    normalized = normalized.replace(/\s+/g, ' ').trim();
+    
+    return normalized;
+  };
+
+  // Helper function to normalize units for better matching
+  const normalizeUnit = (unit: string): string => {
+    const unitMap: Record<string, string> = {
+      // Volume
+      'cup': 'cup', 'cups': 'cup',
+      'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp',
+      'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp',
+      'ml': 'ml', 'milliliter': 'ml', 'milliliters': 'ml',
+      'liter': 'liter', 'liters': 'liter', 'l': 'liter',
+      'fluid ounce': 'fl oz', 'fluid ounces': 'fl oz', 'fl oz': 'fl oz',
+      
+      // Weight
+      'pound': 'lb', 'pounds': 'lb', 'lb': 'lb', 'lbs': 'lb',
+      'ounce': 'oz', 'ounces': 'oz', 'oz': 'oz',
+      'gram': 'g', 'grams': 'g', 'g': 'g',
+      'kilogram': 'kg', 'kilograms': 'kg', 'kg': 'kg',
+      
+      // Count
+      'piece': 'piece', 'pieces': 'piece',
+      'clove': 'clove', 'cloves': 'clove',
+      'head': 'head', 'heads': 'head',
+      'bunch': 'bunch', 'bunches': 'bunch',
+      'can': 'can', 'cans': 'can',
+      'block': 'block', 'blocks': 'block',
+      'cube': 'cube', 'cubes': 'cube',
+      
+      // Special cases
+      '': 'unit', // Empty unit becomes 'unit'
+    };
+    
+    const normalized = unit.toLowerCase().trim();
+    return unitMap[normalized] || normalized;
+  };
+
+  // Helper function to check if two ingredients should be combined
+  const shouldCombineIngredients = (name1: string, name2: string): boolean => {
+    const norm1 = normalizeIngredientName(name1);
+    const norm2 = normalizeIngredientName(name2);
+    
+    // Exact match after normalization
+    if (norm1 === norm2) return true;
+    
+    // Define ingredient groups that should be combined
+    const ingredientGroups = [
+      // Chicken stock/broth variations
+      ['chicken broth', 'chicken stock', 'chicken bouillon', 'chicken bullion'],
+      ['beef broth', 'beef stock', 'beef bouillon', 'beef bullion'],
+      ['vegetable broth', 'vegetable stock', 'vegetable bouillon'],
+      
+      // Parsley variations
+      ['parsley', 'flat leaf parsley', 'italian parsley'],
+      
+      // Common ingredient variations
+      ['onion', 'onions', 'yellow onion', 'white onion'],
+      ['garlic', 'garlic clove', 'garlic cloves'],
+      ['carrot', 'carrots'],
+      ['celery', 'celery stalk', 'celery stalks'],
+      ['tomato', 'tomatoes', 'plum tomato', 'plum tomatoes'],
+      ['bell pepper', 'bell peppers', 'red bell pepper', 'green bell pepper'],
+      
+      // Oils and fats
+      ['olive oil', 'extra virgin olive oil'],
+      ['butter', 'unsalted butter', 'salted butter'],
+      
+      // Cheese variations
+      ['parmesan', 'parmesan cheese', 'parmigiano reggiano'],
+      ['mozzarella', 'mozzarella cheese'],
+      ['cheddar', 'cheddar cheese'],
+    ];
+    
+    // Check if both ingredients belong to the same group
+    for (const group of ingredientGroups) {
+      const inGroup1 = group.some(item => norm1.includes(item) || item.includes(norm1));
+      const inGroup2 = group.some(item => norm2.includes(item) || item.includes(norm2));
+      if (inGroup1 && inGroup2) return true;
+    }
+    
+    // Check for partial matches (one contains the other)
+    if (norm1.length > 3 && norm2.length > 3) {
+      if (norm1.includes(norm2) || norm2.includes(norm1)) return true;
+    }
+    
+    return false;
+  };
+
+  // Helper function to convert units to a common base for addition
+  const convertToCommonUnit = (amount: number, unit: string): { amount: number; unit: string } => {
+    const normalizedUnit = normalizeUnit(unit);
+    
+    // Volume conversions (convert to cups as base)
+    const volumeConversions: Record<string, number> = {
+      'tsp': 1/48,      // 1 tsp = 1/48 cup
+      'tbsp': 1/16,     // 1 tbsp = 1/16 cup
+      'cup': 1,         // base unit
+      'fl oz': 1/8,     // 1 fl oz = 1/8 cup
+      'ml': 1/236.588,  // 1 ml ≈ 1/236.588 cup
+      'liter': 4.22675, // 1 liter ≈ 4.22675 cups
+    };
+    
+    // Weight conversions (convert to ounces as base)
+    const weightConversions: Record<string, number> = {
+      'oz': 1,          // base unit
+      'lb': 16,         // 1 lb = 16 oz
+      'g': 0.035274,    // 1 g ≈ 0.035274 oz
+      'kg': 35.274,     // 1 kg ≈ 35.274 oz
+    };
+    
+    // Try volume conversion first
+    if (volumeConversions[normalizedUnit]) {
+      const convertedAmount = amount * volumeConversions[normalizedUnit];
+      return { amount: convertedAmount, unit: 'cup' };
+    }
+    
+    // Try weight conversion
+    if (weightConversions[normalizedUnit]) {
+      const convertedAmount = amount * weightConversions[normalizedUnit];
+      return { amount: convertedAmount, unit: 'oz' };
+    }
+    
+    // Return as-is if no conversion available
+    return { amount, unit: normalizedUnit };
+  };
+
+  // Helper function to convert back to a user-friendly unit
+  const convertToFriendlyUnit = (amount: number, baseUnit: string): { amount: string; unit: string } => {
+    if (baseUnit === 'cup') {
+      // Convert cups to more appropriate units
+      if (amount >= 1) {
+        return { amount: toFraction(amount), unit: 'cup' };
+      } else if (amount >= 1/16) {
+        const tbsp = amount * 16;
+        return { amount: toFraction(tbsp), unit: 'tbsp' };
+      } else {
+        const tsp = amount * 48;
+        return { amount: toFraction(tsp), unit: 'tsp' };
+      }
+    } else if (baseUnit === 'oz') {
+      // Convert ounces to more appropriate units
+      if (amount >= 16) {
+        const lbs = amount / 16;
+        return { amount: toFraction(lbs), unit: 'lb' };
+      } else {
+        return { amount: toFraction(amount), unit: 'oz' };
+      }
+    }
+    
+    return { amount: toFraction(amount), unit: baseUnit };
+  };
+
   React.useEffect(() => {
     const savedMealPlan = localStorage.getItem('mealPlan');
 
     if (savedMealPlan) {
       const days: Day[] = JSON.parse(savedMealPlan);
-      const ingredients: Record<string, GroceryItem> = {};
+      const rawIngredients: Array<{ name: string; amount: number; unit: string }> = [];
 
-      // Process each meal's ingredients
+      // First pass: collect all ingredients
       days.flatMap(day => day.meals).forEach((meal: Meal) => {
         if (meal.ingredients) {
           meal.ingredients.forEach((ingredient) => {
@@ -142,7 +319,7 @@ function GroceryListPage() {
               return;
             }
 
-            // Use the new cleaning function to get a clean ingredient name
+            // Use the cleaning function to get a clean ingredient name
             const cleanName = getCleanedIngredientName(ingredient.name);
             
             // Skip if the cleaned name is too short or empty
@@ -150,40 +327,68 @@ function GroceryListPage() {
               return;
             }
             
-            const unit = ingredient.unit.toLowerCase().trim();
-            const key = `${cleanName}-${unit}`; // Compound key of name-unit
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
             const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
             const adjustedAmount = parseFloat(adjustedAmountStr);
 
-            if (key in ingredients) {
-              const existingAmountStr = ingredients[key].amount;
-              const existingAmount = parseFloat(existingAmountStr);
-
-              if (!isNaN(existingAmount) && !isNaN(adjustedAmount)) {
-                // Both amounts are numbers, we can add them
-                ingredients[key].amount = (existingAmount + adjustedAmount).toString();
-              } else {
-                // If either is not a number, keep the latest amount string
-                ingredients[key].amount = adjustedAmountStr;
-              }
-            } else {
-              ingredients[key] = {
+            if (!isNaN(adjustedAmount)) {
+              rawIngredients.push({
                 name: cleanName,
-                amount: adjustedAmountStr,
-                unit,
-                checked: false
-              };
+                amount: adjustedAmount,
+                unit: ingredient.unit.toLowerCase().trim()
+              });
             }
           });
         }
       });
 
-      // Convert to array and sort alphabetically
-      const sortedList = Object.values(ingredients)
+      // Second pass: group and combine similar ingredients
+      const consolidatedIngredients: Record<string, { name: string; amount: number; unit: string }> = {};
+
+      rawIngredients.forEach(ingredient => {
+        let foundMatch = false;
+        
+        // Check if this ingredient should be combined with an existing one
+        for (const [key, existing] of Object.entries(consolidatedIngredients)) {
+          if (shouldCombineIngredients(ingredient.name, existing.name)) {
+            // Convert both to common units and add
+            const convertedExisting = convertToCommonUnit(existing.amount, existing.unit);
+            const convertedNew = convertToCommonUnit(ingredient.amount, ingredient.unit);
+            
+            // Only combine if they convert to the same base unit
+            if (convertedExisting.unit === convertedNew.unit) {
+              const totalAmount = convertedExisting.amount + convertedNew.amount;
+              const friendly = convertToFriendlyUnit(totalAmount, convertedExisting.unit);
+              
+              consolidatedIngredients[key] = {
+                name: existing.name, // Keep the first name encountered
+                amount: parseFloat(friendly.amount),
+                unit: friendly.unit
+              };
+              foundMatch = true;
+              break;
+            }
+          }
+        }
+        
+        if (!foundMatch) {
+          // Create a new entry
+          const key = `${ingredient.name}-${Date.now()}-${Math.random()}`;
+          consolidatedIngredients[key] = ingredient;
+        }
+      });
+
+      // Convert to final grocery list format
+      const finalList = Object.values(consolidatedIngredients)
+        .map(item => ({
+          name: item.name,
+          amount: toFraction(item.amount),
+          unit: item.unit,
+          checked: false
+        }))
         .sort((a, b) => a.name.localeCompare(b.name));
 
-      setGroceryList(sortedList);
+      setGroceryList(finalList);
     }
   }, [adjustQuantity]);
 
