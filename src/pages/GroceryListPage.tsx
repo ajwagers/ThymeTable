@@ -93,7 +93,7 @@ function GroceryListPage() {
     const units = [
       'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
       'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
-      'bags?', 'bag'
+      'bags?', 'bag', 'servings?', 'serving'
     ].join('|');
     
     // Remove common patterns at the beginning of ingredient names
@@ -133,14 +133,16 @@ function GroceryListPage() {
     
     // Remove common descriptors and preparation methods
     const descriptorsToRemove = [
-      'fresh', 'dried', 'frozen', 'canned', 'organic', 'raw', 'cooked',
-      'chopped', 'diced', 'sliced', 'minced', 'crushed', 'grated', 'shredded',
-      'cut into.*?dice', 'cut into.*?pieces', 'finely chopped', 'roughly chopped',
-      'plus extra for garnish', 'for garnish', 'extra for.*?', 'divided',
+      'fresh', 'dried', 'frozen', 'canned', 'organic', 'raw', 'cooked', 'beaten',
+      'chopped', 'diced', 'sliced', 'minced', 'crushed', 'grated', 'shredded', 'cubed', 'finely diced',
+      'cut into.*?dice', 'cut into.*?pieces', 'cut into small cubes', 'finely chopped', 'roughly chopped',
+      'plus extra for garnish', 'for garnish', 'extra for.*?', 'divided', 'for serving',
       'low sodium', 'reduced sodium', 'unsalted', 'salted',
       'extra virgin', 'virgin', 'light', 'dark', 'heavy', 'thick',
       'flat leaf', 'italian', 'regular', 'large', 'small', 'medium',
-      'baby', 'young', 'mature', 'ripe', 'unripe'
+      'baby', 'young', 'mature', 'ripe', 'unripe',
+      'boneless', 'skinless', 'bone-in', 'skin-on',
+      'juice of.*?', 'wedges', 'drizzle of'
     ];
     
     // Remove descriptors
@@ -148,6 +150,27 @@ function GroceryListPage() {
       const regex = new RegExp(`\\b${descriptor}\\b`, 'gi');
       normalized = normalized.replace(regex, ' ');
     });
+    
+    // Handle special cases for specific ingredients
+    // Bay leaves variations
+    normalized = normalized.replace(/\bbay leaves?\b/g, 'bay leaf');
+    
+    // Chicken variations
+    normalized = normalized.replace(/\bchicken breast[s]?\b/g, 'chicken breast');
+    normalized = normalized.replace(/\bchicken pieces?\b/g, 'chicken');
+    
+    // Egg variations
+    normalized = normalized.replace(/\beggs?\b/g, 'egg');
+    normalized = normalized.replace(/\begg yolks?\b/g, 'egg yolk');
+    
+    // Lemon variations
+    normalized = normalized.replace(/\blemon wedges?\b/g, 'lemon');
+    normalized = normalized.replace(/\bjuice of.*?lemons?\b/g, 'lemon juice');
+    normalized = normalized.replace(/\bjuice of half.*?lemon\b/g, 'lemon juice');
+    
+    // Onion/shallot variations
+    normalized = normalized.replace(/\bonions?\b/g, 'onion');
+    normalized = normalized.replace(/\bshallots?\b/g, 'shallot');
     
     // Clean up multiple spaces
     normalized = normalized.replace(/\s+/g, ' ').trim();
@@ -161,7 +184,7 @@ function GroceryListPage() {
       // Volume
       'cup': 'cup', 'cups': 'cup',
       'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp',
-      'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp',
+      'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp', 't': 'tsp',
       'ml': 'ml', 'milliliter': 'ml', 'milliliters': 'ml',
       'liter': 'liter', 'liters': 'liter', 'l': 'liter',
       'fluid ounce': 'fl oz', 'fluid ounces': 'fl oz', 'fl oz': 'fl oz',
@@ -181,6 +204,8 @@ function GroceryListPage() {
       'block': 'block', 'blocks': 'block',
       'cube': 'cube', 'cubes': 'cube',
       'bag': 'bag', 'bags': 'bag',
+      'leaf': 'leaf', 'leaves': 'leaf',
+      'serving': 'serving', 'servings': 'serving',
       
       // Empty unit stays empty (for count-based ingredients)
       '': '',
@@ -208,8 +233,26 @@ function GroceryListPage() {
       // Parsley variations
       ['parsley', 'flat leaf parsley', 'italian parsley'],
       
-      // Common ingredient variations
+      // Bay leaf variations
+      ['bay leaf', 'bay leaves'],
+      
+      // Chicken variations
+      ['chicken breast', 'chicken breasts', 'chicken pieces', 'chicken'],
+      
+      // Olive oil variations
+      ['olive oil', 'extra virgin olive oil'],
+      
+      // Egg variations
+      ['egg', 'eggs', 'egg beaten', 'egg yolk', 'egg yolks'],
+      
+      // Lemon variations
+      ['lemon', 'lemon juice', 'lemon wedges'],
+      
+      // Onion variations
       ['onion', 'onions', 'yellow onion', 'white onion'],
+      ['shallot', 'shallots'],
+      
+      // Common ingredient variations
       ['garlic', 'garlic clove', 'garlic cloves'],
       ['carrot', 'carrots'],
       ['celery', 'celery stalk', 'celery stalks'],
@@ -217,14 +260,13 @@ function GroceryListPage() {
       ['bell pepper', 'bell peppers', 'red bell pepper', 'green bell pepper'],
       ['broccoli florets', 'broccoli flowerets'],
       
-      // Oils and fats
-      ['olive oil', 'extra virgin olive oil'],
-      ['butter', 'unsalted butter', 'salted butter'],
-      
       // Cheese variations
       ['parmesan', 'parmesan cheese', 'parmigiano reggiano'],
       ['mozzarella', 'mozzarella cheese'],
       ['cheddar', 'cheddar cheese'],
+      
+      // Butter variations
+      ['butter', 'unsalted butter', 'salted butter'],
     ];
     
     // Check if both ingredients belong to the same group
