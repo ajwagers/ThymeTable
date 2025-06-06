@@ -52,6 +52,39 @@ function GroceryListPage() {
     return whole > 0 ? `${whole} ${fractionStr}` : fractionStr;
   };
 
+  // Helper function to detect if an ingredient name is actually a cooking instruction
+  const isInstruction = (text: string): boolean => {
+    const instructionKeywords = [
+      'add', 'cook', 'stir', 'fry', 'heat', 'boil', 'simmer', 'bake', 'roast', 'grill',
+      'mix', 'combine', 'blend', 'whisk', 'beat', 'fold', 'toss', 'season', 'taste',
+      'serve', 'garnish', 'sprinkle', 'drizzle', 'pour', 'place', 'remove', 'drain',
+      'chop', 'dice', 'slice', 'mince', 'crush', 'press', 'squeeze', 'strain',
+      'continue', 'until', 'about', 'minute', 'minutes', 'second', 'seconds',
+      'cooked through', 'golden brown', 'tender', 'crispy', 'hot', 'warm', 'cool'
+    ];
+
+    const lowerText = text.toLowerCase();
+    
+    // Check if it contains multiple instruction keywords
+    const keywordCount = instructionKeywords.filter(keyword => 
+      lowerText.includes(keyword)
+    ).length;
+    
+    // If it contains 2+ instruction keywords, it's likely an instruction
+    if (keywordCount >= 2) return true;
+    
+    // Check for common instruction patterns
+    const instructionPatterns = [
+      /\b(add|cook|stir|mix|heat|boil)\s+.*\s+(until|about|for)\s+/i,
+      /\b(continue|keep|let)\s+.*\s+(until|for)\s+/i,
+      /\bcooked?\s+through\b/i,
+      /\b(about|for)\s+\d+\s+(minute|second)/i,
+      /\band\s+(cook|stir|mix|add|continue)/i
+    ];
+    
+    return instructionPatterns.some(pattern => pattern.test(text));
+  };
+
   // Helper function to clean ingredient names by removing embedded amounts and units
   const getCleanedIngredientName = (originalName: string): string => {
     let cleaned = originalName.trim();
@@ -104,8 +137,19 @@ function GroceryListPage() {
       days.flatMap(day => day.meals).forEach((meal: Meal) => {
         if (meal.ingredients) {
           meal.ingredients.forEach((ingredient) => {
+            // Skip if this looks like a cooking instruction rather than an ingredient
+            if (isInstruction(ingredient.name)) {
+              return;
+            }
+
             // Use the new cleaning function to get a clean ingredient name
             const cleanName = getCleanedIngredientName(ingredient.name);
+            
+            // Skip if the cleaned name is too short or empty
+            if (cleanName.length < 2) {
+              return;
+            }
+            
             const unit = ingredient.unit.toLowerCase().trim();
             const key = `${cleanName}-${unit}`; // Compound key of name-unit
             const recipeId = `recipe-${meal.id.split('-').pop()}`;
