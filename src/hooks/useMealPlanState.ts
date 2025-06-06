@@ -9,9 +9,11 @@ export const useMealPlanState = () => {
     return saved ? JSON.parse(saved) : createEmptyWeek();
   });
   const [isAutofilling, setIsAutofilling] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const resetWeek = () => {
     setDays(createEmptyWeek());
+    setApiError(null);
   };
 
   const createMealFromRecipe = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
@@ -34,6 +36,7 @@ export const useMealPlanState = () => {
 
   const autofillCalendar = async () => {
     setIsAutofilling(true);
+    setApiError(null);
     try {
       const newDays = createEmptyWeek();
       const mealTypes = ['breakfast', 'lunch', 'dinner'];
@@ -62,27 +65,39 @@ export const useMealPlanState = () => {
       setDays(newDays);
     } catch (error) {
       console.error('Error autofilling calendar:', error);
+      if (error instanceof Error && error.message.includes('quota exceeded')) {
+        setApiError('Spoonacular API quota exceeded. Please try again later or contact support for assistance.');
+      } else {
+        setApiError('Failed to generate meal plan. Please try again later.');
+      }
     } finally {
       setIsAutofilling(false);
     }
   };
 
   const fetchRandomRecipe = async (dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
-    const recipes = await getRandomRecipes(mealType, category);
-    if (recipes.length > 0) {
-      const recipe = recipes[0];
-      const newMeal = await createMealFromRecipe(recipe, dayId, mealType, category);
+    try {
+      const recipes = await getRandomRecipes(mealType, category);
+      if (recipes.length > 0) {
+        const recipe = recipes[0];
+        const newMeal = await createMealFromRecipe(recipe, dayId, mealType, category);
 
-      setDays(prevDays => 
-        prevDays.map(day => 
-          day.id === dayId
-            ? {
-                ...day,
-                meals: [...day.meals, newMeal]
-              }
-            : day
-        )
-      );
+        setDays(prevDays => 
+          prevDays.map(day => 
+            day.id === dayId
+              ? {
+                  ...day,
+                  meals: [...day.meals, newMeal]
+                }
+              : day
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching random recipe:', error);
+      if (error instanceof Error && error.message.includes('quota exceeded')) {
+        setApiError('Spoonacular API quota exceeded. Please try again later or contact support for assistance.');
+      }
     }
   };
 
@@ -147,6 +162,7 @@ export const useMealPlanState = () => {
     fetchRandomRecipe, 
     autofillCalendar,
     isAutofilling,
-    resetWeek
+    resetWeek,
+    apiError
   };
 };
