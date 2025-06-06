@@ -93,13 +93,20 @@ function GroceryListPage() {
     const units = [
       'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
       'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
-      'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inch', 'inches',
-      'loaves?', 'loaf', 'small\\s+loaf', 'pinch', 'pinches'
+      'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inches?', 'inch',
+      'loaves?', 'loaf', 'small\\s+loaf', 'pinches?', 'pinch', 'boxes?', 'box', 'pieces?', 'piece'
     ].join('|');
     
     // Add standalone t, T, g, c with word boundaries to be more precise
     const standaloneUnits = '\\bt\\b|\\bT\\b|\\bg\\b|\\bc\\b';
     const allUnits = `${units}|${standaloneUnits}`;
+    
+    // First, handle the duplicate word issue by removing patterns like "cup of" or "head of"
+    // This fixes cases like "1 cup cup of chopped shallots" -> "1 cup chopped shallots"
+    cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch)\s+\1\s+/gi, '$1 ');
+    
+    // Also handle "X of Y" patterns where X is a unit
+    cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch)\s+of\s+/gi, '');
     
     // Remove common patterns at the beginning of ingredient names
     // This handles cases like "2 pounds regular chicken wings" or "1/2 cup brown sugar"
@@ -124,6 +131,13 @@ function GroceryListPage() {
     // Remove "of" at the beginning if it remains
     cleaned = cleaned.replace(/^of\s+/i, '');
     
+    // Handle specific problematic patterns
+    // Fix "kilo kilo or" -> "kilo"
+    cleaned = cleaned.replace(/\bkilo\s+kilo\s+or\s*,?\s*/gi, 'kilo ');
+    
+    // Remove duplicate words that might remain (like "large large")
+    cleaned = cleaned.replace(/\b(\w+)\s+\1\b/gi, '$1');
+    
     // Clean up multiple spaces and trim
     cleaned = cleaned.replace(/\s+/g, ' ').trim();
     
@@ -141,17 +155,19 @@ function GroceryListPage() {
     const descriptorsToRemove = [
       'fresh', 'dried', 'frozen', 'canned', 'organic', 'raw', 'cooked', 'beaten',
       'chopped', 'diced', 'sliced', 'minced', 'crushed', 'grated', 'shredded', 'cubed', 'finely diced',
-      'cut into.*?dice', 'cut into.*?pieces', 'cut into small cubes', 'finely chopped', 'roughly chopped',
+      'cut into.*?dice', 'cut into.*?pieces', 'cut into small cubes', 'cut into inch cubes', 'finely chopped', 'roughly chopped',
       'plus extra for garnish', 'for garnish', 'extra for.*?', 'divided', 'for serving',
       'low sodium', 'reduced sodium', 'unsalted', 'salted',
       'extra virgin', 'virgin', 'light', 'dark', 'heavy', 'thick',
       'flat leaf', 'italian', 'regular', 'large', 'small', 'medium',
       'baby', 'young', 'mature', 'ripe', 'unripe',
-      'boneless', 'skinless', 'bone-in', 'skin-on',
+      'boneless', 'skinless', 'bone-in', 'skin-on', 'boneless skinless',
       'juice of.*?', 'wedges', 'drizzle of', 'nice', 'creamy', 'one',
       'well rinsed', 'coarsely', 'on the bias', 'peeled', 'finely minced',
       'thick', 'to taste', 'freshly ground', 'granulated', 'sea', 'himalayan', 'kosher',
-      'generous handful', 'handful'
+      'generous handful', 'handful', 'roasted and', 'whisked', 'thinly', 'finely',
+      'cleaned', 'with stems trimmed.*?', 'stems trimmed.*?', 'for serving',
+      'freshly squeezed', 'squeezed', 'stale and', 'halved', 'torn'
     ];
     
     // Remove descriptors
@@ -164,6 +180,13 @@ function GroceryListPage() {
     // Bay leaves variations
     normalized = normalized.replace(/\bbay leaves?\b/g, 'bay leaf');
     
+    // Bread variations
+    normalized = normalized.replace(/\bbread.*?cubed\b/g, 'bread');
+    normalized = normalized.replace(/\bbreadcrumbs?\b/g, 'breadcrumbs');
+    
+    // Cherry tomato variations
+    normalized = normalized.replace(/\bcherry tomatoes?\b/g, 'cherry tomato');
+    
     // Chicken variations
     normalized = normalized.replace(/\bchicken breast[s]?\b/g, 'chicken breast');
     normalized = normalized.replace(/\bchicken pieces?\b/g, 'chicken');
@@ -172,10 +195,19 @@ function GroceryListPage() {
     normalized = normalized.replace(/\beggs?\b/g, 'egg');
     normalized = normalized.replace(/\begg yolks?\b/g, 'egg yolk');
     
+    // Garlic variations
+    normalized = normalized.replace(/\bgarlic cloves?\b/g, 'garlic');
+    normalized = normalized.replace(/\bcloves? garlic\b/g, 'garlic');
+    
     // Lemon variations
     normalized = normalized.replace(/\blemon wedges?\b/g, 'lemon');
     normalized = normalized.replace(/\bjuice of.*?lemons?\b/g, 'lemon juice');
     normalized = normalized.replace(/\bjuice of half.*?lemon\b/g, 'lemon juice');
+    normalized = normalized.replace(/\blemon.*?juice\b/g, 'lemon juice');
+    
+    // Mushroom variations
+    normalized = normalized.replace(/\bmixed wild mushrooms?\b/g, 'mushroom');
+    normalized = normalized.replace(/\bmushrooms?\b/g, 'mushroom');
     
     // Onion/shallot variations
     normalized = normalized.replace(/\bonions?\b/g, 'onion');
@@ -184,10 +216,6 @@ function GroceryListPage() {
     // Feta cheese variations
     normalized = normalized.replace(/\bfeta cheese\b/g, 'feta');
     normalized = normalized.replace(/\bcrumbled\b/g, '');
-    
-    // Garlic variations
-    normalized = normalized.replace(/\bgarlic cloves?\b/g, 'garlic');
-    normalized = normalized.replace(/\bcloves? garlic\b/g, 'garlic');
     
     // Ginger variations
     normalized = normalized.replace(/\bginger.*?minced\b/g, 'ginger');
@@ -256,6 +284,8 @@ function GroceryListPage() {
       'serving': 'serving', 'servings': 'serving',
       'loaf': 'loaf', 'loaves': 'loaf',
       'pinch': 'pinch', 'pinches': 'pinch',
+      'box': 'box', 'boxes': 'box',
+      'inch': 'inch', 'inches': 'inch',
       
       // Size descriptors that were being treated as units
       'large': '', 'medium': '', 'small': '',
@@ -285,6 +315,12 @@ function GroceryListPage() {
     
     // Define ingredient groups that should be combined
     const ingredientGroups = [
+      // Bread variations
+      ['bread', 'breadcrumbs'],
+      
+      // Cherry tomato variations
+      ['cherry tomato', 'cherry tomatoes'],
+      
       // Chicken stock/broth variations
       ['chicken broth', 'chicken stock', 'chicken bouillon', 'chicken bullion'],
       ['beef broth', 'beef stock', 'beef bouillon', 'beef bullion'],
@@ -307,6 +343,9 @@ function GroceryListPage() {
       
       // Lemon variations
       ['lemon', 'lemon juice', 'lemon wedges'],
+      
+      // Mushroom variations
+      ['mushroom', 'mushrooms', 'mixed wild mushrooms'],
       
       // Onion variations
       ['onion', 'onions', 'yellow onion', 'white onion'],
