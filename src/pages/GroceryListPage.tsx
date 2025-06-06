@@ -89,20 +89,24 @@ function GroceryListPage() {
   const getCleanedIngredientName = (originalName: string): string => {
     let cleaned = originalName.trim();
     
-    // Define all units that should be removed (including new ones)
+    // Define all units that should be removed - using word boundaries for precision
     const units = [
-      'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'T', 'teaspoons?', 'tsp', 't',
-      'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'g', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
+      'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
+      'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
       'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inch', 'inches'
     ].join('|');
     
+    // Add standalone t, T, g with word boundaries to be more precise
+    const standaloneUnits = '\\bt\\b|\\bT\\b|\\bg\\b';
+    const allUnits = `${units}|${standaloneUnits}`;
+    
     // Remove common patterns at the beginning of ingredient names
     // This handles cases like "2 pounds regular chicken wings" or "1/2 cup brown sugar"
-    const leadingPattern = new RegExp(`^[\\d\\s\\/]+\\s*(${units})\\s*`, 'i');
+    const leadingPattern = new RegExp(`^[\\d\\s\\/]+\\s*(${allUnits})\\s*`, 'i');
     cleaned = cleaned.replace(leadingPattern, '');
     
     // Remove patterns like "& ½ cups" or "½ cup" that appear in the middle
-    const embeddedPattern = new RegExp(`\\s*[&\\+]?\\s*[\\d\\s\\/½¼¾⅓⅔⅛⅜⅝⅞]+\\s*(${units})\\s*`, 'gi');
+    const embeddedPattern = new RegExp(`\\s*[&\\+]?\\s*[\\d\\s\\/½¼¾⅓⅔⅛⅜⅝⅞]+\\s*(${allUnits})\\s*`, 'gi');
     cleaned = cleaned.replace(embeddedPattern, ' ');
     
     // Remove standalone fractions and numbers that might be left over
@@ -209,8 +213,8 @@ function GroceryListPage() {
     const unitMap: Record<string, string> = {
       // Volume
       'cup': 'cup', 'cups': 'cup',
-      'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp', 'T': 'tbsp',
-      'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp', 't': 'tsp',
+      'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp',
+      'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp',
       'ml': 'ml', 'milliliter': 'ml', 'milliliters': 'ml',
       'liter': 'liter', 'liters': 'liter', 'l': 'liter',
       'fluid ounce': 'fl oz', 'fluid ounces': 'fl oz', 'fl oz': 'fl oz',
@@ -218,7 +222,7 @@ function GroceryListPage() {
       // Weight
       'pound': 'lb', 'pounds': 'lb', 'lb': 'lb', 'lbs': 'lb',
       'ounce': 'oz', 'ounces': 'oz', 'oz': 'oz',
-      'gram': 'g', 'grams': 'g', 'g': 'g',
+      'gram': 'g', 'grams': 'g',
       'kilogram': 'kg', 'kilograms': 'kg', 'kg': 'kg',
       
       // Count
@@ -241,6 +245,12 @@ function GroceryListPage() {
     };
     
     const normalized = unit.toLowerCase().trim();
+    
+    // Handle standalone t, T, g with exact matching
+    if (normalized === 't') return 'tsp';
+    if (normalized === 'T') return 'tbsp';
+    if (normalized === 'g') return 'g';
+    
     return unitMap[normalized] || normalized;
   };
 
