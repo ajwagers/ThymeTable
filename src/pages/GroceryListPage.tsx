@@ -93,7 +93,8 @@ function GroceryListPage() {
     const units = [
       'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
       'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
-      'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inch', 'inches'
+      'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inch', 'inches',
+      'loaves?', 'loaf', 'small\\s+loaf', 'pinch', 'pinches'
     ].join('|');
     
     // Add standalone t, T, g, c with word boundaries to be more precise
@@ -110,8 +111,8 @@ function GroceryListPage() {
     cleaned = cleaned.replace(embeddedPattern, ' ');
     
     // Remove standalone fractions and numbers that might be left over, BUT preserve % symbols and numbers that are part of product names
-    // This regex is more careful to not remove numbers that are followed by % or are clearly part of product names
-    cleaned = cleaned.replace(/\s*(?<!\w)[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+(?!%|\w)\s*/g, ' ');
+    // Fixed regex to properly handle percentages without doubling them
+    cleaned = cleaned.replace(/\s*(?<!\w)[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+(?![%\w])\s*/g, ' ');
     
     // Remove measurement indicators like "(5ml)" or ". (5ml)"
     cleaned = cleaned.replace(/\s*\.?\s*\([^)]*\)/g, '');
@@ -149,7 +150,8 @@ function GroceryListPage() {
       'boneless', 'skinless', 'bone-in', 'skin-on',
       'juice of.*?', 'wedges', 'drizzle of', 'nice', 'creamy', 'one',
       'well rinsed', 'coarsely', 'on the bias', 'peeled', 'finely minced',
-      'thick', 'to taste', 'freshly ground', 'granulated', 'sea', 'himalayan', 'kosher'
+      'thick', 'to taste', 'freshly ground', 'granulated', 'sea', 'himalayan', 'kosher',
+      'generous handful', 'handful'
     ];
     
     // Remove descriptors
@@ -203,6 +205,21 @@ function GroceryListPage() {
     // Leek variations
     normalized = normalized.replace(/\bleeks?\b/g, 'leek');
     
+    // Butter variations
+    normalized = normalized.replace(/\bbutter\b/g, 'butter');
+    
+    // Bell pepper variations
+    normalized = normalized.replace(/\bgreen bell pepper\b/g, 'green pepper');
+    normalized = normalized.replace(/\bbell pepper\b/g, 'pepper');
+    normalized = normalized.replace(/\bgreen pepper\b/g, 'green pepper');
+    
+    // Basil variations
+    normalized = normalized.replace(/\bbasil leaves?\b/g, 'basil');
+    normalized = normalized.replace(/\bfresh basil\b/g, 'basil');
+    
+    // Pasta variations
+    normalized = normalized.replace(/\bpenne pasta\b/g, 'penne');
+    
     // Clean up multiple spaces
     normalized = normalized.replace(/\s+/g, ' ').trim();
     
@@ -237,6 +254,8 @@ function GroceryListPage() {
       'bag': 'bag', 'bags': 'bag',
       'leaf': 'leaf', 'leaves': 'leaf',
       'serving': 'serving', 'servings': 'serving',
+      'loaf': 'loaf', 'loaves': 'loaf',
+      'pinch': 'pinch', 'pinches': 'pinch',
       
       // Size descriptors that were being treated as units
       'large': '', 'medium': '', 'small': '',
@@ -309,20 +328,30 @@ function GroceryListPage() {
       // Leek variations
       ['leek', 'leeks'],
       
+      // Butter variations
+      ['butter', 'unsalted butter', 'salted butter'],
+      
+      // Bell pepper variations
+      ['green pepper', 'green bell pepper'],
+      ['red pepper', 'red bell pepper'],
+      ['bell pepper', 'pepper'],
+      
+      // Basil variations
+      ['basil', 'fresh basil', 'basil leaves'],
+      
+      // Pasta variations
+      ['penne', 'penne pasta'],
+      
       // Common ingredient variations
       ['carrot', 'carrots'],
       ['celery', 'celery stalk', 'celery stalks'],
       ['tomato', 'tomatoes', 'plum tomato', 'plum tomatoes'],
-      ['bell pepper', 'bell peppers', 'red bell pepper', 'green bell pepper'],
       ['broccoli florets', 'broccoli flowerets'],
       
       // Cheese variations
       ['parmesan', 'parmesan cheese', 'parmigiano reggiano'],
       ['mozzarella', 'mozzarella cheese'],
       ['cheddar', 'cheddar cheese'],
-      
-      // Butter variations
-      ['butter', 'unsalted butter', 'salted butter'],
     ];
     
     // Check if both ingredients belong to the same group
