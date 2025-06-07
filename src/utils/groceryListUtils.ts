@@ -556,3 +556,33 @@ export const getIngredientCategory = (normalizedName: string): string => {
   // Default category
   return 'Other';
 };
+
+// Helper function to get a shortened recipe name for display
+export const getShortRecipeName = (recipeName: string): string => {
+  // Remove common prefixes and suffixes
+  let shortened = recipeName
+    .replace(/^(easy|quick|simple|classic|homemade|perfect|best|delicious|amazing)\s+/i, '')
+    .replace(/\s+(recipe|dish|meal)$/i, '')
+    .trim();
+  
+  // If still too long, truncate and add ellipsis
+  if (shortened.length > 20) {
+    shortened = shortened.substring(0, 17) + '...';
+  }
+  
+  return shortened;
+};
+
+// Helper function to get meal type color
+export const getMealTypeColor = (mealType: string): string => {
+  switch (mealType.toLowerCase()) {
+    case 'breakfast':
+      return 'bg-lemon text-gray-800';
+    case 'lunch':
+      return 'bg-terra-400 text-white';
+    case 'dinner':
+      return 'bg-primary-500 text-white';
+    default:
+      return 'bg-gray-400 text-white';
+  }
+};
