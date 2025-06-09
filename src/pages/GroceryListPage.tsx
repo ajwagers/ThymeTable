@@ -83,10 +83,13 @@ function GroceryListPage() {
                 const adjustedAmount = parseFloat(adjustedAmountStr);
 
                 if (!isNaN(adjustedAmount)) {
+                  // Apply measurement conversion immediately after serving adjustment
+                  const converted = convertUnit(adjustedAmount, ingredient.unit);
+                  
                   rawIngredients.push({
                     name: cleanName,
-                    amount: adjustedAmount,
-                    unit: ingredient.unit.toLowerCase().trim(),
+                    amount: parseFloat(converted.amount),
+                    unit: converted.unit.toLowerCase().trim(),
                     recipeTag: {
                       id: recipeId,
                       name: getShortRecipeName(meal.name),
@@ -155,13 +158,10 @@ function GroceryListPage() {
               array.findIndex(t => t.id === tag.id) === index
             );
 
-            // Apply measurement system conversion DURING generation
-            const converted = convertUnit(item.amount, item.unit);
-
             return {
               name: item.name,
-              amount: converted.amount,
-              unit: normalizeUnit(converted.unit), // Apply final unit normalization
+              amount: toFraction(item.amount),
+              unit: normalizeUnit(item.unit), // Apply final unit normalization
               checked: false,
               category: getIngredientCategory(item.name),
               recipeTags: uniqueRecipeTags
