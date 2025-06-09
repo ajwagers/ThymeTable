@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Utensils, Clock, Filter, LogOut, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ServingsControl from './ServingsControl';
+import MeasurementToggle from './MeasurementToggle';
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -34,6 +35,8 @@ const Header: React.FC = () => {
           {user && (
             <div className="flex items-center space-x-3">
               <ServingsControl variant="header" />
+              
+              <MeasurementToggle />
               
               <button 
                 onClick={() => navigate('/grocery-list')}

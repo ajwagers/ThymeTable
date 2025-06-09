@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Users, Utensils, Minus, Plus } from 'lucide-react';
 import { getRecipeDetails } from '../services/spoonacular';
 import { SpoonacularRecipe } from '../types';
 import { useServings } from '../contexts/ServingsContext';
+import { useMeasurement } from '../contexts/MeasurementContext';
 
 function RecipeDetailsPage() {
   const { id } = useParams();
@@ -11,6 +12,7 @@ function RecipeDetailsPage() {
   const [recipe, setRecipe] = useState<SpoonacularRecipe | null>(null);
   const [loading, setLoading] = useState(true);
   const { mealServings, setMealServings, globalServings, adjustQuantity } = useServings();
+  const { convertUnit } = useMeasurement();
 
   const recipeId = id ? `recipe-${id}` : '';
   const currentServings = recipeId ? (mealServings[recipeId] || globalServings) : globalServings;
@@ -154,13 +156,18 @@ function RecipeDetailsPage() {
               {recipe.ingredients.map((ingredient, index) => {
                 const adjustedAmount = adjustQuantity(ingredient.amount, recipe.servings, recipeId);
                 const cleanName = cleanIngredientName(ingredient.name);
+                
+                // Convert the adjusted amount and unit to the selected measurement system
+                const adjustedAmountNum = parseFloat(adjustedAmount);
+                const converted = convertUnit(adjustedAmountNum, ingredient.unit);
+                
                 return (
                   <li 
                     key={index}
                     className="flex items-center text-gray-700"
                   >
                     <span className="w-2 h-2 bg-primary-500 rounded-full mr-2" />
-                    {adjustedAmount} {ingredient.unit} {cleanName}
+                    {converted.amount} {converted.unit} {cleanName}
                   </li>
                 );
               })}

@@ -3,6 +3,7 @@ import { ArrowLeft, ShoppingCart, ExternalLink, Printer, X, Trash2 } from 'lucid
 import { useNavigate } from 'react-router-dom';
 import { Day, Meal } from '../types';
 import { useServings } from '../contexts/ServingsContext';
+import { useMeasurement } from '../contexts/MeasurementContext';
 import {
   toFraction,
   isInstruction,
@@ -36,6 +37,7 @@ interface GroceryItem {
 function GroceryListPage() {
   const navigate = useNavigate();
   const { adjustQuantity } = useServings();
+  const { convertUnit } = useMeasurement();
   const [groceryList, setGroceryList] = React.useState<GroceryItem[]>([]);
   const [isPrintMode, setIsPrintMode] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -153,10 +155,13 @@ function GroceryListPage() {
               array.findIndex(t => t.id === tag.id) === index
             );
 
+            // Apply measurement system conversion
+            const converted = convertUnit(item.amount, item.unit);
+
             return {
               name: item.name,
-              amount: toFraction(item.amount),
-              unit: normalizeUnit(item.unit), // Apply final unit normalization
+              amount: converted.amount,
+              unit: normalizeUnit(converted.unit), // Apply final unit normalization
               checked: false,
               category: getIngredientCategory(item.name),
               recipeTags: uniqueRecipeTags
@@ -170,7 +175,7 @@ function GroceryListPage() {
     };
 
     generateGroceryList();
-  }, [adjustQuantity]);
+  }, [adjustQuantity, convertUnit]);
 
   const toggleItem = (index: number) => {
     setGroceryList(prev => 
