@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ShoppingCart, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, ExternalLink, Printer, X, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Day, Meal } from '../types';
 import { useServings } from '../contexts/ServingsContext';
@@ -37,6 +37,7 @@ function GroceryListPage() {
   const navigate = useNavigate();
   const { adjustQuantity } = useServings();
   const [groceryList, setGroceryList] = React.useState<GroceryItem[]>([]);
+  const [isPrintMode, setIsPrintMode] = React.useState(false);
 
   React.useEffect(() => {
     const savedMealPlan = localStorage.getItem('mealPlan');
@@ -167,9 +168,21 @@ function GroceryListPage() {
     );
   };
 
+  const removeItem = (index: number) => {
+    setGroceryList(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleRecipeClick = (recipeId: string) => {
     const numericId = recipeId.replace('recipe-', '');
     navigate(`/recipe/${numericId}`);
+  };
+
+  const handlePrint = () => {
+    setIsPrintMode(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrintMode(false);
+    }, 100);
   };
 
   // Group items by category and sort
@@ -223,9 +236,47 @@ function GroceryListPage() {
     return sortedGroups;
   }, [groceryList]);
 
+  if (isPrintMode) {
+    return (
+      <div className="print:block hidden">
+        <style>{`
+          @media print {
+            body { font-size: 12px; }
+            .print-header { border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+            .print-category { font-weight: bold; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
+            .print-item { margin: 3px 0; display: flex; align-items: center; }
+            .print-checkbox { width: 12px; height: 12px; border: 1px solid #000; margin-right: 8px; }
+            .print-amount { font-weight: bold; margin-right: 5px; }
+          }
+        `}</style>
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="print-header">
+            <h1 className="text-2xl font-bold">Weekly Grocery List</h1>
+            <p className="text-sm text-gray-600">Generated on {new Date().toLocaleDateString()}</p>
+          </div>
+          
+          {groupedItems.map(({ category, items }) => (
+            <div key={category} className="mb-4">
+              <h2 className="print-category text-lg">{category}</h2>
+              {items.map((item, index) => (
+                <div key={`${item.name}-${item.amount}-${item.unit}`} className="print-item">
+                  <div className="print-checkbox"></div>
+                  <span className="print-amount">
+                    {item.amount} {item.unit && item.unit.trim() !== '' ? `${item.unit} ` : ''}
+                  </span>
+                  <span>{item.name}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-6 print:shadow-none print:p-0">
+      <div className="flex items-center justify-between mb-6 print:hidden">
         <button 
           onClick={() => navigate('/')}
           className="btn-secondary"
@@ -237,6 +288,13 @@ function GroceryListPage() {
           <ShoppingCart className="w-6 h-6 mr-2 text-primary-500" />
           Weekly Grocery List
         </h1>
+        <button
+          onClick={handlePrint}
+          className="btn-primary"
+        >
+          <Printer className="w-4 h-4 mr-2" />
+          Print List
+        </button>
       </div>
 
       {groceryList.length === 0 ? (
@@ -264,7 +322,7 @@ function GroceryListPage() {
                   return (
                     <div 
                       key={`${item.name}-${item.amount}-${item.unit}`}
-                      className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                      className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors group"
                     >
                       <div className="flex items-start gap-3">
                         <input
@@ -297,6 +355,13 @@ function GroceryListPage() {
                             </div>
                           )}
                         </div>
+                        <button
+                          onClick={() => removeItem(globalIndex)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                          title="Remove ingredient"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   );
