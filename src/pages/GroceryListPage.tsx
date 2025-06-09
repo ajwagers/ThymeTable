@@ -38,126 +38,138 @@ function GroceryListPage() {
   const { adjustQuantity } = useServings();
   const [groceryList, setGroceryList] = React.useState<GroceryItem[]>([]);
   const [isPrintMode, setIsPrintMode] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const savedMealPlan = localStorage.getItem('mealPlan');
+    const generateGroceryList = async () => {
+      setIsLoading(true);
+      
+      // Add a small delay to show the loading animation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const savedMealPlan = localStorage.getItem('mealPlan');
 
-    if (savedMealPlan) {
-      const days: Day[] = JSON.parse(savedMealPlan);
-      const rawIngredients: Array<{ 
-        name: string; 
-        amount: number; 
-        unit: string; 
-        recipeTag: RecipeTag;
-      }> = [];
+      if (savedMealPlan) {
+        const days: Day[] = JSON.parse(savedMealPlan);
+        const rawIngredients: Array<{ 
+          name: string; 
+          amount: number; 
+          unit: string; 
+          recipeTag: RecipeTag;
+        }> = [];
 
-      // First pass: collect all ingredients with their recipe tags
-      days.forEach(day => {
-        day.meals.forEach((meal: Meal) => {
-          if (meal.ingredients) {
-            meal.ingredients.forEach((ingredient) => {
-              // Skip if this looks like a cooking instruction rather than an ingredient
-              if (isInstruction(ingredient.name)) {
-                return;
-              }
+        // First pass: collect all ingredients with their recipe tags
+        days.forEach(day => {
+          day.meals.forEach((meal: Meal) => {
+            if (meal.ingredients) {
+              meal.ingredients.forEach((ingredient) => {
+                // Skip if this looks like a cooking instruction rather than an ingredient
+                if (isInstruction(ingredient.name)) {
+                  return;
+                }
 
-              // Use the cleaning function to get a clean ingredient name
-              const cleanName = getCleanedIngredientName(ingredient.name);
-              
-              // Skip if the cleaned name is too short or empty
-              if (cleanName.length < 2) {
-                return;
-              }
-              
-              const recipeId = `recipe-${meal.id.split('-').pop()}`;
-              const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
-              const adjustedAmount = parseFloat(adjustedAmountStr);
+                // Use the cleaning function to get a clean ingredient name
+                const cleanName = getCleanedIngredientName(ingredient.name);
+                
+                // Skip if the cleaned name is too short or empty
+                if (cleanName.length < 2) {
+                  return;
+                }
+                
+                const recipeId = `recipe-${meal.id.split('-').pop()}`;
+                const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
+                const adjustedAmount = parseFloat(adjustedAmountStr);
 
-              if (!isNaN(adjustedAmount)) {
-                rawIngredients.push({
-                  name: cleanName,
-                  amount: adjustedAmount,
-                  unit: ingredient.unit.toLowerCase().trim(),
-                  recipeTag: {
-                    id: recipeId,
-                    name: getShortRecipeName(meal.name),
-                    mealType: meal.type,
-                    dayName: day.name
-                  }
-                });
-              }
-            });
-          }
+                if (!isNaN(adjustedAmount)) {
+                  rawIngredients.push({
+                    name: cleanName,
+                    amount: adjustedAmount,
+                    unit: ingredient.unit.toLowerCase().trim(),
+                    recipeTag: {
+                      id: recipeId,
+                      name: getShortRecipeName(meal.name),
+                      mealType: meal.type,
+                      dayName: day.name
+                    }
+                  });
+                }
+              });
+            }
+          });
         });
-      });
 
-      // Second pass: group and combine similar ingredients while preserving recipe tags
-      const consolidatedIngredients: Record<string, { 
-        name: string; 
-        amount: number; 
-        unit: string; 
-        recipeTags: RecipeTag[];
-      }> = {};
+        // Second pass: group and combine similar ingredients while preserving recipe tags
+        const consolidatedIngredients: Record<string, { 
+          name: string; 
+          amount: number; 
+          unit: string; 
+          recipeTags: RecipeTag[];
+        }> = {};
 
-      rawIngredients.forEach(ingredient => {
-        let foundMatch = false;
-        
-        // Check if this ingredient should be combined with an existing one
-        for (const [key, existing] of Object.entries(consolidatedIngredients)) {
-          if (shouldCombineIngredients(ingredient.name, existing.name)) {
-            // Convert both to common units and add
-            const convertedExisting = convertToCommonUnit(existing.amount, existing.unit);
-            const convertedNew = convertToCommonUnit(ingredient.amount, ingredient.unit);
-            
-            // Only combine if they convert to the same base unit
-            if (convertedExisting.unit === convertedNew.unit) {
-              const totalAmount = convertedExisting.amount + convertedNew.amount;
-              const friendly = convertToFriendlyUnit(totalAmount, convertedExisting.unit);
+        rawIngredients.forEach(ingredient => {
+          let foundMatch = false;
+          
+          // Check if this ingredient should be combined with an existing one
+          for (const [key, existing] of Object.entries(consolidatedIngredients)) {
+            if (shouldCombineIngredients(ingredient.name, existing.name)) {
+              // Convert both to common units and add
+              const convertedExisting = convertToCommonUnit(existing.amount, existing.unit);
+              const convertedNew = convertToCommonUnit(ingredient.amount, ingredient.unit);
               
-              consolidatedIngredients[key] = {
-                name: existing.name, // Keep the first name encountered
-                amount: parseFloat(friendly.amount),
-                unit: friendly.unit,
-                recipeTags: [...existing.recipeTags, ingredient.recipeTag]
-              };
-              foundMatch = true;
-              break;
+              // Only combine if they convert to the same base unit
+              if (convertedExisting.unit === convertedNew.unit) {
+                const totalAmount = convertedExisting.amount + convertedNew.amount;
+                const friendly = convertToFriendlyUnit(totalAmount, convertedExisting.unit);
+                
+                consolidatedIngredients[key] = {
+                  name: existing.name, // Keep the first name encountered
+                  amount: parseFloat(friendly.amount),
+                  unit: friendly.unit,
+                  recipeTags: [...existing.recipeTags, ingredient.recipeTag]
+                };
+                foundMatch = true;
+                break;
+              }
             }
           }
-        }
-        
-        if (!foundMatch) {
-          // Create a new entry
-          const key = `${ingredient.name}-${Date.now()}-${Math.random()}`;
-          consolidatedIngredients[key] = {
-            name: ingredient.name,
-            amount: ingredient.amount,
-            unit: ingredient.unit,
-            recipeTags: [ingredient.recipeTag]
-          };
-        }
-      });
-
-      // Convert to final grocery list format with categories and deduplicated recipe tags
-      const finalList = Object.values(consolidatedIngredients)
-        .map(item => {
-          // Remove duplicate recipe tags (same recipe ID)
-          const uniqueRecipeTags = item.recipeTags.filter((tag, index, array) => 
-            array.findIndex(t => t.id === tag.id) === index
-          );
-
-          return {
-            name: item.name,
-            amount: toFraction(item.amount),
-            unit: normalizeUnit(item.unit), // Apply final unit normalization
-            checked: false,
-            category: getIngredientCategory(item.name),
-            recipeTags: uniqueRecipeTags
-          };
+          
+          if (!foundMatch) {
+            // Create a new entry
+            const key = `${ingredient.name}-${Date.now()}-${Math.random()}`;
+            consolidatedIngredients[key] = {
+              name: ingredient.name,
+              amount: ingredient.amount,
+              unit: ingredient.unit,
+              recipeTags: [ingredient.recipeTag]
+            };
+          }
         });
 
-      setGroceryList(finalList);
-    }
+        // Convert to final grocery list format with categories and deduplicated recipe tags
+        const finalList = Object.values(consolidatedIngredients)
+          .map(item => {
+            // Remove duplicate recipe tags (same recipe ID)
+            const uniqueRecipeTags = item.recipeTags.filter((tag, index, array) => 
+              array.findIndex(t => t.id === tag.id) === index
+            );
+
+            return {
+              name: item.name,
+              amount: toFraction(item.amount),
+              unit: normalizeUnit(item.unit), // Apply final unit normalization
+              checked: false,
+              category: getIngredientCategory(item.name),
+              recipeTags: uniqueRecipeTags
+            };
+          });
+
+        setGroceryList(finalList);
+      }
+      
+      setIsLoading(false);
+    };
+
+    generateGroceryList();
   }, [adjustQuantity]);
 
   const toggleItem = (index: number) => {
@@ -242,6 +254,7 @@ function GroceryListPage() {
         <style>{`
           @media print {
             body { font-size: 12px; }
+            header { display: none !important; }
             .print-header { border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
             .print-category { font-weight: bold; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
             .print-item { margin: 3px 0; display: flex; align-items: center; }
@@ -269,6 +282,28 @@ function GroceryListPage() {
               ))}
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500 mb-4 mx-auto"></div>
+              <ShoppingCart className="w-6 h-6 text-primary-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Generating Your Grocery List</h2>
+            <p className="text-gray-600">Analyzing your meal plan and organizing ingredients...</p>
+            <div className="mt-4 flex justify-center space-x-1">
+              <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            </div>
+          </div>
         </div>
       </div>
     );
