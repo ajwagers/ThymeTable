@@ -157,7 +157,7 @@ function RecipeDetailsPage() {
                 const adjustedAmount = adjustQuantity(ingredient.amount, recipe.servings, recipeId);
                 const cleanName = cleanIngredientName(ingredient.name);
                 
-                // Convert the adjusted amount and unit to the selected measurement system
+                // Convert the adjusted amount and unit to the selected measurement system DURING generation
                 const adjustedAmountNum = parseFloat(adjustedAmount);
                 const converted = convertUnit(adjustedAmountNum, ingredient.unit);
                 

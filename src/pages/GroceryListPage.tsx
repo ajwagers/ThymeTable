@@ -155,7 +155,7 @@ function GroceryListPage() {
               array.findIndex(t => t.id === tag.id) === index
             );
 
-            // Apply measurement system conversion
+            // Apply measurement system conversion DURING generation
             const converted = convertUnit(item.amount, item.unit);
 
             return {
