@@ -79,11 +79,13 @@ function GroceryListPage() {
                 }
                 
                 const recipeId = `recipe-${meal.id.split('-').pop()}`;
+                
+                // Step 1: Adjust for servings first
                 const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
                 const adjustedAmount = parseFloat(adjustedAmountStr);
 
                 if (!isNaN(adjustedAmount)) {
-                  // Apply measurement conversion immediately after serving adjustment
+                  // Step 2: Apply measurement conversion to the adjusted amount
                   const converted = convertUnit(adjustedAmount, ingredient.unit);
                   
                   rawIngredients.push({
