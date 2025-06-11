@@ -76,7 +76,8 @@ export const getCleanedIngredientName = (originalName: string): string => {
     'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
     'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
     'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inches?', 'inch',
-    'loaves?', 'loaf', 'small\\s+loaf', 'pinches?', 'pinch', 'boxes?', 'box', 'pieces?', 'piece'
+    'loaves?', 'loaf', 'small\\s+loaf', 'pinches?', 'pinch', 'boxes?', 'box', 'pieces?', 'piece',
+    'dashes?', 'dash', 'halves?', 'half'
   ].join('|');
   
   // Add standalone t, T, g, c with word boundaries to be more precise
@@ -85,10 +86,10 @@ export const getCleanedIngredientName = (originalName: string): string => {
   
   // First, handle the duplicate word issue by removing patterns like "cup of" or "head of"
   // This fixes cases like "1 cup cup of chopped shallots" -> "1 cup chopped shallots"
-  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch)\s+\1\s+/gi, '$1 ');
+  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash)\s+\1\s+/gi, '$1 ');
   
   // Also handle "X of Y" patterns where X is a unit
-  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch)\s+of\s+/gi, '');
+  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash)\s+of\s+/gi, '');
   
   // Remove common patterns at the beginning of ingredient names
   // This handles cases like "2 pounds regular chicken wings" or "1/2 cup brown sugar"
@@ -154,7 +155,11 @@ export const normalizeIngredientName = (name: string): string => {
     'thick', 'to taste', 'freshly ground', 'granulated', 'sea', 'himalayan', 'kosher',
     'generous handful', 'handful', 'roasted and', 'whisked', 'thinly', 'finely',
     'cleaned', 'with stems trimmed.*?', 'stems trimmed.*?', 'for serving',
-    'freshly squeezed', 'squeezed', 'stale and', 'halved', 'torn'
+    'freshly squeezed', 'squeezed', 'stale and', 'halved', 'torn',
+    'skinned', 'boned', 'skinned & boned', 'skinned and boned',
+    'shelled', 'peeled', 'deveined', 'peeled and deveined',
+    'uncooked', 'whisked', 'grated', 'optional:', 'optional',
+    'or other', 'or to taste'
   ];
   
   // Remove descriptors
@@ -174,13 +179,23 @@ export const normalizeIngredientName = (name: string): string => {
   // Cherry tomato variations
   normalized = normalized.replace(/\bcherry tomatoes?\b/g, 'cherry tomato');
   
-  // Chicken variations
+  // Chicken variations - ENHANCED
   normalized = normalized.replace(/\bchicken breast[s]?\b/g, 'chicken breast');
+  normalized = normalized.replace(/\bchicken breast halves?\b/g, 'chicken breast');
   normalized = normalized.replace(/\bchicken pieces?\b/g, 'chicken');
+  normalized = normalized.replace(/\bchicken wings?\b/g, 'chicken wing');
   
-  // Egg variations
+  // Shrimp variations - NEW
+  normalized = normalized.replace(/\bshrimp\b/g, 'shrimp');
+  normalized = normalized.replace(/\bshrimps\b/g, 'shrimp');
+  normalized = normalized.replace(/\blarge shrimp\b/g, 'shrimp');
+  normalized = normalized.replace(/\bmedium shrimp\b/g, 'shrimp');
+  normalized = normalized.replace(/\bsmall shrimp\b/g, 'shrimp');
+  
+  // Egg variations - ENHANCED
   normalized = normalized.replace(/\beggs?\b/g, 'egg');
   normalized = normalized.replace(/\begg yolks?\b/g, 'egg yolk');
+  normalized = normalized.replace(/\begg whites?\b/g, 'egg white');
   
   // Garlic variations
   normalized = normalized.replace(/\bgarlic cloves?\b/g, 'garlic');
@@ -204,11 +219,16 @@ export const normalizeIngredientName = (name: string): string => {
   normalized = normalized.replace(/\bfeta cheese\b/g, 'feta');
   normalized = normalized.replace(/\bcrumbled\b/g, '');
   
+  // Parmesan variations - NEW
+  normalized = normalized.replace(/\bparmesan cheese\b/g, 'parmesan');
+  normalized = normalized.replace(/\bparmigiano reggiano\b/g, 'parmesan');
+  normalized = normalized.replace(/\bparmigiano-reggiano\b/g, 'parmesan');
+  
   // Ginger variations
   normalized = normalized.replace(/\bginger.*?minced\b/g, 'ginger');
   normalized = normalized.replace(/\binch.*?ginger\b/g, 'ginger');
   
-  // Salt variations - normalize all salt types to just "salt"
+  // Salt and pepper variations - ENHANCED
   normalized = normalized.replace(/\b(kosher|sea|himalayan)\s+salt\b/g, 'salt');
   normalized = normalized.replace(/\bsalt\s*&\s*pepper\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bsalt\s*(and|&)\s*(black\s+)?pepper\b/g, 'salt and pepper');
@@ -216,6 +236,15 @@ export const normalizeIngredientName = (name: string): string => {
   normalized = normalized.replace(/\bsalt\s*(and|&)\s*pepper.*?taste\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bsalt.*?pepper.*?season\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bsalt.*?fresh\s+ground\s+pepper.*?garlic\b/g, 'salt and pepper');
+  normalized = normalized.replace(/\bfresh ground black pepper\b/g, 'black pepper');
+  normalized = normalized.replace(/\bfreshly ground pepper\b/g, 'black pepper');
+  normalized = normalized.replace(/\bground black pepper\b/g, 'black pepper');
+  normalized = normalized.replace(/\bblack pepper\b/g, 'black pepper');
+  
+  // Hot sauce variations - NEW
+  normalized = normalized.replace(/\bhot sauce\b/g, 'hot sauce');
+  normalized = normalized.replace(/\bsriracha\b/g, 'hot sauce');
+  normalized = normalized.replace(/\btabasco\b/g, 'hot sauce');
   
   // Leek variations
   normalized = normalized.replace(/\bleeks?\b/g, 'leek');
@@ -273,6 +302,7 @@ export const normalizeUnit = (unit: string): string => {
     'pinch': 'pinch', 'pinches': 'pinch',
     'box': 'box', 'boxes': 'box',
     'inch': 'inch', 'inches': 'inch',
+    'dash': 'dash', 'dashes': 'dash',
     
     // Size descriptors that were being treated as units
     'large': '', 'medium': '', 'small': '',
@@ -319,14 +349,19 @@ export const shouldCombineIngredients = (name1: string, name2: string): boolean 
     // Bay leaf variations
     ['bay leaf', 'bay leaves'],
     
-    // Chicken variations
-    ['chicken breast', 'chicken breasts', 'chicken pieces', 'chicken'],
+    // Chicken variations - ENHANCED
+    ['chicken breast', 'chicken breasts', 'chicken breast halves', 'chicken pieces', 'chicken'],
+    
+    // Shrimp variations - NEW
+    ['shrimp', 'shrimps', 'large shrimp', 'medium shrimp', 'small shrimp'],
     
     // Olive oil variations
     ['olive oil', 'extra virgin olive oil'],
     
-    // Egg variations
-    ['egg', 'eggs', 'egg beaten', 'egg yolk', 'egg yolks'],
+    // Egg variations - ENHANCED
+    ['egg', 'eggs', 'egg beaten'],
+    ['egg white', 'egg whites'],
+    ['egg yolk', 'egg yolks'],
     
     // Lemon variations
     ['lemon', 'lemon juice', 'lemon wedges'],
@@ -341,15 +376,22 @@ export const shouldCombineIngredients = (name1: string, name2: string): boolean 
     // Feta cheese variations
     ['feta', 'feta cheese'],
     
+    // Parmesan variations - NEW
+    ['parmesan', 'parmesan cheese', 'parmigiano reggiano', 'parmigiano-reggiano'],
+    
     // Garlic variations
     ['garlic', 'garlic clove', 'garlic cloves'],
     
     // Ginger variations
     ['ginger'],
     
-    // Salt and pepper variations
+    // Salt and pepper variations - ENHANCED
     ['salt', 'kosher salt', 'sea salt', 'himalayan salt'],
     ['salt and pepper', 'salt & pepper', 'salt and black pepper', 'salt and freshly ground pepper'],
+    ['black pepper', 'freshly ground pepper', 'fresh ground black pepper', 'ground black pepper'],
+    
+    // Hot sauce variations - NEW
+    ['hot sauce', 'sriracha', 'tabasco'],
     
     // Leek variations
     ['leek', 'leeks'],
@@ -375,21 +417,31 @@ export const shouldCombineIngredients = (name1: string, name2: string): boolean 
     ['broccoli florets', 'broccoli flowerets'],
     
     // Cheese variations
-    ['parmesan', 'parmesan cheese', 'parmigiano reggiano'],
     ['mozzarella', 'mozzarella cheese'],
     ['cheddar', 'cheddar cheese'],
   ];
   
   // Check if both ingredients belong to the same group
   for (const group of ingredientGroups) {
-    const inGroup1 = group.some(item => norm1.includes(item) || item.includes(norm1));
-    const inGroup2 = group.some(item => norm2.includes(item) || item.includes(norm2));
+    const inGroup1 = group.some(item => {
+      // Check for exact matches and partial matches
+      return norm1 === item || norm1.includes(item) || item.includes(norm1);
+    });
+    const inGroup2 = group.some(item => {
+      return norm2 === item || norm2.includes(item) || item.includes(norm2);
+    });
     if (inGroup1 && inGroup2) return true;
   }
   
-  // Check for partial matches (one contains the other)
-  if (norm1.length > 3 && norm2.length > 3) {
-    if (norm1.includes(norm2) || norm2.includes(norm1)) return true;
+  // Check for partial matches (one contains the other) - but be more strict
+  if (norm1.length > 4 && norm2.length > 4) {
+    // Only combine if one is clearly a subset of the other
+    const longer = norm1.length > norm2.length ? norm1 : norm2;
+    const shorter = norm1.length > norm2.length ? norm2 : norm1;
+    
+    // Check if the shorter name is contained in the longer name as a whole word
+    const regex = new RegExp(`\\b${shorter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    if (regex.test(longer)) return true;
   }
   
   return false;
@@ -417,6 +469,9 @@ export const convertToCommonUnit = (amount: number, unit: string): { amount: num
     'kg': 35.274,     // 1 kg ≈ 35.274 oz
   };
   
+  // Count conversions (keep as count)
+  const countUnits = ['piece', 'clove', 'head', 'bunch', 'can', 'block', 'cube', 'bag', 'leaf', 'serving', 'loaf', 'pinch', 'box', 'inch', 'dash'];
+  
   // Try volume conversion first
   if (volumeConversions[normalizedUnit]) {
     const convertedAmount = amount * volumeConversions[normalizedUnit];
@@ -427,6 +482,11 @@ export const convertToCommonUnit = (amount: number, unit: string): { amount: num
   if (weightConversions[normalizedUnit]) {
     const convertedAmount = amount * weightConversions[normalizedUnit];
     return { amount: convertedAmount, unit: 'oz' };
+  }
+  
+  // Handle count units
+  if (countUnits.includes(normalizedUnit)) {
+    return { amount, unit: 'count' };
   }
   
   // Return as-is if no conversion available
@@ -454,6 +514,9 @@ export const convertToFriendlyUnit = (amount: number, baseUnit: string): { amoun
     } else {
       return { amount: toFraction(amount), unit: 'oz' };
     }
+  } else if (baseUnit === 'count') {
+    // For count items, just return the count
+    return { amount: toFraction(amount), unit: '' };
   }
   
   return { amount: toFraction(amount), unit: baseUnit };
