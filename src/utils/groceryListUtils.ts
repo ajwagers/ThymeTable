@@ -71,68 +71,93 @@ export const isInstruction = (text: string): boolean => {
 export const getCleanedIngredientName = (originalName: string): string => {
   let cleaned = originalName.trim();
   
+  // Skip if this is clearly a cooking instruction
+  if (isInstruction(cleaned)) {
+    return '';
+  }
+  
+  // Skip common non-ingredient phrases
+  const skipPhrases = [
+    'drizzle of', 'to taste', 'for garnish', 'for serving', 'optional',
+    'few drops', 'pinch of', 'dash of', 'handful of'
+  ];
+  
+  for (const phrase of skipPhrases) {
+    if (cleaned.toLowerCase().includes(phrase)) {
+      return '';
+    }
+  }
+  
   // Define all units that should be removed - using word boundaries for precision
   const units = [
     'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
-    'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'kg', 'blocks?', 'bunches?', 'bunch', 'heads?', 'head',
-    'bags?', 'bag', 'servings?', 'serving', 'large', 'medium', 'small', 'inches?', 'inch',
-    'loaves?', 'loaf', 'small\\s+loaf', 'pinches?', 'pinch', 'boxes?', 'box', 'pieces?', 'piece',
-    'dashes?', 'dash', 'halves?', 'half'
+    'cans?', 'cloves?', 'ml', 'liters?', 'l', 'grams?', 'gr', 'g', 'kg', 'kilograms?',
+    'blocks?', 'bunches?', 'bunch', 'heads?', 'head', 'bags?', 'bag', 'servings?', 'serving', 
+    'large', 'medium', 'small', 'inches?', 'inch', 'loaves?', 'loaf', 'small\\s+loaf', 
+    'pinches?', 'pinch', 'boxes?', 'box', 'pieces?', 'piece', 'dashes?', 'dash', 
+    'halves?', 'half', 'drops?', 'drop'
   ].join('|');
   
-  // Add standalone t, T, g, c with word boundaries to be more precise
-  const standaloneUnits = '\\bt\\b|\\bT\\b|\\bg\\b|\\bc\\b';
+  // Add standalone t, T, c with word boundaries to be more precise
+  const standaloneUnits = '\\bt\\b|\\bT\\b|\\bc\\b';
   const allUnits = `${units}|${standaloneUnits}`;
   
-  // First, handle the duplicate word issue by removing patterns like "cup of" or "head of"
-  // This fixes cases like "1 cup cup of chopped shallots" -> "1 cup chopped shallots"
-  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash)\s+\1\s+/gi, '$1 ');
+  // STEP 1: Handle units stuck together without spaces (like "200gr", "400g", "180g")
+  // This is the key fix for the reported issue
+  const stuckUnitsPattern = new RegExp(`\\b\\d+\\s*(${units})\\b`, 'gi');
+  cleaned = cleaned.replace(stuckUnitsPattern, ' ');
   
-  // Also handle "X of Y" patterns where X is a unit
-  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash)\s+of\s+/gi, '');
+  // STEP 2: Handle duplicate words that appear in ingredient names
+  // Fix cases like "1 cup cup of chopped shallots" -> "1 cup chopped shallots"
+  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash|gram|grams|gr|g|kg|kilogram|kilograms)\s+\1\s+/gi, '$1 ');
   
-  // Remove common patterns at the beginning of ingredient names
+  // STEP 3: Handle "X of Y" patterns where X is a unit
+  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash|gram|grams|gr|g|kg|kilogram|kilograms)\s+of\s+/gi, '');
+  
+  // STEP 4: Remove leading measurement patterns
   // This handles cases like "2 pounds regular chicken wings" or "1/2 cup brown sugar"
   const leadingPattern = new RegExp(`^[\\d\\s\\/]+\\s*(${allUnits})\\s*`, 'i');
   cleaned = cleaned.replace(leadingPattern, '');
   
-  // NEW: Handle units without spaces (like "400g", "200gr", "2t", etc.)
-  // This pattern catches numbers directly followed by units without spaces
-  const noSpacePattern = new RegExp(`\\b\\d+\\s*(${allUnits})\\b`, 'gi');
-  cleaned = cleaned.replace(noSpacePattern, ' ');
-  
-  // Remove patterns like "& ½ cups" or "½ cup" that appear in the middle
+  // STEP 5: Remove embedded measurement patterns in the middle
   const embeddedPattern = new RegExp(`\\s*[&\\+]?\\s*[\\d\\s\\/½¼¾⅓⅔⅛⅜⅝⅞]+\\s*(${allUnits})\\s*`, 'gi');
   cleaned = cleaned.replace(embeddedPattern, ' ');
   
-  // Remove standalone fractions and numbers that might be left over, BUT preserve % symbols and numbers that are part of product names
-  // Fixed regex to properly handle percentages without doubling them
+  // STEP 6: Remove standalone fractions and numbers that might be left over
+  // BUT preserve % symbols and numbers that are part of product names
   cleaned = cleaned.replace(/\s*(?<!\w)[\d\s\/½¼¾⅓⅔⅛⅜⅝⅞]+(?![%\w])\s*/g, ' ');
   
-  // Remove measurement indicators like "(5ml)" or ". (5ml)"
+  // STEP 7: Remove measurement indicators like "(5ml)" or ". (5ml)"
   cleaned = cleaned.replace(/\s*\.?\s*\([^)]*\)/g, '');
   
-  // Remove extra periods and dashes
-  cleaned = cleaned.replace(/\s*\.\s*/g, ' ');
-  cleaned = cleaned.replace(/\s*-\s*/g, ' ');
+  // STEP 8: Remove extra periods, dashes, and commas
+  cleaned = cleaned.replace(/\s*[,\.\-]\s*/g, ' ');
   
-  // Remove "of" at the beginning if it remains
+  // STEP 9: Remove "of" at the beginning if it remains
   cleaned = cleaned.replace(/^of\s+/i, '');
   
-  // Handle specific problematic patterns
+  // STEP 10: Remove "about" and similar qualifiers
+  cleaned = cleaned.replace(/\b(about|approximately|roughly|around)\s+/gi, '');
+  
+  // STEP 11: Handle specific problematic patterns
   // Fix "kilo kilo or" -> "kilo"
   cleaned = cleaned.replace(/\bkilo\s+kilo\s+or\s*,?\s*/gi, 'kilo ');
   
-  // Remove duplicate words that might remain (like "large large")
+  // STEP 12: Remove duplicate words that might remain (like "large large")
   cleaned = cleaned.replace(/\b(\w+)\s+\1\b/gi, '$1');
   
-  // Clean up multiple spaces and trim
+  // STEP 13: Clean up multiple spaces and trim
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
   
-  // Remove any remaining leading/trailing punctuation
-  cleaned = cleaned.replace(/^[,\-\.\s]+|[,\-\.\s]+$/g, '');
+  // STEP 14: Remove any remaining leading/trailing punctuation
+  cleaned = cleaned.replace(/^[,\-\.\s&]+|[,\-\.\s&]+$/g, '');
   
-  return cleaned.toLowerCase() || originalName.toLowerCase();
+  // STEP 15: Final check - if the result is too short or empty, return empty
+  if (cleaned.length < 2) {
+    return '';
+  }
+  
+  return cleaned.toLowerCase();
 };
 
 // Helper function to normalize ingredient names for better matching
@@ -159,7 +184,8 @@ export const normalizeIngredientName = (name: string): string => {
     'skinned', 'boned', 'skinned & boned', 'skinned and boned',
     'shelled', 'peeled', 'deveined', 'peeled and deveined',
     'uncooked', 'whisked', 'grated', 'optional:', 'optional',
-    'or other', 'or to taste'
+    'or other', 'or to taste', 'style', 'tiger style', 'firm fleshed',
+    'ned', 'drained', 'cut into pieces'
   ];
   
   // Remove descriptors
@@ -185,12 +211,22 @@ export const normalizeIngredientName = (name: string): string => {
   normalized = normalized.replace(/\bchicken pieces?\b/g, 'chicken');
   normalized = normalized.replace(/\bchicken wings?\b/g, 'chicken wing');
   
-  // Shrimp variations - NEW
+  // Shrimp variations - ENHANCED
   normalized = normalized.replace(/\bshrimp\b/g, 'shrimp');
   normalized = normalized.replace(/\bshrimps\b/g, 'shrimp');
   normalized = normalized.replace(/\blarge shrimp\b/g, 'shrimp');
   normalized = normalized.replace(/\bmedium shrimp\b/g, 'shrimp');
   normalized = normalized.replace(/\bsmall shrimp\b/g, 'shrimp');
+  normalized = normalized.replace(/\btiger.*?shrimp\b/g, 'shrimp');
+  
+  // Fish variations - NEW
+  normalized = normalized.replace(/\bwhite fish fillets?\b/g, 'white fish');
+  normalized = normalized.replace(/\bfish fillets?\b/g, 'fish');
+  normalized = normalized.replace(/\bsalmon fillets?\b/g, 'salmon');
+  
+  // Crab variations - NEW
+  normalized = normalized.replace(/\bsurimi crab sticks?\b/g, 'crab sticks');
+  normalized = normalized.replace(/\bcrab sticks?\b/g, 'crab sticks');
   
   // Egg variations - ENHANCED
   normalized = normalized.replace(/\beggs?\b/g, 'egg');
@@ -219,7 +255,7 @@ export const normalizeIngredientName = (name: string): string => {
   normalized = normalized.replace(/\bfeta cheese\b/g, 'feta');
   normalized = normalized.replace(/\bcrumbled\b/g, '');
   
-  // Parmesan variations - NEW
+  // Parmesan variations - ENHANCED
   normalized = normalized.replace(/\bparmesan cheese\b/g, 'parmesan');
   normalized = normalized.replace(/\bparmigiano reggiano\b/g, 'parmesan');
   normalized = normalized.replace(/\bparmigiano-reggiano\b/g, 'parmesan');
@@ -241,10 +277,36 @@ export const normalizeIngredientName = (name: string): string => {
   normalized = normalized.replace(/\bground black pepper\b/g, 'black pepper');
   normalized = normalized.replace(/\bblack pepper\b/g, 'black pepper');
   
-  // Hot sauce variations - NEW
+  // Hot sauce variations - ENHANCED
   normalized = normalized.replace(/\bhot sauce\b/g, 'hot sauce');
   normalized = normalized.replace(/\bsriracha\b/g, 'hot sauce');
   normalized = normalized.replace(/\btabasco\b/g, 'hot sauce');
+  
+  // Olive oil variations - ENHANCED
+  normalized = normalized.replace(/\bolive oil\b/g, 'olive oil');
+  normalized = normalized.replace(/\bextra virgin olive oil\b/g, 'olive oil');
+  
+  // Sesame oil variations - NEW
+  normalized = normalized.replace(/\btoasted sesame oil\b/g, 'sesame oil');
+  normalized = normalized.replace(/\bsesame oil\b/g, 'sesame oil');
+  
+  // Pasta variations - NEW
+  normalized = normalized.replace(/\bpasta\b/g, 'pasta');
+  
+  // Corn variations - NEW
+  normalized = normalized.replace(/\bsweet corn\b/g, 'corn');
+  normalized = normalized.replace(/\bcorn\b/g, 'corn');
+  
+  // Pineapple variations - NEW
+  normalized = normalized.replace(/\bfresh pineapple\b/g, 'pineapple');
+  normalized = normalized.replace(/\bpineapple\b/g, 'pineapple');
+  
+  // Almond variations - NEW
+  normalized = normalized.replace(/\balmond flakes?\b/g, 'almonds');
+  normalized = normalized.replace(/\balmonds?\b/g, 'almonds');
+  
+  // Raisin variations - NEW
+  normalized = normalized.replace(/\braisins?\b/g, 'raisins');
   
   // Leek variations
   normalized = normalized.replace(/\bleeks?\b/g, 'leek');
@@ -284,7 +346,7 @@ export const normalizeUnit = (unit: string): string => {
     // Weight
     'pound': 'lb', 'pounds': 'lb', 'lb': 'lb', 'lbs': 'lb',
     'ounce': 'oz', 'ounces': 'oz', 'oz': 'oz',
-    'gram': 'g', 'grams': 'g', 'g': 'g',
+    'gram': 'g', 'grams': 'g', 'g': 'g', 'gr': 'g',
     'kilogram': 'kg', 'kilograms': 'kg', 'kg': 'kg',
     
     // Count
@@ -303,6 +365,8 @@ export const normalizeUnit = (unit: string): string => {
     'box': 'box', 'boxes': 'box',
     'inch': 'inch', 'inches': 'inch',
     'dash': 'dash', 'dashes': 'dash',
+    'drop': 'drop', 'drops': 'drop',
+    'handful': 'handful',
     
     // Size descriptors that were being treated as units
     'large': '', 'medium': '', 'small': '',
@@ -352,11 +416,20 @@ export const shouldCombineIngredients = (name1: string, name2: string): boolean 
     // Chicken variations - ENHANCED
     ['chicken breast', 'chicken breasts', 'chicken breast halves', 'chicken pieces', 'chicken'],
     
-    // Shrimp variations - NEW
-    ['shrimp', 'shrimps', 'large shrimp', 'medium shrimp', 'small shrimp'],
+    // Shrimp variations - ENHANCED
+    ['shrimp', 'shrimps', 'large shrimp', 'medium shrimp', 'small shrimp', 'tiger shrimp'],
+    
+    // Fish variations - NEW
+    ['white fish', 'fish', 'salmon', 'fish fillets', 'white fish fillets', 'salmon fillets'],
+    
+    // Crab variations - NEW
+    ['crab sticks', 'surimi crab sticks'],
     
     // Olive oil variations
     ['olive oil', 'extra virgin olive oil'],
+    
+    // Sesame oil variations - NEW
+    ['sesame oil', 'toasted sesame oil'],
     
     // Egg variations - ENHANCED
     ['egg', 'eggs', 'egg beaten'],
@@ -376,7 +449,7 @@ export const shouldCombineIngredients = (name1: string, name2: string): boolean 
     // Feta cheese variations
     ['feta', 'feta cheese'],
     
-    // Parmesan variations - NEW
+    // Parmesan variations - ENHANCED
     ['parmesan', 'parmesan cheese', 'parmigiano reggiano', 'parmigiano-reggiano'],
     
     // Garlic variations
@@ -390,8 +463,20 @@ export const shouldCombineIngredients = (name1: string, name2: string): boolean 
     ['salt and pepper', 'salt & pepper', 'salt and black pepper', 'salt and freshly ground pepper'],
     ['black pepper', 'freshly ground pepper', 'fresh ground black pepper', 'ground black pepper'],
     
-    // Hot sauce variations - NEW
+    // Hot sauce variations - ENHANCED
     ['hot sauce', 'sriracha', 'tabasco'],
+    
+    // Corn variations - NEW
+    ['corn', 'sweet corn'],
+    
+    // Pineapple variations - NEW
+    ['pineapple', 'fresh pineapple'],
+    
+    // Almond variations - NEW
+    ['almonds', 'almond flakes'],
+    
+    // Pasta variations - NEW
+    ['pasta'],
     
     // Leek variations
     ['leek', 'leeks'],
@@ -470,7 +555,7 @@ export const convertToCommonUnit = (amount: number, unit: string): { amount: num
   };
   
   // Count conversions (keep as count)
-  const countUnits = ['piece', 'clove', 'head', 'bunch', 'can', 'block', 'cube', 'bag', 'leaf', 'serving', 'loaf', 'pinch', 'box', 'inch', 'dash'];
+  const countUnits = ['piece', 'clove', 'head', 'bunch', 'can', 'block', 'cube', 'bag', 'leaf', 'serving', 'loaf', 'pinch', 'box', 'inch', 'dash', 'drop', 'handful'];
   
   // Try volume conversion first
   if (volumeConversions[normalizedUnit]) {
@@ -537,7 +622,7 @@ export const getIngredientCategory = (normalizedName: string): string => {
     'cucumber', 'cucumbers', 'zucchini', 'squash', 'eggplant', 'mushroom', 'mushrooms',
     'avocado', 'avocados', 'corn', 'peas', 'green beans', 'asparagus',
     'basil', 'parsley', 'cilantro', 'thyme', 'rosemary', 'oregano', 'sage', 'mint',
-    'dill', 'chives', 'bay leaf', 'bay leaves', 'leek', 'leeks'
+    'dill', 'chives', 'bay leaf', 'bay leaves', 'leek', 'leeks', 'pineapple'
   ];
   
   // Dairy & Refrigerated
@@ -553,18 +638,18 @@ export const getIngredientCategory = (normalizedName: string): string => {
     'chicken', 'chicken breast', 'chicken thigh', 'chicken wing', 'turkey', 'duck',
     'beef', 'ground beef', 'steak', 'roast', 'pork', 'ham', 'bacon', 'sausage',
     'lamb', 'veal', 'fish', 'salmon', 'tuna', 'cod', 'tilapia', 'shrimp', 'crab',
-    'lobster', 'scallops', 'mussels', 'clams', 'oysters'
+    'lobster', 'scallops', 'mussels', 'clams', 'oysters', 'white fish', 'crab sticks'
   ];
   
   // Pantry & Dry Goods
   const pantry = [
     'flour', 'sugar', 'brown sugar', 'salt', 'pepper', 'black pepper', 'salt and pepper',
-    'olive oil', 'vegetable oil', 'canola oil', 'coconut oil', 'vinegar', 'balsamic vinegar',
+    'olive oil', 'vegetable oil', 'canola oil', 'coconut oil', 'sesame oil', 'vinegar', 'balsamic vinegar',
     'soy sauce', 'worcestershire sauce', 'hot sauce', 'ketchup', 'mustard', 'mayonnaise',
     'rice', 'pasta', 'penne', 'spaghetti', 'noodles', 'quinoa', 'oats', 'cereal',
     'bread', 'breadcrumbs', 'crackers', 'tortillas', 'pita bread',
     'beans', 'black beans', 'kidney beans', 'chickpeas', 'lentils', 'split peas',
-    'nuts', 'almonds', 'walnuts', 'pecans', 'peanuts', 'cashews', 'pine nuts',
+    'nuts', 'almonds', 'walnuts', 'pecans', 'peanuts', 'cashews', 'pine nuts', 'raisins',
     'vanilla', 'vanilla extract', 'baking powder', 'baking soda', 'yeast',
     'cinnamon', 'paprika', 'cumin', 'chili powder', 'garlic powder', 'onion powder',
     'italian seasoning', 'herbs', 'spices', 'honey', 'maple syrup', 'molasses',
