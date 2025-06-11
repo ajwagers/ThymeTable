@@ -1,6 +1,5 @@
 import axios, { AxiosError } from 'axios';
 import { SpoonacularRecipe } from '../types';
-import { useMeasurement } from '../contexts/MeasurementContext';
 
 const API_KEY = import.meta.env.VITE_SPOONACULAR_API_KEY;
 const BASE_URL = 'https://api.spoonacular.com/recipes';
@@ -95,18 +94,18 @@ export const getRecipeDetails = async (recipeId: number): Promise<SpoonacularRec
         name: ingredient.original,
         amount,
         unit,
-        originalAmount: amount,    // Store original values // Store original values
+        originalAmount: amount,
         originalUnit: unit,
       };
-    });;
+    });
 
     return {
       id: recipe.id,
-      title: recipe.title, title: recipe.title,
+      title: recipe.title,
       readyInMinutes: recipe.readyInMinutes,
-      servings: recipe.servings,   servings: recipe.servings,
-      calories: Math.round(recipe.nutrition?.nutrients?.[0]?.amount || 0),    calories: Math.round(recipe.nutrition?.nutrients?.[0]?.amount || 0),
-};  }    throw new Error(`Failed to fetch recipe details: ${error instanceof Error ? error.message : 'Unknown error'}`);    }      handleSpoonacularError(error);    if (axios.isAxiosError(error)) {  } catch (error) {    };      ingredients: convertedIngredients,      instructions: recipe.analyzedInstructions[0]?.steps.map((step: any) => step.step) || [],      dishTypes: recipe.dishTypes || [],      cuisines: recipe.cuisines || [],      image: recipe.image,      image: recipe.image,
+      servings: recipe.servings,
+      calories: Math.round(recipe.nutrition?.nutrients?.[0]?.amount || 0),
+      image: recipe.image,
       cuisines: recipe.cuisines || [],
       dishTypes: recipe.dishTypes || [],
       instructions: recipe.analyzedInstructions[0]?.steps.map((step: any) => step.step) || [],
