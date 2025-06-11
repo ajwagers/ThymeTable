@@ -12,21 +12,58 @@ function RecipeDetailsPage() {
   const [recipe, setRecipe] = useState<SpoonacularRecipe | null>(null);
   const [loading, setLoading] = useState(true);
   const { mealServings, setMealServings, globalServings, adjustQuantity } = useServings();
-  const { convertUnit } = useMeasurement();
+  const { convertUnit, system } = useMeasurement();
 
   const recipeId = id ? `recipe-${id}` : '';
   const currentServings = recipeId ? (mealServings[recipeId] || globalServings) : globalServings;
 
+  // Add system as a dependency to re-render when measurement system changes
   useEffect(() => {
     const fetchRecipe = async () => {
       if (id) {
         const data = await getRecipeDetails(parseInt(id));
-        setRecipe(data);
+        if (data?.ingredients) {
+          // Convert measurements upfront
+          const convertedIngredients = data.ingredients.map(ingredient => {
+            const adjustedAmount = adjustQuantity(ingredient.amount, data.servings, recipeId);
+            const converted = convertUnit(parseFloat(adjustedAmount), ingredient.unit);
+            return {
+              ...ingredient,
+              amount: converted.amount,
+              unit: converted.unit,
+            };
+          });
+
+          setRecipe(prev => prev ? {
+            ...prev,
+            ingredients: convertedIngredients
+          } : null);
+        }
         setLoading(false);
       }
     };
     fetchRecipe();
-  }, [id]);
+  }, [id, system, convertUnit, adjustQuantity]);
+
+  // Add useEffect to handle measurement system changes
+  useEffect(() => {
+    if (recipe?.ingredients) {
+      const updatedIngredients = recipe.ingredients.map(ingredient => {
+        const adjustedAmount = adjustQuantity(ingredient.originalAmount, recipe.servings, recipeId);
+        const converted = convertUnit(parseFloat(adjustedAmount), ingredient.originalUnit);
+        return {
+          ...ingredient,
+          convertedAmount: converted.amount,
+          convertedUnit: converted.unit,
+        };
+      });
+
+      setRecipe(prev => prev ? {
+        ...prev,
+        ingredients: updatedIngredients
+      } : null);
+    }
+  }, [system, convertUnit, recipe?.servings, recipeId]);
 
   const handleServingsChange = (newServings: number) => {
     if (recipeId) {
@@ -154,20 +191,11 @@ function RecipeDetailsPage() {
             <h2 className="text-xl font-semibold mb-4 text-gray-800">Ingredients</h2>
             <ul className="space-y-2">
               {recipe.ingredients.map((ingredient, index) => {
-                const adjustedAmount = adjustQuantity(ingredient.amount, recipe.servings, recipeId);
                 const cleanName = cleanIngredientName(ingredient.name);
-                
-                // Convert the adjusted amount and unit to the selected measurement system DURING generation
-                const adjustedAmountNum = parseFloat(adjustedAmount);
-                const converted = convertUnit(adjustedAmountNum, ingredient.unit);
-                
                 return (
-                  <li 
-                    key={index}
-                    className="flex items-center text-gray-700"
-                  >
+                  <li key={index} className="flex items-center text-gray-700">
                     <span className="w-2 h-2 bg-primary-500 rounded-full mr-2" />
-                    {converted.amount} {converted.unit} {cleanName}
+                    {ingredient.convertedAmount} {ingredient.convertedUnit} {cleanName}
                   </li>
                 );
               })}
