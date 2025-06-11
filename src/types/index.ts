@@ -35,6 +35,16 @@ export interface DragResult {
   type: string;
 }
 
+export interface Ingredient {
+  name: string;
+  amount: number;
+  unit: string;
+  originalAmount?: number;
+  originalUnit?: string;
+  convertedAmount?: number;
+  convertedUnit?: string;
+}
+
 export interface SpoonacularRecipe {
   id: number;
   title: string;
@@ -44,10 +54,6 @@ export interface SpoonacularRecipe {
   image: string;
   cuisines: string[];
   instructions?: string[];
-  ingredients?: {
-    name: string;
-    amount: number;
-    unit: string;
-  }[];
+  ingredients?: Ingredient[];
   dishTypes?: string[];
 }
