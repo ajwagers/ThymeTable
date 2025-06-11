@@ -88,6 +88,17 @@ export const getCleanedIngredientName = (originalName: string): string => {
     }
   }
   
+  // STEP 1: Handle units stuck together without spaces (like "200gr", "400g", "180g")
+  // This is the key fix - using proper word boundaries and being more specific
+  cleaned = cleaned.replace(/\b\d+\s*gr\b/gi, ' '); // "200gr" -> " "
+  cleaned = cleaned.replace(/\b\d+\s*g\b(?![a-z])/gi, ' '); // "400g" -> " " but not "green"
+  cleaned = cleaned.replace(/\b\d+\s*kg\b/gi, ' '); // "2kg" -> " "
+  cleaned = cleaned.replace(/\b\d+\s*ml\b/gi, ' '); // "500ml" -> " "
+  cleaned = cleaned.replace(/\b\d+\s*l\b(?![a-z])/gi, ' '); // "2l" -> " " but not "large"
+  cleaned = cleaned.replace(/\b\d+\s*oz\b/gi, ' '); // "14oz" -> " "
+  cleaned = cleaned.replace(/\b\d+\s*lb\b/gi, ' '); // "2lb" -> " "
+  cleaned = cleaned.replace(/\b\d+\s*lbs\b/gi, ' '); // "2lbs" -> " "
+  
   // Define all units that should be removed - using word boundaries for precision
   const units = [
     'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
@@ -99,20 +110,16 @@ export const getCleanedIngredientName = (originalName: string): string => {
   ].join('|');
   
   // Add standalone t, T, c with word boundaries to be more precise
+  // Note: Removed standalone 'g' to prevent removing it from words like "green"
   const standaloneUnits = '\\bt\\b|\\bT\\b|\\bc\\b';
   const allUnits = `${units}|${standaloneUnits}`;
   
-  // STEP 1: Handle units stuck together without spaces (like "200gr", "400g", "180g")
-  // This is the key fix for the reported issue
-  const stuckUnitsPattern = new RegExp(`\\b\\d+\\s*(${units})\\b`, 'gi');
-  cleaned = cleaned.replace(stuckUnitsPattern, ' ');
-  
   // STEP 2: Handle duplicate words that appear in ingredient names
   // Fix cases like "1 cup cup of chopped shallots" -> "1 cup chopped shallots"
-  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash|gram|grams|gr|g|kg|kilogram|kilograms)\s+\1\s+/gi, '$1 ');
+  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash|gram|grams|gr|kg|kilogram|kilograms)\s+\1\s+/gi, '$1 ');
   
   // STEP 3: Handle "X of Y" patterns where X is a unit
-  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash|gram|grams|gr|g|kg|kilogram|kilograms)\s+of\s+/gi, '');
+  cleaned = cleaned.replace(/\b(cup|head|box|piece|loaf|pinch|dash|gram|grams|gr|kg|kilogram|kilograms)\s+of\s+/gi, '');
   
   // STEP 4: Remove leading measurement patterns
   // This handles cases like "2 pounds regular chicken wings" or "1/2 cup brown sugar"
@@ -377,10 +384,9 @@ export const normalizeUnit = (unit: string): string => {
   
   const normalized = unit.toLowerCase().trim();
   
-  // Handle standalone t, T, g, c with exact matching
+  // Handle standalone t, T, c with exact matching
   if (normalized === 't') return 'tsp';
   if (normalized === 'T') return 'tbsp';
-  if (normalized === 'g') return 'g';
   if (normalized === 'c') return 'cup';
   
   return unitMap[normalized] || normalized;
