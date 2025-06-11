@@ -95,6 +95,11 @@ export const getCleanedIngredientName = (originalName: string): string => {
   const leadingPattern = new RegExp(`^[\\d\\s\\/]+\\s*(${allUnits})\\s*`, 'i');
   cleaned = cleaned.replace(leadingPattern, '');
   
+  // NEW: Handle units without spaces (like "400g", "200gr", "2t", etc.)
+  // This pattern catches numbers directly followed by units without spaces
+  const noSpacePattern = new RegExp(`\\b\\d+\\s*(${allUnits})\\b`, 'gi');
+  cleaned = cleaned.replace(noSpacePattern, ' ');
+  
   // Remove patterns like "& ½ cups" or "½ cup" that appear in the middle
   const embeddedPattern = new RegExp(`\\s*[&\\+]?\\s*[\\d\\s\\/½¼¾⅓⅔⅛⅜⅝⅞]+\\s*(${allUnits})\\s*`, 'gi');
   cleaned = cleaned.replace(embeddedPattern, ' ');
