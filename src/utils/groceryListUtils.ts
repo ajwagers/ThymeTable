@@ -233,7 +233,7 @@ export const normalizeIngredientName = (name: string): string => {
   normalized = normalized.replace(/\bsalt\s*&\s*pepper\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bsalt\s*(and|&)\s*(black\s+)?pepper\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bsalt\s*(and|&)\s*freshly\s+ground\s+pepper\b/g, 'salt and pepper');
-  normalized = normalized.replace(/\bsalt\s*(and|&)\s*pepper.*?taste\b/g, 'salt and pepper');
+  normalized = normalized.replace(/\bsalt.*?pepper.*?taste\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bsalt.*?pepper.*?season\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bsalt.*?fresh\s+ground\s+pepper.*?garlic\b/g, 'salt and pepper');
   normalized = normalized.replace(/\bfresh ground black pepper\b/g, 'black pepper');
@@ -278,13 +278,13 @@ export const normalizeUnit = (unit: string): string => {
     'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp',
     'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp',
     'ml': 'ml', 'milliliter': 'ml', 'milliliters': 'ml',
-    'liter': 'liter', 'liters': 'liter', 'l': 'liter',
+    'liter': 'l', 'liters': 'l', 'l': 'l',
     'fluid ounce': 'fl oz', 'fluid ounces': 'fl oz', 'fl oz': 'fl oz',
     
     // Weight
     'pound': 'lb', 'pounds': 'lb', 'lb': 'lb', 'lbs': 'lb',
     'ounce': 'oz', 'ounces': 'oz', 'oz': 'oz',
-    'gram': 'g', 'grams': 'g',
+    'gram': 'g', 'grams': 'g', 'g': 'g',
     'kilogram': 'kg', 'kilograms': 'kg', 'kg': 'kg',
     
     // Count
@@ -458,7 +458,7 @@ export const convertToCommonUnit = (amount: number, unit: string): { amount: num
     'cup': 1,         // base unit
     'fl oz': 1/8,     // 1 fl oz = 1/8 cup
     'ml': 1/236.588,  // 1 ml ≈ 1/236.588 cup
-    'liter': 4.22675, // 1 liter ≈ 4.22675 cups
+    'l': 4.22675,     // 1 liter ≈ 4.22675 cups
   };
   
   // Weight conversions (convert to ounces as base)

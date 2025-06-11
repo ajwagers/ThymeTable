@@ -71,26 +71,32 @@ export function MeasurementProvider({ children }: { children: React.ReactNode })
         return { amount: toFraction(convertedAmount), unit: convertedUnit };
       }
     } else {
-      // Convert to metric system
+      // Convert to metric system - ENHANCED to handle ALL US units
       const usToMetricConversions: Record<string, { factor: number; unit: string }> = {
         // Volume conversions (US to metric)
         'cup': { factor: 236.588, unit: 'ml' },
         'cups': { factor: 236.588, unit: 'ml' },
+        'c': { factor: 236.588, unit: 'ml' },
         'tbsp': { factor: 14.787, unit: 'ml' },
         'tablespoon': { factor: 14.787, unit: 'ml' },
         'tablespoons': { factor: 14.787, unit: 'ml' },
+        'T': { factor: 14.787, unit: 'ml' },
         'tsp': { factor: 4.929, unit: 'ml' },
         'teaspoon': { factor: 4.929, unit: 'ml' },
         'teaspoons': { factor: 4.929, unit: 'ml' },
+        't': { factor: 4.929, unit: 'ml' },
         'fl oz': { factor: 29.574, unit: 'ml' },
         'fluid ounce': { factor: 29.574, unit: 'ml' },
         'fluid ounces': { factor: 29.574, unit: 'ml' },
         'pint': { factor: 473.176, unit: 'ml' },
         'pints': { factor: 473.176, unit: 'ml' },
+        'pt': { factor: 473.176, unit: 'ml' },
         'quart': { factor: 946.353, unit: 'ml' },
         'quarts': { factor: 946.353, unit: 'ml' },
+        'qt': { factor: 946.353, unit: 'ml' },
         'gallon': { factor: 3785.41, unit: 'ml' },
         'gallons': { factor: 3785.41, unit: 'ml' },
+        'gal': { factor: 3785.41, unit: 'ml' },
         
         // Weight conversions (US to metric)
         'oz': { factor: 28.35, unit: 'g' },
@@ -123,6 +129,14 @@ export function MeasurementProvider({ children }: { children: React.ReactNode })
           amount: toFraction(convertedAmount), 
           unit: convertedUnit 
         };
+      }
+      
+      // Check if it's already a metric unit
+      const metricUnits = ['ml', 'milliliter', 'milliliters', 'l', 'liter', 'liters', 
+                          'g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms'];
+      
+      if (metricUnits.includes(normalizedUnit)) {
+        return { amount: toFraction(amount), unit: normalizedUnit };
       }
     }
 

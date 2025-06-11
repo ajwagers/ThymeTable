@@ -37,7 +37,7 @@ interface GroceryItem {
 function GroceryListPage() {
   const navigate = useNavigate();
   const { adjustQuantity } = useServings();
-  const { convertUnit } = useMeasurement();
+  const { convertUnit, system } = useMeasurement();
   const [groceryList, setGroceryList] = React.useState<GroceryItem[]>([]);
   const [isPrintMode, setIsPrintMode] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -160,9 +160,14 @@ function GroceryListPage() {
               array.findIndex(t => t.id === tag.id) === index
             );
 
+            // Apply proper fraction formatting based on measurement system
+            const formattedAmount = system === 'metric' 
+              ? item.amount.toFixed(1).replace(/\.0$/, '')
+              : toFraction(item.amount);
+
             return {
               name: item.name,
-              amount: toFraction(item.amount),
+              amount: formattedAmount,
               unit: normalizeUnit(item.unit), // Apply final unit normalization
               checked: false,
               category: getIngredientCategory(item.name),
@@ -177,7 +182,7 @@ function GroceryListPage() {
     };
 
     generateGroceryList();
-  }, [adjustQuantity, convertUnit]);
+  }, [adjustQuantity, convertUnit, system]); // Added system as dependency
 
   const toggleItem = (index: number) => {
     setGroceryList(prev => 
