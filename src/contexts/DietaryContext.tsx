@@ -7,6 +7,11 @@ export type DietaryFilter =
   | 'vegan' 
   | 'vegetarian' 
   | 'lacto-vegetarian'
+  | 'ovo-vegetarian'
+  | 'pescatarian'
+  | 'paleo'
+  | 'primal'
+  | 'slow-carb'
   | 'custom';
 
 export interface CustomDietaryFilter {
@@ -52,6 +57,22 @@ const dietaryMappings: Record<DietaryFilter, { diet?: string; intolerances?: str
   },
   'lacto-vegetarian': { 
     diet: 'lacto vegetarian' 
+  },
+  'ovo-vegetarian': { 
+    diet: 'ovo vegetarian' 
+  },
+  'pescatarian': { 
+    diet: 'pescetarian' 
+  },
+  'paleo': { 
+    diet: 'paleo' 
+  },
+  'primal': { 
+    diet: 'primal' 
+  },
+  'slow-carb': {
+    // Slow carb doesn't have direct Spoonacular support, so we'll exclude high-carb ingredients
+    excludeIngredients: ['bread', 'pasta', 'rice', 'potato', 'sugar', 'flour', 'cereal', 'oats']
   },
   'custom': {} // Handled separately
 };
@@ -133,7 +154,16 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
       const mapping = dietaryMappings[diet];
       if (mapping.diet) {
         // For conflicting diets, prioritize more restrictive ones
-        const dietPriority = { vegan: 4, vegetarian: 3, 'lacto vegetarian': 2, ketogenic: 1 };
+        const dietPriority = { 
+          vegan: 8, 
+          vegetarian: 7, 
+          'lacto vegetarian': 6, 
+          'ovo vegetarian': 5,
+          pescetarian: 4,
+          paleo: 3,
+          primal: 2,
+          ketogenic: 1 
+        };
         const currentPriority = dietPriority[mapping.diet as keyof typeof dietPriority] || 0;
         const existingPriority = primaryDiet ? dietPriority[primaryDiet as keyof typeof dietPriority] || 0 : 0;
         
