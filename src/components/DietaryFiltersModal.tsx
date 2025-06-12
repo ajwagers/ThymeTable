@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Check, Filter, Leaf, Wheat, Milk, Zap, Heart, Salad } from 'lucide-react';
+import { X, Plus, Trash2, Check, Filter, Leaf, Wheat, Milk, Zap, Heart, Salad, Fish, Mountain, Flame, Clock } from 'lucide-react';
 import { useDietary, DietaryFilter, CustomDietaryFilter } from '../contexts/DietaryContext';
 
 interface DietaryFiltersModalProps {
@@ -56,6 +56,41 @@ const dietaryOptions: Array<{
     description: 'Vegetarian diet that includes dairy but excludes eggs',
     icon: <Salad className="w-5 h-5" />,
     color: 'bg-teal-100 text-teal-700 border-teal-200'
+  },
+  {
+    id: 'ovo-vegetarian',
+    name: 'Ovo-Vegetarian',
+    description: 'Vegetarian diet that includes eggs but excludes dairy',
+    icon: <Heart className="w-5 h-5" />,
+    color: 'bg-cyan-100 text-cyan-700 border-cyan-200'
+  },
+  {
+    id: 'pescatarian',
+    name: 'Pescatarian',
+    description: 'Vegetarian diet that includes fish and seafood',
+    icon: <Fish className="w-5 h-5" />,
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-200'
+  },
+  {
+    id: 'paleo',
+    name: 'Paleo',
+    description: 'Based on foods presumed to be eaten by early humans',
+    icon: <Mountain className="w-5 h-5" />,
+    color: 'bg-orange-100 text-orange-700 border-orange-200'
+  },
+  {
+    id: 'primal',
+    name: 'Primal',
+    description: 'Similar to paleo but allows some dairy and modern foods',
+    icon: <Flame className="w-5 h-5" />,
+    color: 'bg-red-100 text-red-700 border-red-200'
+  },
+  {
+    id: 'slow-carb',
+    name: 'Slow Carb',
+    description: 'Focuses on slow-digesting carbs and excludes refined sugars',
+    icon: <Clock className="w-5 h-5" />,
+    color: 'bg-slate-100 text-slate-700 border-slate-200'
   }
 ];
 
@@ -149,7 +184,7 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
           />
           
           <motion.div
-            className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="relative bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -178,7 +213,7 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
               {/* Standard Dietary Filters */}
               <div className="p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Standard Diets</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {dietaryOptions.map((option) => {
                     const isActive = activeDiets.includes(option.id);
                     return (
