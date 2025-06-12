@@ -28,7 +28,15 @@ const handleSpoonacularError = (error: AxiosError) => {
   throw new Error(`API Error: ${error.message}`);
 };
 
-export const getRandomRecipes = async (mealType: string, category: 'main' | 'side' = 'main'): Promise<SpoonacularRecipe[]> => {
+export const getRandomRecipes = async (
+  mealType: string, 
+  category: 'main' | 'side' = 'main',
+  dietaryParams?: {
+    diet?: string;
+    intolerances?: string;
+    excludeIngredients?: string;
+  }
+): Promise<SpoonacularRecipe[]> => {
   try {
     if (!API_KEY) {
       throw new Error('Spoonacular API key is missing');
@@ -42,12 +50,27 @@ export const getRandomRecipes = async (mealType: string, category: 'main' | 'sid
       tags.push('main course');
     }
 
+    const params: any = {
+      apiKey: API_KEY,
+      number: 10,
+      tags: tags.join(','),
+    };
+
+    // Add dietary parameters if provided
+    if (dietaryParams) {
+      if (dietaryParams.diet) {
+        params.diet = dietaryParams.diet;
+      }
+      if (dietaryParams.intolerances) {
+        params.intolerances = dietaryParams.intolerances;
+      }
+      if (dietaryParams.excludeIngredients) {
+        params.excludeIngredients = dietaryParams.excludeIngredients;
+      }
+    }
+
     const response = await axios.get(`${BASE_URL}/random`, {
-      params: {
-        apiKey: API_KEY,
-        number: 10,
-        tags: tags.join(','),
-      },
+      params,
       timeout: 10000, // 10 second timeout
     });
 

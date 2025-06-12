@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Day, DragResult, Meal } from '../types';
 import { createEmptyWeek } from '../data/initialData';
 import { getRandomRecipes, getRecipeDetails } from '../services/spoonacular';
+import { useDietary } from '../contexts/DietaryContext';
 
 export const useMealPlanState = () => {
+  const { getSpoonacularParams } = useDietary();
   const [days, setDays] = useState<Day[]>(() => {
     const saved = localStorage.getItem('mealPlan');
     return saved ? JSON.parse(saved) : createEmptyWeek();
@@ -40,11 +42,12 @@ export const useMealPlanState = () => {
     try {
       const newDays = createEmptyWeek();
       const mealTypes = ['breakfast', 'lunch', 'dinner'];
+      const dietaryParams = getSpoonacularParams();
       
       for (const day of newDays) {
         for (const mealType of mealTypes) {
           // Add main dish
-          const mainRecipes = await getRandomRecipes(mealType, 'main');
+          const mainRecipes = await getRandomRecipes(mealType, 'main', dietaryParams);
           if (mainRecipes.length > 0) {
             const recipe = mainRecipes[0];
             const newMeal = await createMealFromRecipe(recipe, day.id, mealType, 'main');
@@ -52,7 +55,7 @@ export const useMealPlanState = () => {
 
             // Add side dishes for lunch and dinner
             if (mealType !== 'breakfast') {
-              const sideRecipes = await getRandomRecipes(mealType, 'side');
+              const sideRecipes = await getRandomRecipes(mealType, 'side', dietaryParams);
               if (sideRecipes.length > 0) {
                 const sideRecipe = sideRecipes[0];
                 const sideMeal = await createMealFromRecipe(sideRecipe, day.id, mealType, 'side');
@@ -77,7 +80,8 @@ export const useMealPlanState = () => {
 
   const fetchRandomRecipe = async (dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
     try {
-      const recipes = await getRandomRecipes(mealType, category);
+      const dietaryParams = getSpoonacularParams();
+      const recipes = await getRandomRecipes(mealType, category, dietaryParams);
       if (recipes.length > 0) {
         const recipe = recipes[0];
         const newMeal = await createMealFromRecipe(recipe, dayId, mealType, category);
