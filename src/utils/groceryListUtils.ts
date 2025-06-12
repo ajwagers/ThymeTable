@@ -88,30 +88,40 @@ export const getCleanedIngredientName = (originalName: string): string => {
     }
   }
   
-  // STEP 1: Handle units stuck together without spaces (like "200gr", "400g", "180g")
-  // This is the key fix - using proper word boundaries and being more specific
+  // STEP 1: Handle units stuck together without spaces - BE VERY SPECIFIC
+  // Only remove "g" when it's directly after a number (like "400g")
   cleaned = cleaned.replace(/\b\d+\s*gr\b/gi, ' '); // "200gr" -> " "
-  cleaned = cleaned.replace(/\b\d+\s*g\b(?![a-z])/gi, ' '); // "400g" -> " " but not "green"
+  cleaned = cleaned.replace(/\b\d+\s*g\b/gi, ' '); // "400g" -> " " (only after numbers)
   cleaned = cleaned.replace(/\b\d+\s*kg\b/gi, ' '); // "2kg" -> " "
   cleaned = cleaned.replace(/\b\d+\s*ml\b/gi, ' '); // "500ml" -> " "
-  cleaned = cleaned.replace(/\b\d+\s*l\b(?![a-z])/gi, ' '); // "2l" -> " " but not "large"
+  cleaned = cleaned.replace(/\b\d+\s*l\b/gi, ' '); // "2l" -> " " (only after numbers)
   cleaned = cleaned.replace(/\b\d+\s*oz\b/gi, ' '); // "14oz" -> " "
   cleaned = cleaned.replace(/\b\d+\s*lb\b/gi, ' '); // "2lb" -> " "
   cleaned = cleaned.replace(/\b\d+\s*lbs\b/gi, ' '); // "2lbs" -> " "
   
-  // Define all units that should be removed - using word boundaries for precision
+  // Define all units that should be removed - but be VERY careful with single letters
   const units = [
     'pounds?', 'lbs?', 'ounces?', 'oz', 'cups?', 'tablespoons?', 'tbsp', 'teaspoons?', 'tsp',
-    'cans?', 'cloves?', 'ml', 'liters?', 'l', 'grams?', 'gr', 'g', 'kg', 'kilograms?',
+    'cans?', 'cloves?', 'ml', 'liters?', 'grams?', 'gr', 'kg', 'kilograms?',
     'blocks?', 'bunches?', 'bunch', 'heads?', 'head', 'bags?', 'bag', 'servings?', 'serving', 
     'large', 'medium', 'small', 'inches?', 'inch', 'loaves?', 'loaf', 'small\\s+loaf', 
     'pinches?', 'pinch', 'boxes?', 'box', 'pieces?', 'piece', 'dashes?', 'dash', 
     'halves?', 'half', 'drops?', 'drop'
   ].join('|');
   
-  // Add standalone t, T, c with word boundaries to be more precise
-  // Note: Removed standalone 'g' to prevent removing it from words like "green"
+  // CRITICAL: Only include standalone single letters that are DEFINITELY units
+  // Remove standalone "g" and "l" ONLY when they appear as isolated words
   const standaloneUnits = '\\bt\\b|\\bT\\b|\\bc\\b';
+  
+  // STEP 1.5: Handle standalone "g" and "l" ONLY when they're isolated units
+  // This is much more conservative - only removes when it's clearly a unit
+  cleaned = cleaned.replace(/\s+\bg\b\s+/gi, ' '); // " g " -> " " (only when isolated)
+  cleaned = cleaned.replace(/\s+\bl\b\s+/gi, ' '); // " l " -> " " (only when isolated)
+  cleaned = cleaned.replace(/^g\b\s+/gi, ''); // "g something" -> "something" (at start)
+  cleaned = cleaned.replace(/\s+\bg$/gi, ''); // "something g" -> "something" (at end)
+  cleaned = cleaned.replace(/^l\b\s+/gi, ''); // "l something" -> "something" (at start)
+  cleaned = cleaned.replace(/\s+\bl$/gi, ''); // "something l" -> "something" (at end)
+  
   const allUnits = `${units}|${standaloneUnits}`;
   
   // STEP 2: Handle duplicate words that appear in ingredient names
