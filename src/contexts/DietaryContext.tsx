@@ -12,6 +12,13 @@ export type DietaryFilter =
   | 'paleo'
   | 'primal'
   | 'slow-carb'
+  | 'bulletproof'
+  | 'low-fodmap'
+  | 'whole30'
+  | 'gaps'
+  | 'mediterranean'
+  | 'grain-free'
+  | 'fruitarian'
   | 'custom';
 
 export interface CustomDietaryFilter {
@@ -73,6 +80,36 @@ const dietaryMappings: Record<DietaryFilter, { diet?: string; intolerances?: str
   'slow-carb': {
     // Slow carb doesn't have direct Spoonacular support, so we'll exclude high-carb ingredients
     excludeIngredients: ['bread', 'pasta', 'rice', 'potato', 'sugar', 'flour', 'cereal', 'oats']
+  },
+  'bulletproof': {
+    // Bulletproof diet focuses on high-quality fats and excludes inflammatory foods
+    excludeIngredients: ['sugar', 'gluten', 'corn', 'soy', 'vegetable oil', 'canola oil', 'margarine', 'processed foods']
+  },
+  'low-fodmap': {
+    // Low FODMAP excludes fermentable carbs that can cause digestive issues
+    excludeIngredients: ['onion', 'garlic', 'wheat', 'beans', 'lentils', 'chickpeas', 'apple', 'pear', 'mango', 'watermelon', 'honey', 'agave']
+  },
+  'whole30': {
+    // Whole30 eliminates sugar, alcohol, grains, legumes, soy, and dairy
+    excludeIngredients: ['sugar', 'honey', 'maple syrup', 'agave', 'alcohol', 'grains', 'wheat', 'rice', 'oats', 'quinoa', 'beans', 'lentils', 'peanuts', 'soy', 'dairy', 'cheese', 'milk', 'yogurt']
+  },
+  'gaps': {
+    // GAPS diet excludes grains, starches, and processed foods
+    excludeIngredients: ['grains', 'wheat', 'rice', 'corn', 'oats', 'quinoa', 'potato', 'sweet potato', 'sugar', 'processed foods', 'soy']
+  },
+  'mediterranean': {
+    // Mediterranean diet emphasizes whole foods, fish, olive oil
+    // We'll use this as a positive filter rather than exclusions
+    diet: 'mediterranean'
+  },
+  'grain-free': {
+    // Excludes all grains including wheat, rice, oats, etc.
+    excludeIngredients: ['wheat', 'rice', 'oats', 'barley', 'rye', 'corn', 'quinoa', 'millet', 'buckwheat', 'amaranth', 'bread', 'pasta', 'cereal']
+  },
+  'fruitarian': {
+    // Fruitarian diet consists primarily of fruits
+    // This is very restrictive, so we'll exclude most non-fruit items
+    excludeIngredients: ['meat', 'fish', 'dairy', 'eggs', 'grains', 'vegetables', 'legumes', 'nuts', 'seeds']
   },
   'custom': {} // Handled separately
 };
@@ -155,14 +192,18 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
       if (mapping.diet) {
         // For conflicting diets, prioritize more restrictive ones
         const dietPriority = { 
-          vegan: 8, 
-          vegetarian: 7, 
-          'lacto vegetarian': 6, 
-          'ovo vegetarian': 5,
-          pescetarian: 4,
-          paleo: 3,
-          primal: 2,
-          ketogenic: 1 
+          fruitarian: 12,
+          vegan: 11, 
+          vegetarian: 10, 
+          'lacto vegetarian': 9, 
+          'ovo vegetarian': 8,
+          pescetarian: 7,
+          paleo: 6,
+          primal: 5,
+          ketogenic: 4,
+          mediterranean: 3,
+          whole30: 2,
+          gaps: 1 
         };
         const currentPriority = dietPriority[mapping.diet as keyof typeof dietPriority] || 0;
         const existingPriority = primaryDiet ? dietPriority[primaryDiet as keyof typeof dietPriority] || 0 : 0;

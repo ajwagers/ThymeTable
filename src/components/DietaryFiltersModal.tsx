@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Check, Filter, Leaf, Wheat, Milk, Zap, Heart, Salad, Fish, Mountain, Flame, Clock } from 'lucide-react';
+import { X, Plus, Trash2, Check, Filter, Leaf, Wheat, Milk, Zap, Heart, Salad, Fish, Mountain, Flame, Clock, Shield, AlertTriangle, Target, Dna, Waves, Wheat as GrainIcon, Apple } from 'lucide-react';
 import { useDietary, DietaryFilter, CustomDietaryFilter } from '../contexts/DietaryContext';
 
 interface DietaryFiltersModalProps {
@@ -91,6 +91,55 @@ const dietaryOptions: Array<{
     description: 'Focuses on slow-digesting carbs and excludes refined sugars',
     icon: <Clock className="w-5 h-5" />,
     color: 'bg-slate-100 text-slate-700 border-slate-200'
+  },
+  {
+    id: 'bulletproof',
+    name: 'Bulletproof',
+    description: 'High-quality fats and excludes inflammatory foods',
+    icon: <Shield className="w-5 h-5" />,
+    color: 'bg-gray-100 text-gray-700 border-gray-200'
+  },
+  {
+    id: 'low-fodmap',
+    name: 'Low FODMAP',
+    description: 'Excludes fermentable carbs that can cause digestive issues',
+    icon: <AlertTriangle className="w-5 h-5" />,
+    color: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+  },
+  {
+    id: 'whole30',
+    name: 'Whole30',
+    description: 'Eliminates sugar, grains, legumes, soy, and dairy for 30 days',
+    icon: <Target className="w-5 h-5" />,
+    color: 'bg-rose-100 text-rose-700 border-rose-200'
+  },
+  {
+    id: 'gaps',
+    name: 'GAPS',
+    description: 'Gut and Psychology Syndrome diet focusing on gut health',
+    icon: <Dna className="w-5 h-5" />,
+    color: 'bg-violet-100 text-violet-700 border-violet-200'
+  },
+  {
+    id: 'mediterranean',
+    name: 'Mediterranean',
+    description: 'Emphasizes whole foods, fish, olive oil, and fresh produce',
+    icon: <Waves className="w-5 h-5" />,
+    color: 'bg-sky-100 text-sky-700 border-sky-200'
+  },
+  {
+    id: 'grain-free',
+    name: 'Grain-Free',
+    description: 'Excludes all grains including wheat, rice, oats, and corn',
+    icon: <GrainIcon className="w-5 h-5" />,
+    color: 'bg-stone-100 text-stone-700 border-stone-200'
+  },
+  {
+    id: 'fruitarian',
+    name: 'Fruitarian',
+    description: 'Diet consisting primarily of fruits and fruit-like vegetables',
+    icon: <Apple className="w-5 h-5" />,
+    color: 'bg-pink-100 text-pink-700 border-pink-200'
   }
 ];
 
@@ -99,7 +148,7 @@ const commonIntolerances = [
 ];
 
 const commonDiets = [
-  'gluten free', 'ketogenic', 'vegetarian', 'lacto-vegetarian', 'ovo-vegetarian', 'vegan', 'pescetarian', 'paleo', 'primal', 'whole30'
+  'gluten free', 'ketogenic', 'vegetarian', 'lacto-vegetarian', 'ovo-vegetarian', 'vegan', 'pescetarian', 'paleo', 'primal', 'whole30', 'mediterranean'
 ];
 
 function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
@@ -184,7 +233,7 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
           />
           
           <motion.div
-            className="relative bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
+            className="relative bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -198,7 +247,7 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">Dietary Filters</h2>
-                  <p className="text-sm text-gray-600">Customize your meal recommendations</p>
+                  <p className="text-sm text-gray-600">Customize your meal recommendations with {dietaryOptions.length} diet options</p>
                 </div>
               </div>
               <button
