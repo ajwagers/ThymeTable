@@ -52,29 +52,38 @@ export const getRandomRecipes = async (
 
     const params: any = {
       apiKey: API_KEY,
-      number: 10,
+      number: 20, // Increased from 10 to get more options for filtering
       tags: tags.join(','),
     };
 
-    // Add dietary parameters if provided
+    // Add dietary parameters if provided - WITH STRICT ENFORCEMENT
     if (dietaryParams) {
-      if (dietaryParams.diet) {
-        params.diet = dietaryParams.diet;
-      }
+      console.log('🔍 Spoonacular API Request with dietary params:', dietaryParams);
+      
+      // CRITICAL: Intolerances are hard restrictions
       if (dietaryParams.intolerances) {
         params.intolerances = dietaryParams.intolerances;
       }
+      
+      // CRITICAL: Excluded ingredients are absolute restrictions
       if (dietaryParams.excludeIngredients) {
         params.excludeIngredients = dietaryParams.excludeIngredients;
       }
+      
+      // Diet is a preference, but exclusions override
+      if (dietaryParams.diet) {
+        params.diet = dietaryParams.diet;
+      }
     }
+
+    console.log('🌐 Final Spoonacular API params:', params);
 
     const response = await axios.get(`${BASE_URL}/random`, {
       params,
-      timeout: 10000, // 10 second timeout
+      timeout: 15000, // Increased timeout for more complex filtering
     });
 
-    return response.data.recipes.map((recipe: any) => ({
+    const recipes = response.data.recipes.map((recipe: any) => ({
       id: recipe.id,
       title: recipe.title,
       readyInMinutes: recipe.readyInMinutes,
@@ -84,6 +93,24 @@ export const getRandomRecipes = async (
       cuisines: recipe.cuisines || [],
       dishTypes: recipe.dishTypes || [],
     }));
+
+    console.log(`✅ Received ${recipes.length} recipes from Spoonacular for ${mealType} (${category})`);
+    
+    // Additional client-side filtering for extra safety
+    if (dietaryParams?.excludeIngredients) {
+      const excludeList = dietaryParams.excludeIngredients.toLowerCase().split(',');
+      const filteredRecipes = recipes.filter((recipe: SpoonacularRecipe) => {
+        const titleLower = recipe.title.toLowerCase();
+        return !excludeList.some(excluded => 
+          titleLower.includes(excluded.trim())
+        );
+      });
+      
+      console.log(`🔍 Client-side filtering: ${recipes.length} → ${filteredRecipes.length} recipes after excluding ingredients`);
+      return filteredRecipes;
+    }
+
+    return recipes;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       handleSpoonacularError(error);

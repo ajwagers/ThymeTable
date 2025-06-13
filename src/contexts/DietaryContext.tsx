@@ -45,73 +45,143 @@ interface DietaryContextType {
 
 const DietaryContext = createContext<DietaryContextType | undefined>(undefined);
 
-// Mapping dietary filters to Spoonacular API parameters
+// Enhanced mapping with comprehensive ingredient exclusions
 const dietaryMappings: Record<DietaryFilter, { diet?: string; intolerances?: string[]; excludeIngredients?: string[] }> = {
   'gluten-free': { 
-    intolerances: ['gluten'] 
+    intolerances: ['gluten'],
+    excludeIngredients: [
+      'wheat', 'barley', 'rye', 'spelt', 'kamut', 'triticale', 'bulgur', 'semolina', 'durum',
+      'bread', 'pasta', 'noodles', 'flour', 'breadcrumbs', 'croutons', 'couscous',
+      'beer', 'malt', 'brewer\'s yeast', 'wheat germ', 'wheat bran', 'graham flour',
+      'farro', 'einkorn', 'emmer', 'seitan', 'vital wheat gluten'
+    ]
   },
   'dairy-free': { 
-    intolerances: ['dairy'] 
+    intolerances: ['dairy'],
+    excludeIngredients: [
+      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'sour cream', 'cottage cheese',
+      'ricotta', 'mozzarella', 'cheddar', 'parmesan', 'swiss', 'goat cheese', 'feta',
+      'cream cheese', 'mascarpone', 'whey', 'casein', 'lactose', 'buttermilk',
+      'heavy cream', 'half and half', 'evaporated milk', 'condensed milk',
+      'ice cream', 'sherbet', 'frozen yogurt', 'kefir', 'ghee', 'clarified butter'
+    ]
   },
   'ketogenic': { 
-    diet: 'ketogenic' 
+    diet: 'ketogenic',
+    excludeIngredients: [
+      'sugar', 'honey', 'maple syrup', 'agave', 'corn syrup', 'brown sugar',
+      'bread', 'pasta', 'rice', 'quinoa', 'oats', 'cereal', 'crackers',
+      'potato', 'sweet potato', 'corn', 'beans', 'lentils', 'chickpeas',
+      'banana', 'apple', 'orange', 'grapes', 'pineapple', 'mango',
+      'flour', 'wheat', 'barley', 'rye'
+    ]
   },
   'vegan': { 
-    diet: 'vegan' 
+    diet: 'vegan',
+    excludeIngredients: [
+      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
+      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
+      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'eggs', 'honey',
+      'gelatin', 'lard', 'bacon', 'ham', 'sausage', 'pepperoni'
+    ]
   },
   'vegetarian': { 
-    diet: 'vegetarian' 
+    diet: 'vegetarian',
+    excludeIngredients: [
+      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
+      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
+      'bacon', 'ham', 'sausage', 'pepperoni', 'anchovy', 'gelatin', 'lard'
+    ]
   },
   'lacto-vegetarian': { 
-    diet: 'lacto vegetarian' 
+    diet: 'lacto vegetarian',
+    excludeIngredients: [
+      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
+      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
+      'eggs', 'bacon', 'ham', 'sausage', 'pepperoni', 'anchovy', 'gelatin', 'lard'
+    ]
   },
   'ovo-vegetarian': { 
-    diet: 'ovo vegetarian' 
+    diet: 'ovo vegetarian',
+    excludeIngredients: [
+      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
+      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
+      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'bacon', 'ham', 'sausage',
+      'pepperoni', 'anchovy', 'gelatin', 'lard'
+    ]
   },
   'pescatarian': { 
-    diet: 'pescetarian' 
+    diet: 'pescetarian',
+    excludeIngredients: [
+      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck',
+      'bacon', 'ham', 'sausage', 'pepperoni', 'lard'
+    ]
   },
   'paleo': { 
-    diet: 'paleo' 
+    diet: 'paleo',
+    excludeIngredients: [
+      'grains', 'wheat', 'rice', 'oats', 'quinoa', 'barley', 'rye', 'corn',
+      'legumes', 'beans', 'lentils', 'chickpeas', 'peanuts', 'soy',
+      'dairy', 'milk', 'cheese', 'yogurt', 'butter',
+      'sugar', 'processed foods', 'refined oils', 'bread', 'pasta'
+    ]
   },
   'primal': { 
-    diet: 'primal' 
+    diet: 'primal',
+    excludeIngredients: [
+      'grains', 'wheat', 'rice', 'oats', 'quinoa', 'barley', 'rye', 'corn',
+      'legumes', 'beans', 'lentils', 'chickpeas', 'peanuts', 'soy',
+      'sugar', 'processed foods', 'refined oils', 'bread', 'pasta'
+    ]
   },
   'slow-carb': {
-    // Slow carb doesn't have direct Spoonacular support, so we'll exclude high-carb ingredients
-    excludeIngredients: ['bread', 'pasta', 'rice', 'potato', 'sugar', 'flour', 'cereal', 'oats']
+    excludeIngredients: [
+      'bread', 'pasta', 'rice', 'potato', 'sugar', 'flour', 'cereal', 'oats',
+      'quinoa', 'corn', 'wheat', 'barley', 'rye', 'crackers', 'bagels'
+    ]
   },
   'bulletproof': {
-    // Bulletproof diet focuses on high-quality fats and excludes inflammatory foods
-    excludeIngredients: ['sugar', 'gluten', 'corn', 'soy', 'vegetable oil', 'canola oil', 'margarine', 'processed foods']
+    excludeIngredients: [
+      'sugar', 'gluten', 'corn', 'soy', 'vegetable oil', 'canola oil', 'margarine',
+      'processed foods', 'artificial sweeteners', 'grains', 'legumes'
+    ]
   },
   'low-fodmap': {
-    // Low FODMAP excludes fermentable carbs that can cause digestive issues
-    excludeIngredients: ['onion', 'garlic', 'wheat', 'beans', 'lentils', 'chickpeas', 'apple', 'pear', 'mango', 'watermelon', 'honey', 'agave']
+    excludeIngredients: [
+      'onion', 'garlic', 'wheat', 'beans', 'lentils', 'chickpeas', 'apple', 'pear',
+      'mango', 'watermelon', 'honey', 'agave', 'cashews', 'pistachios',
+      'artichoke', 'asparagus', 'cauliflower', 'mushrooms'
+    ]
   },
   'whole30': {
-    // Whole30 eliminates sugar, alcohol, grains, legumes, soy, and dairy
-    excludeIngredients: ['sugar', 'honey', 'maple syrup', 'agave', 'alcohol', 'grains', 'wheat', 'rice', 'oats', 'quinoa', 'beans', 'lentils', 'peanuts', 'soy', 'dairy', 'cheese', 'milk', 'yogurt']
+    excludeIngredients: [
+      'sugar', 'honey', 'maple syrup', 'agave', 'alcohol', 'grains', 'wheat', 'rice',
+      'oats', 'quinoa', 'beans', 'lentils', 'peanuts', 'soy', 'dairy', 'cheese',
+      'milk', 'yogurt', 'processed foods', 'carrageenan', 'msg', 'sulfites'
+    ]
   },
   'gaps': {
-    // GAPS diet excludes grains, starches, and processed foods
-    excludeIngredients: ['grains', 'wheat', 'rice', 'corn', 'oats', 'quinoa', 'potato', 'sweet potato', 'sugar', 'processed foods', 'soy']
+    excludeIngredients: [
+      'grains', 'wheat', 'rice', 'corn', 'oats', 'quinoa', 'potato', 'sweet potato',
+      'sugar', 'processed foods', 'soy', 'beans', 'lentils', 'chickpeas'
+    ]
   },
   'mediterranean': {
-    // Mediterranean diet emphasizes whole foods, fish, olive oil
-    // We'll use this as a positive filter rather than exclusions
     diet: 'mediterranean'
   },
   'grain-free': {
-    // Excludes all grains including wheat, rice, oats, etc.
-    excludeIngredients: ['wheat', 'rice', 'oats', 'barley', 'rye', 'corn', 'quinoa', 'millet', 'buckwheat', 'amaranth', 'bread', 'pasta', 'cereal']
+    excludeIngredients: [
+      'wheat', 'rice', 'oats', 'barley', 'rye', 'corn', 'quinoa', 'millet',
+      'buckwheat', 'amaranth', 'bread', 'pasta', 'cereal', 'crackers', 'flour'
+    ]
   },
   'fruitarian': {
-    // Fruitarian diet consists primarily of fruits
-    // This is very restrictive, so we'll exclude most non-fruit items
-    excludeIngredients: ['meat', 'fish', 'dairy', 'eggs', 'grains', 'vegetables', 'legumes', 'nuts', 'seeds']
+    excludeIngredients: [
+      'meat', 'fish', 'dairy', 'eggs', 'grains', 'vegetables', 'legumes',
+      'nuts', 'seeds', 'roots', 'tubers', 'leaves', 'stems'
+    ]
   },
-  'custom': {} // Handled separately
+  'custom': {}
 };
 
 export function DietaryProvider({ children }: { children: React.ReactNode }) {
@@ -179,7 +249,7 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
   const getSpoonacularParams = () => {
     const params: { diet?: string; intolerances?: string; excludeIngredients?: string } = {};
     
-    // Collect all dietary requirements
+    // Collect all dietary requirements with STRICT PRIORITY on exclusions
     const allIntolerances: string[] = [];
     const allExcludeIngredients: string[] = [];
     let primaryDiet: string | undefined;
@@ -189,6 +259,16 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
       if (diet === 'custom') return; // Handle custom separately
       
       const mapping = dietaryMappings[diet];
+      
+      // CRITICAL: Always add exclusions first - these are non-negotiable
+      if (mapping.intolerances) {
+        allIntolerances.push(...mapping.intolerances);
+      }
+      if (mapping.excludeIngredients) {
+        allExcludeIngredients.push(...mapping.excludeIngredients);
+      }
+      
+      // Only set diet if no exclusions conflict
       if (mapping.diet) {
         // For conflicting diets, prioritize more restrictive ones
         const dietPriority = { 
@@ -212,35 +292,55 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
           primaryDiet = mapping.diet;
         }
       }
-      if (mapping.intolerances) {
-        allIntolerances.push(...mapping.intolerances);
-      }
-      if (mapping.excludeIngredients) {
-        allExcludeIngredients.push(...mapping.excludeIngredients);
-      }
     });
 
     // Process custom filters
     if (activeDiets.includes('custom')) {
       customFilters.forEach(filter => {
+        // CRITICAL: Always prioritize exclusions
+        allIntolerances.push(...filter.intolerances);
+        allExcludeIngredients.push(...filter.excludeIngredients);
+        
         if (filter.diet && !primaryDiet) {
           primaryDiet = filter.diet;
         }
-        allIntolerances.push(...filter.intolerances);
-        allExcludeIngredients.push(...filter.excludeIngredients);
       });
     }
 
-    // Build final parameters
-    if (primaryDiet) {
-      params.diet = primaryDiet;
-    }
+    // Build final parameters with EXCLUSIONS TAKING ABSOLUTE PRIORITY
+    
+    // 1. ALWAYS include intolerances - these are hard restrictions
     if (allIntolerances.length > 0) {
       params.intolerances = [...new Set(allIntolerances)].join(',');
     }
+    
+    // 2. ALWAYS include ingredient exclusions - these override everything
     if (allExcludeIngredients.length > 0) {
       params.excludeIngredients = [...new Set(allExcludeIngredients)].join(',');
     }
+    
+    // 3. Only include diet if it doesn't conflict with exclusions
+    // For strict filtering, we might want to be more conservative here
+    if (primaryDiet) {
+      // Check if the diet conflicts with our exclusions
+      const hasConflicts = (
+        (primaryDiet.includes('vegetarian') && allExcludeIngredients.some(ing => ['dairy', 'milk', 'cheese'].includes(ing))) ||
+        (primaryDiet === 'mediterranean' && allExcludeIngredients.some(ing => ['dairy', 'gluten', 'wheat'].includes(ing)))
+      );
+      
+      // Only include diet if no major conflicts
+      if (!hasConflicts) {
+        params.diet = primaryDiet;
+      }
+    }
+
+    console.log('🔍 Dietary Filter Debug:', {
+      activeDiets,
+      allIntolerances,
+      allExcludeIngredients: allExcludeIngredients.slice(0, 10), // Show first 10 for debugging
+      primaryDiet,
+      finalParams: params
+    });
 
     return params;
   };
