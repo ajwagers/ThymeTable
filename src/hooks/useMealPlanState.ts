@@ -23,7 +23,8 @@ export const useMealPlanState = () => {
     const fullRecipe = await getRecipeDetails(recipe.id);
     
     return {
-      id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${recipe.id}`,
+      id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`, // Use timestamp instead of recipe ID
+      recipeId: recipe.id, // Store the actual Spoonacular recipe ID separately
       name: recipe.title,
       type: mealType as 'breakfast' | 'lunch' | 'dinner',
       category,

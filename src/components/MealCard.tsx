@@ -14,10 +14,12 @@ interface MealCardProps {
 
 const MealCard: React.FC<MealCardProps> = ({ meal, index, isExpanded, isHovered }) => {
   const { adjustQuantity, mealServings, globalServings } = useServings();
-  const recipeId = `recipe-${meal.id.split('-').pop()}`;
-  const currentServings = mealServings[recipeId] || globalServings;
+  
+  // Use recipeId if available, otherwise fall back to extracting from meal ID
+  const recipeKey = meal.recipeId ? `recipe-${meal.recipeId}` : `recipe-${meal.id.split('-').pop()}`;
+  const currentServings = mealServings[recipeKey] || globalServings;
 
-  const adjustedCalories = adjustQuantity(meal.calories, meal.servings, recipeId);
+  const adjustedCalories = adjustQuantity(meal.calories, meal.servings, recipeKey);
 
   return (
     <Draggable draggableId={meal.id} index={index}>

@@ -17,9 +17,13 @@ const MealList: React.FC<MealListProps> = ({ meals, mealType, onAddMeal }) => {
   const navigate = useNavigate();
 
   const handleCardClick = (meal: Meal) => {
-    const recipeId = meal.id.split('-').pop();
-    if (recipeId && !isNaN(parseInt(recipeId))) {
+    // Use the recipeId field if available, otherwise try to extract from the meal ID
+    const recipeId = meal.recipeId || meal.id.split('-').pop();
+    
+    if (recipeId && !isNaN(parseInt(recipeId.toString()))) {
       navigate(`/recipe/${recipeId}`);
+    } else {
+      console.error('Invalid recipe ID:', recipeId, 'for meal:', meal);
     }
   };
 

@@ -78,10 +78,11 @@ function GroceryListPage() {
                   return;
                 }
                 
-                const recipeId = `recipe-${meal.id.split('-').pop()}`;
+                // Use recipeId if available, otherwise extract from meal ID
+                const recipeKey = meal.recipeId ? `recipe-${meal.recipeId}` : `recipe-${meal.id.split('-').pop()}`;
                 
                 // Step 1: Adjust for servings first
-                const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeId);
+                const adjustedAmountStr = adjustQuantity(ingredient.amount, meal.servings, recipeKey);
                 const adjustedAmount = parseFloat(adjustedAmountStr);
 
                 if (!isNaN(adjustedAmount)) {
@@ -93,7 +94,7 @@ function GroceryListPage() {
                     amount: parseFloat(converted.amount),
                     unit: converted.unit.toLowerCase().trim(),
                     recipeTag: {
-                      id: recipeId,
+                      id: recipeKey,
                       name: getShortRecipeName(meal.name),
                       mealType: meal.type,
                       dayName: day.name
@@ -197,6 +198,7 @@ function GroceryListPage() {
   };
 
   const handleRecipeClick = (recipeId: string) => {
+    // Extract numeric ID from recipe key (e.g., "recipe-123" -> "123")
     const numericId = recipeId.replace('recipe-', '');
     navigate(`/recipe/${numericId}`);
   };

@@ -1,5 +1,6 @@
 export interface Meal {
   id: string;
+  recipeId?: number; // Add separate field for Spoonacular recipe ID
   name: string;
   type: 'breakfast' | 'lunch' | 'dinner';
   category: 'main' | 'side';
