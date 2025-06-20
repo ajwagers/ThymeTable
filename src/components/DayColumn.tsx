@@ -7,9 +7,21 @@ interface DayColumnProps {
   day: Day;
   getListStyle: (isDraggingOver: boolean) => string;
   onAddMeal: (dayId: string, mealType: string) => void;
+  onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => void;
 }
 
-const DayColumn: React.FC<DayColumnProps> = ({ day, getListStyle, onAddMeal }) => {
+const DayColumn: React.FC<DayColumnProps> = ({ 
+  day, 
+  getListStyle, 
+  onAddMeal, 
+  onChangeRecipe 
+}) => {
+  const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side') => {
+    if (onChangeRecipe) {
+      onChangeRecipe(day.id, mealId, mealType, category);
+    }
+  };
+
   return (
     <div className="day-column">
       <div className="mb-2">
@@ -37,6 +49,8 @@ const DayColumn: React.FC<DayColumnProps> = ({ day, getListStyle, onAddMeal }) =
                   meals={day.meals.filter(meal => meal.type === mealType)}
                   mealType={mealType}
                   onAddMeal={() => onAddMeal(day.id, mealType)}
+                  onChangeRecipe={handleChangeRecipe}
+                  dayId={day.id}
                 />
                 {provided.placeholder}
               </div>

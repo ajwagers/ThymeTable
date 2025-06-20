@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import MealCard from './MealCard';
 import MealPlaceholder from './MealPlaceholder';
 import { Meal } from '../types';
@@ -9,32 +8,23 @@ interface MealListProps {
   meals: Meal[];
   mealType: string;
   onAddMeal: () => void;
+  onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side') => void;
+  dayId?: string;
 }
 
-const MealList: React.FC<MealListProps> = ({ meals, mealType, onAddMeal }) => {
+const MealList: React.FC<MealListProps> = ({ 
+  meals, 
+  mealType, 
+  onAddMeal, 
+  onChangeRecipe,
+  dayId 
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const navigate = useNavigate();
 
-  const handleCardClick = (meal: Meal) => {
-    // Use the recipeId field if available, otherwise try to extract from the meal ID
-    let recipeId = meal.recipeId;
-    
-    if (!recipeId) {
-      // Try to extract from meal ID (format: dayId-mealType-timestamp or dayId-mealType-side-timestamp)
-      const parts = meal.id.split('-');
-      // Get the last part which should be the timestamp, but we need the actual recipe ID
-      // This is a fallback - ideally recipeId should always be set
-      console.warn('No recipeId found for meal:', meal.name, 'ID:', meal.id);
-      return; // Don't navigate if we don't have a proper recipe ID
-    }
-    
-    console.log('Navigating to recipe:', recipeId, 'for meal:', meal.name);
-    
-    if (recipeId && !isNaN(parseInt(recipeId.toString()))) {
-      navigate(`/recipe/${recipeId}`);
-    } else {
-      console.error('Invalid recipe ID:', recipeId, 'for meal:', meal);
+  const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side') => {
+    if (onChangeRecipe) {
+      onChangeRecipe(mealId, mealType, category);
     }
   };
 
@@ -94,7 +84,6 @@ const MealList: React.FC<MealListProps> = ({ meals, mealType, onAddMeal }) => {
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleCardClick(meal);
                   }}
                 >
                   <MealCard 
@@ -102,6 +91,8 @@ const MealList: React.FC<MealListProps> = ({ meals, mealType, onAddMeal }) => {
                     index={index} 
                     isExpanded={isExpanded}
                     isHovered={isHovered}
+                    onChangeRecipe={handleChangeRecipe}
+                    dayId={dayId}
                   />
                 </motion.div>
               );

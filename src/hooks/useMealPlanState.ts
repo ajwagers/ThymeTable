@@ -18,41 +18,88 @@ export const useMealPlanState = () => {
     setApiError(null);
   };
 
-  const createMealFromRecipe = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
-    // CRITICAL: Double-check that this recipe is allowed before creating the meal
-    if (!isRecipeAllowed(recipe.title)) {
-      console.error(`🚫 BLOCKED: Recipe "${recipe.title}" violates dietary restrictions`);
-      throw new Error(`Recipe "${recipe.title}" contains forbidden ingredients`);
-    }
+  const createMealFromRecipe = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Promise<Meal | null> => {
+    try {
+      // CRITICAL: Double-check that this recipe is allowed before creating the meal
+      if (!isRecipeAllowed(recipe.title)) {
+        console.log(`🚫 SKIPPED: Recipe "${recipe.title}" violates dietary restrictions`);
+        return null;
+      }
 
-    // Fetch full recipe details to get ingredients
-    const fullRecipe = await getRecipeDetails(recipe.id);
-    
-    // Additional check with full ingredient list
-    if (fullRecipe?.ingredients) {
-      const ingredientNames = fullRecipe.ingredients.map(ing => ing.name);
-      if (!isRecipeAllowed(recipe.title, ingredientNames)) {
-        console.error(`🚫 BLOCKED: Recipe "${recipe.title}" has forbidden ingredients in detailed list`);
-        throw new Error(`Recipe "${recipe.title}" contains forbidden ingredients in ingredient list`);
+      // Fetch full recipe details to get ingredients
+      const fullRecipe = await getRecipeDetails(recipe.id);
+      
+      // Additional check with full ingredient list
+      if (fullRecipe?.ingredients) {
+        const ingredientNames = fullRecipe.ingredients.map(ing => ing.name);
+        if (!isRecipeAllowed(recipe.title, ingredientNames)) {
+          console.log(`🚫 SKIPPED: Recipe "${recipe.title}" has forbidden ingredients in detailed list`);
+          return null;
+        }
+      }
+      
+      const meal: Meal = {
+        id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`, // Use timestamp for unique ID
+        recipeId: recipe.id, // Store the actual Spoonacular recipe ID separately - this is critical!
+        name: recipe.title,
+        type: mealType as 'breakfast' | 'lunch' | 'dinner',
+        category,
+        cuisine: recipe.cuisines[0] || 'Various',
+        prepTime: recipe.readyInMinutes,
+        servings: recipe.servings,
+        calories: recipe.calories,
+        image: recipe.image,
+        ingredients: fullRecipe?.ingredients || []
+      };
+
+      console.log('✅ Created APPROVED meal with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
+      return meal;
+    } catch (error) {
+      console.log(`🚫 ERROR creating meal from recipe "${recipe.title}":`, error);
+      return null;
+    }
+  };
+
+  const createPlaceholderMeal = (dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Meal => {
+    const mealNames = {
+      breakfast: category === 'main' ? 'Simple Breakfast' : 'Breakfast Side',
+      lunch: category === 'main' ? 'Quick Lunch' : 'Lunch Side',
+      dinner: category === 'main' ? 'Easy Dinner' : 'Dinner Side'
+    };
+
+    return {
+      id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`,
+      name: mealNames[mealType as keyof typeof mealNames],
+      type: mealType as 'breakfast' | 'lunch' | 'dinner',
+      category,
+      cuisine: 'Various',
+      prepTime: 30,
+      servings: 4,
+      calories: 300,
+      ingredients: []
+    };
+  };
+
+  const findSuitableRecipe = async (mealType: string, category: 'main' | 'side', dietaryParams: any, maxAttempts: number = 10): Promise<Meal | null> => {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const recipes = await getRandomRecipes(mealType, category, dietaryParams, isRecipeAllowed);
+        
+        for (const recipe of recipes) {
+          const meal = await createMealFromRecipe(recipe, 'temp', mealType, category);
+          if (meal) {
+            return meal;
+          }
+        }
+        
+        // If no suitable recipe found in this batch, try again
+        console.log(`🔄 Attempt ${attempt + 1}: No suitable ${category} ${mealType} recipes found, trying again...`);
+      } catch (error) {
+        console.error(`Error in attempt ${attempt + 1} for ${mealType} ${category}:`, error);
       }
     }
     
-    const meal: Meal = {
-      id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`, // Use timestamp for unique ID
-      recipeId: recipe.id, // Store the actual Spoonacular recipe ID separately - this is critical!
-      name: recipe.title,
-      type: mealType as 'breakfast' | 'lunch' | 'dinner',
-      category,
-      cuisine: recipe.cuisines[0] || 'Various',
-      prepTime: recipe.readyInMinutes,
-      servings: recipe.servings,
-      calories: recipe.calories,
-      image: recipe.image,
-      ingredients: fullRecipe?.ingredients || []
-    };
-
-    console.log('✅ Created APPROVED meal with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
-    return meal;
+    return null;
   };
 
   const autofillCalendar = async () => {
@@ -68,28 +115,34 @@ export const useMealPlanState = () => {
       for (const day of newDays) {
         for (const mealType of mealTypes) {
           try {
-            // Add main dish with STRICT filtering
-            const mainRecipes = await getRandomRecipes(mealType, 'main', dietaryParams, isRecipeAllowed);
-            if (mainRecipes.length > 0) {
-              const recipe = mainRecipes[0];
-              const newMeal = await createMealFromRecipe(recipe, day.id, mealType, 'main');
-              day.meals.push(newMeal);
-
-              // Add side dishes for lunch and dinner with STRICT filtering
-              if (mealType !== 'breakfast') {
-                const sideRecipes = await getRandomRecipes(mealType, 'side', dietaryParams, isRecipeAllowed);
-                if (sideRecipes.length > 0) {
-                  const sideRecipe = sideRecipes[0];
-                  const sideMeal = await createMealFromRecipe(sideRecipe, day.id, mealType, 'side');
-                  day.meals.push(sideMeal);
-                }
-              }
+            // Add main dish with multiple attempts
+            const mainMeal = await findSuitableRecipe(mealType, 'main', dietaryParams);
+            if (mainMeal) {
+              mainMeal.id = `${day.id}-${mealType}-${Date.now()}`;
+              day.meals.push(mainMeal);
             } else {
-              console.warn(`⚠️ No suitable ${mealType} recipes found for ${day.name} with current dietary restrictions`);
+              console.warn(`⚠️ No suitable ${mealType} main recipes found for ${day.name}, adding placeholder`);
+              day.meals.push(createPlaceholderMeal(day.id, mealType, 'main'));
+            }
+
+            // Add side dishes for lunch and dinner with multiple attempts
+            if (mealType !== 'breakfast') {
+              const sideMeal = await findSuitableRecipe(mealType, 'side', dietaryParams);
+              if (sideMeal) {
+                sideMeal.id = `${day.id}-${mealType}-side-${Date.now()}`;
+                day.meals.push(sideMeal);
+              } else {
+                console.warn(`⚠️ No suitable ${mealType} side recipes found for ${day.name}, adding placeholder`);
+                day.meals.push(createPlaceholderMeal(day.id, mealType, 'side'));
+              }
             }
           } catch (error) {
             console.error(`Error adding ${mealType} for ${day.name}:`, error);
-            // Continue with other meals even if one fails
+            // Add placeholder meals to ensure slots are filled
+            day.meals.push(createPlaceholderMeal(day.id, mealType, 'main'));
+            if (mealType !== 'breakfast') {
+              day.meals.push(createPlaceholderMeal(day.id, mealType, 'side'));
+            }
           }
         }
       }
@@ -111,35 +164,93 @@ export const useMealPlanState = () => {
       const dietaryParams = getSpoonacularParams();
       console.log('🔍 Fetching single recipe with dietary params:', dietaryParams);
       
-      const recipes = await getRandomRecipes(mealType, category, dietaryParams, isRecipeAllowed);
-      if (recipes.length > 0) {
-        const recipe = recipes[0];
-        const newMeal = await createMealFromRecipe(recipe, dayId, mealType, category);
-
+      const meal = await findSuitableRecipe(mealType, category, dietaryParams);
+      
+      if (meal) {
+        meal.id = `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`;
+        
         setDays(prevDays => 
           prevDays.map(day => 
             day.id === dayId
               ? {
                   ...day,
-                  meals: [...day.meals, newMeal]
+                  meals: [...day.meals, meal]
                 }
               : day
           )
         );
       } else {
-        console.warn(`⚠️ No suitable ${category} ${mealType} recipes found with current dietary restrictions`);
-        setApiError(`No suitable ${mealType} recipes found that match your dietary restrictions. Try adjusting your filters or try again.`);
+        console.warn(`⚠️ No suitable ${category} ${mealType} recipes found with current dietary restrictions, adding placeholder`);
+        const placeholderMeal = createPlaceholderMeal(dayId, mealType, category);
+        
+        setDays(prevDays => 
+          prevDays.map(day => 
+            day.id === dayId
+              ? {
+                  ...day,
+                  meals: [...day.meals, placeholderMeal]
+                }
+              : day
+          )
+        );
+        
+        setApiError(`No suitable ${mealType} recipes found that match your dietary restrictions. A placeholder meal was added instead.`);
       }
     } catch (error) {
       console.error('Error fetching random recipe:', error);
       if (error instanceof Error && error.message.includes('quota exceeded')) {
         setApiError('Spoonacular API quota exceeded. Please try again later or contact support for assistance.');
-      } else if (error instanceof Error && error.message.includes('forbidden ingredients')) {
-        setApiError('Recipe was blocked due to dietary restrictions. Trying again...');
-        // Automatically retry once
-        setTimeout(() => fetchRandomRecipe(dayId, mealType, category), 1000);
       } else {
-        setApiError('Failed to fetch recipe. Please try again.');
+        setApiError('Failed to fetch recipe. Adding placeholder meal instead.');
+        // Add placeholder meal as fallback
+        const placeholderMeal = createPlaceholderMeal(dayId, mealType, category);
+        setDays(prevDays => 
+          prevDays.map(day => 
+            day.id === dayId
+              ? {
+                  ...day,
+                  meals: [...day.meals, placeholderMeal]
+                }
+              : day
+          )
+        );
+      }
+    }
+  };
+
+  const changeRecipe = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => {
+    try {
+      const dietaryParams = getSpoonacularParams();
+      console.log('🔄 Changing recipe with dietary params:', dietaryParams);
+      
+      const newMeal = await findSuitableRecipe(mealType, category, dietaryParams);
+      
+      if (newMeal) {
+        // Use the same ID as the meal being replaced to maintain position
+        newMeal.id = mealId;
+        
+        setDays(prevDays => 
+          prevDays.map(day => 
+            day.id === dayId
+              ? {
+                  ...day,
+                  meals: day.meals.map(meal => 
+                    meal.id === mealId ? newMeal : meal
+                  )
+                }
+              : day
+          )
+        );
+      } else {
+        console.warn(`⚠️ No suitable replacement ${category} ${mealType} recipes found`);
+        setApiError(`No suitable replacement ${mealType} recipes found that match your dietary restrictions.`);
+      }
+    } catch (error) {
+      console.error('Error changing recipe:', error);
+      if (error instanceof Error && error.message.includes('quota exceeded')) {
+        setApiError('Spoonacular API quota exceeded. Please try again later or contact support for assistance.');
+      } else {
+        setApiError('Failed to change recipe. Please try again later.');
       }
     }
   };
@@ -203,6 +314,7 @@ export const useMealPlanState = () => {
     handleDragEnd, 
     getListStyle, 
     fetchRandomRecipe, 
+    changeRecipe,
     autofillCalendar,
     isAutofilling,
     resetWeek,

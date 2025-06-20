@@ -12,6 +12,7 @@ function WeeklyPlannerPage() {
     handleDragEnd, 
     getListStyle,
     fetchRandomRecipe,
+    changeRecipe,
     autofillCalendar,
     isAutofilling,
     resetWeek,
@@ -123,6 +124,7 @@ function WeeklyPlannerPage() {
           days={days} 
           getListStyle={getListStyle} 
           onAddMeal={fetchRandomRecipe}
+          onChangeRecipe={changeRecipe}
         />
       </DragDropContext>
 
