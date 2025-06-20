@@ -41,13 +41,29 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 async function checkConnection() {
   try {
-    const { data, error } = await supabase.from('_supabase_migrations').select('*').limit(1);
-    if (error && error.code !== '42P01') {
+    // Simple connection test - try to query the auth.users table
+    const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1 });
+    if (error && !error.message.includes('JWT')) {
       throw error;
     }
     return true;
   } catch (error) {
     console.error('❌ Connection test failed:', error.message);
+    return false;
+  }
+}
+
+async function tableExists(tableName) {
+  try {
+    const { data, error } = await supabase
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_schema', 'public')
+      .eq('table_name', tableName)
+      .single();
+    
+    return !error && data;
+  } catch (error) {
     return false;
   }
 }
@@ -64,6 +80,21 @@ async function runMigration() {
     }
     console.log('✅ Connected to Supabase successfully');
     
+    // Check if tables already exist
+    console.log('🔍 Checking existing database schema...');
+    const favoritesExists = await tableExists('favorite_recipes');
+    const mealPlansExists = await tableExists('saved_meal_plans');
+    
+    if (favoritesExists && mealPlansExists) {
+      console.log('✅ Database tables already exist - migration previously completed');
+      console.log('📊 Found tables:');
+      console.log('   - favorite_recipes ✅');
+      console.log('   - saved_meal_plans ✅');
+      console.log('');
+      console.log('🎉 Your database is ready to use!');
+      return;
+    }
+    
     // Read the migration file
     const migrationPath = join(__dirname, '..', 'supabase', 'migrations', '20250620184438_lively_unit.sql');
     console.log(`📖 Reading migration file: ${migrationPath}`);
@@ -71,73 +102,31 @@ async function runMigration() {
     const migrationSQL = readFileSync(migrationPath, 'utf8');
     console.log(`📝 Migration file loaded (${migrationSQL.length} characters)`);
     
-    // Split migration into individual statements and execute them
-    console.log('🔄 Executing migration statements...');
-    const statements = migrationSQL
-      .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--') && stmt !== '');
-    
-    console.log(`📊 Found ${statements.length} SQL statements to execute`);
-    
-    let successCount = 0;
-    let skipCount = 0;
-    
-    for (let i = 0; i < statements.length; i++) {
-      const statement = statements[i];
-      if (statement.trim()) {
-        try {
-          console.log(`   Executing statement ${i + 1}/${statements.length}...`);
-          
-          // Use the SQL editor endpoint for direct execution
-          const { error } = await supabase.rpc('exec', { 
-            sql: statement + ';' 
-          });
-          
-          if (error) {
-            // Check if it's a "already exists" error, which we can safely ignore
-            if (error.message.includes('already exists') || 
-                error.message.includes('duplicate key') ||
-                error.code === '42P07' || // relation already exists
-                error.code === '42710') { // object already exists
-              console.log(`   ⚠️ Skipped (already exists): ${error.message.split('\n')[0]}`);
-              skipCount++;
-            } else {
-              console.error(`   ❌ Error in statement ${i + 1}:`, error.message);
-              throw error;
-            }
-          } else {
-            successCount++;
-          }
-        } catch (stmtError) {
-          console.error(`   ❌ Failed to execute statement ${i + 1}:`, stmtError.message);
-          throw stmtError;
-        }
-      }
-    }
-    
-    console.log('\n✅ Migration completed successfully!');
-    console.log(`📊 Results: ${successCount} executed, ${skipCount} skipped (already existed)`);
+    console.log('\n⚠️ Automatic SQL execution is not available.');
+    console.log('Please run the migration manually using one of these methods:');
     console.log('');
-    console.log('📋 Database schema updated:');
-    console.log('   - favorite_recipes (for saving favorite recipes)');
-    console.log('   - saved_meal_plans (for saving weekly meal plans)');
+    console.log('🔧 Method 1 - Supabase Dashboard (Recommended):');
+    console.log('1. Go to https://supabase.com/dashboard');
+    console.log('2. Select your project');
+    console.log('3. Go to SQL Editor');
+    console.log('4. Create a new query');
+    console.log('5. Copy and paste the contents of: supabase/migrations/20250620184438_lively_unit.sql');
+    console.log('6. Click "Run" to execute the migration');
     console.log('');
-    console.log('🔒 Security features enabled:');
-    console.log('   - Row Level Security (RLS)');
-    console.log('   - User-specific access policies');
-    console.log('   - Automatic timestamps');
+    console.log('🔧 Method 2 - Supabase CLI (if installed):');
+    console.log('1. Run: supabase db reset');
+    console.log('2. Or: supabase migration up');
     console.log('');
-    console.log('🎉 Your app is now ready with favorites and saved meal plans!');
+    console.log('📄 Migration file location:');
+    console.log(`   ${migrationPath}`);
+    console.log('');
+    console.log('✨ After running the migration, your app will have:');
+    console.log('   - Favorites system for saving recipes');
+    console.log('   - Saved meal plans for reusing weekly plans');
+    console.log('   - Row Level Security for user data protection');
     
   } catch (error) {
-    console.error('\n❌ Migration failed:', error.message);
-    
-    if (error.message.includes('already exists')) {
-      console.log('ℹ️ Tables already exist - migration may have run previously');
-      console.log('✅ Your database is up to date!');
-      return;
-    }
+    console.error('\n❌ Migration setup failed:', error.message);
     
     console.error('\n🔧 Troubleshooting:');
     console.error('1. Check your VITE_SUPABASE_URL in .env file');
