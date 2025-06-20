@@ -112,6 +112,7 @@ const MealCard: React.FC<MealCardProps> = ({
           style={{
             transformOrigin: 'top center',
             filter: isHovered ? 'none' : 'grayscale(60%)',
+            zIndex: showHoverOptions ? 1000 : 'auto', // Ensure the entire card is elevated when showing options
           }}
           onMouseEnter={() => setShowHoverOptions(true)}
           onMouseLeave={() => {
@@ -121,16 +122,17 @@ const MealCard: React.FC<MealCardProps> = ({
         >
           {meal.image && (
             <div 
-              className="absolute inset-0 bg-cover bg-center opacity-10 group-hover:opacity-15 transition-opacity"
+              className="absolute inset-0 bg-cover bg-center opacity-10 group-hover:opacity-15 transition-opacity z-0"
               style={{ backgroundImage: `url(${meal.image})` }}
             />
           )}
           
-          {/* Hover Options Overlay */}
+          {/* Hover Options Overlay - HIGHEST Z-INDEX */}
           <AnimatePresence>
             {showHoverOptions && !snapshot.isDragging && (
               <motion.div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+                style={{ zIndex: 9999 }} // Highest possible z-index
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -141,6 +143,7 @@ const MealCard: React.FC<MealCardProps> = ({
                     <motion.button
                       onClick={handleOpenRecipe}
                       className="bg-white/90 hover:bg-white text-gray-800 px-3 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+                      style={{ zIndex: 10000 }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       initial={{ y: 10, opacity: 0 }}
@@ -154,6 +157,7 @@ const MealCard: React.FC<MealCardProps> = ({
                     <motion.button
                       onClick={handleShowChangeOptions}
                       className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+                      style={{ zIndex: 10000 }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       initial={{ y: 10, opacity: 0 }}
@@ -169,6 +173,7 @@ const MealCard: React.FC<MealCardProps> = ({
                     <motion.button
                       onClick={handleChangeRecipeRandom}
                       className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+                      style={{ zIndex: 10000 }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       initial={{ y: 10, opacity: 0 }}
@@ -190,6 +195,7 @@ const MealCard: React.FC<MealCardProps> = ({
                               key={favorite.id}
                               onClick={(e) => handleChangeRecipeFavorite(e, favorite.recipe_id)}
                               className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-medium transition-all duration-200 flex items-center gap-1 w-full"
+                              style={{ zIndex: 10000 }}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               initial={{ y: 10, opacity: 0 }}
@@ -207,6 +213,7 @@ const MealCard: React.FC<MealCardProps> = ({
                     <motion.button
                       onClick={handleBackToHover}
                       className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs font-medium transition-all duration-200"
+                      style={{ zIndex: 10000 }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       initial={{ y: 10, opacity: 0 }}
