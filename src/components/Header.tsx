@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Utensils, Clock, Filter, LogOut, ShoppingCart } from 'lucide-react';
+import { Utensils, Clock, Filter, LogOut, ShoppingCart, Heart, BookOpen } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDietary } from '../contexts/DietaryContext';
 import ServingsControl from './ServingsControl';
@@ -22,6 +22,8 @@ const Header: React.FC = () => {
       console.error('Error signing out:', error);
     }
   };
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
@@ -46,16 +48,31 @@ const Header: React.FC = () => {
                 <button 
                   onClick={() => navigate('/grocery-list')}
                   className={`btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white ${
-                    location.pathname === '/grocery-list' ? 'bg-white/20' : ''
+                    isActive('/grocery-list') ? 'bg-white/20' : ''
                   }`}
                 >
                   <ShoppingCart className="h-4 w-4 mr-1" />
                   <span>Grocery List</span>
                 </button>
 
-                <button className="btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white">
-                  <Clock className="h-4 w-4 mr-1" />
-                  <span>Meal History</span>
+                <button 
+                  onClick={() => navigate('/favorites')}
+                  className={`btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white ${
+                    isActive('/favorites') ? 'bg-white/20' : ''
+                  }`}
+                >
+                  <Heart className="h-4 w-4 mr-1" />
+                  <span>Favorites</span>
+                </button>
+
+                <button 
+                  onClick={() => navigate('/saved-plans')}
+                  className={`btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white ${
+                    isActive('/saved-plans') ? 'bg-white/20' : ''
+                  }`}
+                >
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  <span>Saved Plans</span>
                 </button>
                 
                 <button 

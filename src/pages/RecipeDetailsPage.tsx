@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, Users, Utensils, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Clock, Users, Utensils, Minus, Plus, Heart } from 'lucide-react';
 import { getRecipeDetails } from '../services/spoonacular';
 import { SpoonacularRecipe } from '../types';
 import { useServings } from '../contexts/ServingsContext';
 import { useMeasurement } from '../contexts/MeasurementContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 function RecipeDetailsPage() {
   const { id } = useParams();
@@ -14,9 +15,12 @@ function RecipeDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const { mealServings, setMealServings, globalServings, adjustQuantity } = useServings();
   const { convertUnit, system } = useMeasurement();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
   const recipeId = id ? `recipe-${id}` : '';
   const currentServings = recipeId ? (mealServings[recipeId] || globalServings) : globalServings;
+  const numericRecipeId = id ? parseInt(id) : null;
+  const isRecipeFavorited = numericRecipeId ? isFavorite(numericRecipeId) : false;
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -104,6 +108,20 @@ function RecipeDetailsPage() {
     }
   };
 
+  const handleFavoriteToggle = async () => {
+    if (!recipe || !numericRecipeId) return;
+
+    try {
+      if (isRecipeFavorited) {
+        await removeFromFavorites(numericRecipeId);
+      } else {
+        await addToFavorites(recipe);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
   // Helper function to clean ingredient names by removing embedded amounts and units
   const cleanIngredientName = (name: string) => {
     // Remove common patterns like "1 cup of", "2 tablespoons", "1/2 teaspoon", etc.
@@ -153,13 +171,27 @@ function RecipeDetailsPage() {
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
-      <button 
-        onClick={() => navigate('/')}
-        className="mb-6 btn-secondary"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Planner
-      </button>
+      <div className="flex items-center justify-between mb-6">
+        <button 
+          onClick={() => navigate('/')}
+          className="btn-secondary"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Planner
+        </button>
+        
+        <button
+          onClick={handleFavoriteToggle}
+          className={`btn-secondary ${
+            isRecipeFavorited 
+              ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
+              : 'hover:bg-gray-100'
+          }`}
+        >
+          <Heart className={`w-4 h-4 mr-2 ${isRecipeFavorited ? 'fill-current' : ''}`} />
+          {isRecipeFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
+        </button>
+      </div>
 
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         <div className="md:w-1/2">
