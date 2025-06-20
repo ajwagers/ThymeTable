@@ -3,6 +3,7 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import { Sparkles, RefreshCw, AlertCircle, X, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WeeklyCalendar from '../components/WeeklyCalendar';
+import ChangeRecipeModal from '../components/ChangeRecipeModal';
 import { useMealPlanState } from '../hooks/useMealPlanState';
 import { useFavorites } from '../contexts/FavoritesContext';
 
@@ -24,6 +25,15 @@ function WeeklyPlannerPage() {
   const [saveName, setSaveName] = useState('');
   const [saveDescription, setSaveDescription] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Change Recipe Modal State
+  const [showChangeModal, setShowChangeModal] = useState(false);
+  const [changeModalData, setChangeModalData] = useState<{
+    dayId: string;
+    mealId: string;
+    mealType: string;
+    category: 'main' | 'side';
+  } | null>(null);
 
   const handleSaveMealPlan = async () => {
     if (!saveName.trim()) return;
@@ -60,6 +70,40 @@ function WeeklyPlannerPage() {
     setSaveName(generatePlanName());
     setSaveDescription('');
     setShowSaveModal(true);
+  };
+
+  const handleChangeRecipeRequest = (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => {
+    setChangeModalData({ dayId, mealId, mealType, category });
+    setShowChangeModal(true);
+  };
+
+  const handleChangeRecipeRandom = () => {
+    if (changeModalData) {
+      changeRecipe(
+        changeModalData.dayId, 
+        changeModalData.mealId, 
+        changeModalData.mealType, 
+        changeModalData.category, 
+        true
+      );
+    }
+    setShowChangeModal(false);
+    setChangeModalData(null);
+  };
+
+  const handleChangeRecipeFavorite = (favoriteRecipeId: number) => {
+    if (changeModalData) {
+      changeRecipe(
+        changeModalData.dayId, 
+        changeModalData.mealId, 
+        changeModalData.mealType, 
+        changeModalData.category, 
+        false, 
+        favoriteRecipeId
+      );
+    }
+    setShowChangeModal(false);
+    setChangeModalData(null);
   };
 
   return (
@@ -124,9 +168,22 @@ function WeeklyPlannerPage() {
           days={days} 
           getListStyle={getListStyle} 
           onAddMeal={fetchRandomRecipe}
-          onChangeRecipe={changeRecipe}
+          onChangeRecipe={handleChangeRecipeRequest}
         />
       </DragDropContext>
+
+      {/* Change Recipe Modal */}
+      <ChangeRecipeModal
+        isOpen={showChangeModal}
+        onClose={() => {
+          setShowChangeModal(false);
+          setChangeModalData(null);
+        }}
+        mealType={changeModalData?.mealType || ''}
+        category={changeModalData?.category || 'main'}
+        onSelectRandom={handleChangeRecipeRandom}
+        onSelectFavorite={handleChangeRecipeFavorite}
+      />
 
       {/* Save Meal Plan Modal */}
       <AnimatePresence>
