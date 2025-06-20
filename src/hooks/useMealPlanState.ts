@@ -257,16 +257,34 @@ export const useMealPlanState = () => {
       let newMeal: Meal | null = null;
 
       if (useRandom) {
-        // Use random recipe
+        // Use random recipe generation
         const dietaryParams = getSpoonacularParams();
-        console.log('🔄 Changing recipe with dietary params:', dietaryParams);
+        console.log('🔄 Changing to random recipe with dietary params:', dietaryParams);
         
         newMeal = await findSuitableRecipe(mealType, category, dietaryParams);
+        
+        if (!newMeal) {
+          console.warn(`⚠️ No suitable replacement ${category} ${mealType} recipes found`);
+          setApiError(`No suitable replacement ${mealType} recipes found that match your dietary restrictions.`);
+          return;
+        }
       } else if (favoriteRecipeId) {
         // Use favorite recipe
+        console.log('🔄 Changing to favorite recipe ID:', favoriteRecipeId);
         const favorite = favorites.find(fav => fav.recipe_id === favoriteRecipeId);
-        if (favorite) {
-          newMeal = await createMealFromFavorite(favorite, dayId, mealType, category);
+        
+        if (!favorite) {
+          console.error('Favorite recipe not found:', favoriteRecipeId);
+          setApiError('Selected favorite recipe not found.');
+          return;
+        }
+        
+        newMeal = await createMealFromFavorite(favorite, dayId, mealType, category);
+        
+        if (!newMeal) {
+          console.warn(`⚠️ Favorite recipe "${favorite.recipe_title}" violates current dietary restrictions`);
+          setApiError(`The selected favorite recipe doesn't match your current dietary restrictions.`);
+          return;
         }
       }
       
@@ -286,9 +304,9 @@ export const useMealPlanState = () => {
               : day
           )
         );
-      } else {
-        console.warn(`⚠️ No suitable replacement ${category} ${mealType} recipes found`);
-        setApiError(`No suitable replacement ${mealType} recipes found that match your dietary restrictions.`);
+        
+        console.log('✅ Successfully replaced recipe');
+        setApiError(null); // Clear any previous errors
       }
     } catch (error) {
       console.error('Error changing recipe:', error);
