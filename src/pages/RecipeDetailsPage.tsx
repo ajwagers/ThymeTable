@@ -11,50 +11,83 @@ function RecipeDetailsPage() {
   const navigate = useNavigate();
   const [recipe, setRecipe] = useState<SpoonacularRecipe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { mealServings, setMealServings, globalServings, adjustQuantity } = useServings();
   const { convertUnit, system } = useMeasurement();
 
   const recipeId = id ? `recipe-${id}` : '';
   const currentServings = recipeId ? (mealServings[recipeId] || globalServings) : globalServings;
 
-  // Add system as a dependency to re-render when measurement system changes
   useEffect(() => {
     const fetchRecipe = async () => {
-      if (id) {
-        const data = await getRecipeDetails(parseInt(id));
-        if (data?.ingredients) {
-          // Convert measurements upfront
-          const convertedIngredients = data.ingredients.map(ingredient => {
-            const adjustedAmount = adjustQuantity(ingredient.amount, data.servings, recipeId);
-            const converted = convertUnit(parseFloat(adjustedAmount), ingredient.unit);
-            return {
-              ...ingredient,
-              amount: converted.amount,
-              unit: converted.unit,
-            };
-          });
+      if (!id) {
+        setError('No recipe ID provided');
+        setLoading(false);
+        return;
+      }
 
-          setRecipe(prev => prev ? {
-            ...prev,
-            ingredients: convertedIngredients
-          } : null);
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Fetching recipe details for ID:', id);
+        const numericId = parseInt(id);
+        
+        if (isNaN(numericId)) {
+          throw new Error('Invalid recipe ID format');
         }
+
+        const data = await getRecipeDetails(numericId);
+        
+        if (!data) {
+          throw new Error('Recipe not found');
+        }
+
+        console.log('Successfully fetched recipe:', data.title);
+        
+        if (data.ingredients) {
+          // Store original amounts for conversion calculations
+          const processedIngredients = data.ingredients.map(ingredient => ({
+            ...ingredient,
+            originalAmount: ingredient.amount,
+            originalUnit: ingredient.unit,
+          }));
+
+          setRecipe({
+            ...data,
+            ingredients: processedIngredients
+          });
+        } else {
+          setRecipe(data);
+        }
+      } catch (error) {
+        console.error('Error fetching recipe details:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load recipe');
+      } finally {
         setLoading(false);
       }
     };
-    fetchRecipe();
-  }, [id, system, convertUnit, adjustQuantity]);
 
-  // Add useEffect to handle measurement system changes
+    fetchRecipe();
+  }, [id]);
+
+  // Handle measurement system changes and serving adjustments
   useEffect(() => {
     if (recipe?.ingredients) {
       const updatedIngredients = recipe.ingredients.map(ingredient => {
-        const adjustedAmount = adjustQuantity(ingredient.originalAmount, recipe.servings, recipeId);
-        const converted = convertUnit(parseFloat(adjustedAmount), ingredient.originalUnit);
+        const originalAmount = ingredient.originalAmount || ingredient.amount;
+        const originalUnit = ingredient.originalUnit || ingredient.unit;
+        
+        // First adjust for servings
+        const adjustedAmount = adjustQuantity(originalAmount, recipe.servings, recipeId);
+        
+        // Then convert units
+        const converted = convertUnit(parseFloat(adjustedAmount), originalUnit);
+        
         return {
           ...ingredient,
-          convertedAmount: converted.amount,
-          convertedUnit: converted.unit,
+          amount: converted.amount,
+          unit: converted.unit,
         };
       });
 
@@ -63,7 +96,7 @@ function RecipeDetailsPage() {
         ingredients: updatedIngredients
       } : null);
     }
-  }, [system, convertUnit, recipe?.servings, recipeId]);
+  }, [system, convertUnit, currentServings, recipe?.servings, recipeId, adjustQuantity]);
 
   const handleServingsChange = (newServings: number) => {
     if (recipeId) {
@@ -83,23 +116,35 @@ function RecipeDetailsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-      </div>
-    );
-  }
-
-  if (!recipe) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-600">Recipe not found</p>
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
         <button 
           onClick={() => navigate('/')}
-          className="mt-4 btn-primary"
+          className="mb-6 btn-secondary"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Planner
         </button>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !recipe) {
+    return (
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <button 
+          onClick={() => navigate('/')}
+          className="mb-6 btn-secondary"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Planner
+        </button>
+        <div className="text-center py-8">
+          <p className="text-gray-600 mb-4">{error || 'Recipe not found'}</p>
+          <p className="text-sm text-gray-500">Recipe ID: {id}</p>
+        </div>
       </div>
     );
   }
@@ -167,7 +212,7 @@ function RecipeDetailsPage() {
             </div>
           </div>
 
-          {recipe.cuisines.length > 0 && (
+          {recipe.cuisines && recipe.cuisines.length > 0 && (
             <div className="mb-6">
               <h2 className="text-lg font-medium mb-2">Cuisine</h2>
               <div className="flex flex-wrap gap-2">
@@ -195,7 +240,7 @@ function RecipeDetailsPage() {
                 return (
                   <li key={index} className="flex items-center text-gray-700">
                     <span className="w-2 h-2 bg-primary-500 rounded-full mr-2" />
-                    {ingredient.convertedAmount} {ingredient.convertedUnit} {cleanName}
+                    {ingredient.amount} {ingredient.unit} {cleanName}
                   </li>
                 );
               })}

@@ -22,9 +22,9 @@ export const useMealPlanState = () => {
     // Fetch full recipe details to get ingredients
     const fullRecipe = await getRecipeDetails(recipe.id);
     
-    return {
-      id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`, // Use timestamp instead of recipe ID
-      recipeId: recipe.id, // Store the actual Spoonacular recipe ID separately
+    const meal: Meal = {
+      id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`, // Use timestamp for unique ID
+      recipeId: recipe.id, // Store the actual Spoonacular recipe ID separately - this is critical!
       name: recipe.title,
       type: mealType as 'breakfast' | 'lunch' | 'dinner',
       category,
@@ -35,6 +35,9 @@ export const useMealPlanState = () => {
       image: recipe.image,
       ingredients: fullRecipe?.ingredients || []
     };
+
+    console.log('Created meal with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
+    return meal;
   };
 
   const autofillCalendar = async () => {

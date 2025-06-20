@@ -18,7 +18,18 @@ const MealList: React.FC<MealListProps> = ({ meals, mealType, onAddMeal }) => {
 
   const handleCardClick = (meal: Meal) => {
     // Use the recipeId field if available, otherwise try to extract from the meal ID
-    const recipeId = meal.recipeId || meal.id.split('-').pop();
+    let recipeId = meal.recipeId;
+    
+    if (!recipeId) {
+      // Try to extract from meal ID (format: dayId-mealType-timestamp or dayId-mealType-side-timestamp)
+      const parts = meal.id.split('-');
+      // Get the last part which should be the timestamp, but we need the actual recipe ID
+      // This is a fallback - ideally recipeId should always be set
+      console.warn('No recipeId found for meal:', meal.name, 'ID:', meal.id);
+      return; // Don't navigate if we don't have a proper recipe ID
+    }
+    
+    console.log('Navigating to recipe:', recipeId, 'for meal:', meal.name);
     
     if (recipeId && !isNaN(parseInt(recipeId.toString()))) {
       navigate(`/recipe/${recipeId}`);
