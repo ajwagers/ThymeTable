@@ -8,7 +8,7 @@ interface MealListProps {
   meals: Meal[];
   mealType: string;
   onAddMeal: () => void;
-  onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side') => void;
+  onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   dayId?: string;
 }
 
@@ -22,9 +22,9 @@ const MealList: React.FC<MealListProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side') => {
+  const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => {
     if (onChangeRecipe) {
-      onChangeRecipe(mealId, mealType, category);
+      onChangeRecipe(mealId, mealType, category, useRandom, favoriteRecipeId);
     }
   };
 

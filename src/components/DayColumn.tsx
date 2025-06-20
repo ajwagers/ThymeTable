@@ -7,7 +7,7 @@ interface DayColumnProps {
   day: Day;
   getListStyle: (isDraggingOver: boolean) => string;
   onAddMeal: (dayId: string, mealType: string) => void;
-  onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => void;
+  onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({ 
@@ -16,9 +16,9 @@ const DayColumn: React.FC<DayColumnProps> = ({
   onAddMeal, 
   onChangeRecipe 
 }) => {
-  const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side') => {
+  const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => {
     if (onChangeRecipe) {
-      onChangeRecipe(day.id, mealId, mealType, category);
+      onChangeRecipe(day.id, mealId, mealType, category, useRandom, favoriteRecipeId);
     }
   };
 

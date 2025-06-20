@@ -3,9 +3,11 @@ import { Day, DragResult, Meal } from '../types';
 import { createEmptyWeek } from '../data/initialData';
 import { getRandomRecipes, getRecipeDetails } from '../services/spoonacular';
 import { useDietary } from '../contexts/DietaryContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 export const useMealPlanState = () => {
   const { getSpoonacularParams, isRecipeAllowed } = useDietary();
+  const { favorites } = useFavorites();
   const [days, setDays] = useState<Day[]>(() => {
     const saved = localStorage.getItem('mealPlan');
     return saved ? JSON.parse(saved) : createEmptyWeek();
@@ -56,6 +58,38 @@ export const useMealPlanState = () => {
       return meal;
     } catch (error) {
       console.log(`🚫 ERROR creating meal from recipe "${recipe.title}":`, error);
+      return null;
+    }
+  };
+
+  const createMealFromFavorite = async (favorite: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Promise<Meal | null> => {
+    try {
+      const recipe = favorite.recipe_data;
+      
+      // Check if this favorite recipe is still allowed with current dietary restrictions
+      if (!isRecipeAllowed(recipe.title)) {
+        console.log(`🚫 SKIPPED: Favorite recipe "${recipe.title}" violates current dietary restrictions`);
+        return null;
+      }
+
+      const meal: Meal = {
+        id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`,
+        recipeId: recipe.id,
+        name: recipe.title,
+        type: mealType as 'breakfast' | 'lunch' | 'dinner',
+        category,
+        cuisine: recipe.cuisines?.[0] || 'Various',
+        prepTime: recipe.readyInMinutes,
+        servings: recipe.servings,
+        calories: recipe.calories,
+        image: recipe.image,
+        ingredients: recipe.ingredients || []
+      };
+
+      console.log('✅ Created meal from favorite with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
+      return meal;
+    } catch (error) {
+      console.log(`🚫 ERROR creating meal from favorite "${favorite.recipe_title}":`, error);
       return null;
     }
   };
@@ -218,12 +252,23 @@ export const useMealPlanState = () => {
     }
   };
 
-  const changeRecipe = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => {
+  const changeRecipe = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom: boolean = true, favoriteRecipeId?: number) => {
     try {
-      const dietaryParams = getSpoonacularParams();
-      console.log('🔄 Changing recipe with dietary params:', dietaryParams);
-      
-      const newMeal = await findSuitableRecipe(mealType, category, dietaryParams);
+      let newMeal: Meal | null = null;
+
+      if (useRandom) {
+        // Use random recipe
+        const dietaryParams = getSpoonacularParams();
+        console.log('🔄 Changing recipe with dietary params:', dietaryParams);
+        
+        newMeal = await findSuitableRecipe(mealType, category, dietaryParams);
+      } else if (favoriteRecipeId) {
+        // Use favorite recipe
+        const favorite = favorites.find(fav => fav.recipe_id === favoriteRecipeId);
+        if (favorite) {
+          newMeal = await createMealFromFavorite(favorite, dayId, mealType, category);
+        }
+      }
       
       if (newMeal) {
         // Use the same ID as the meal being replaced to maintain position

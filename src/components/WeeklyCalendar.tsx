@@ -6,7 +6,7 @@ interface WeeklyCalendarProps {
   days: Day[];
   getListStyle: (isDraggingOver: boolean) => string;
   onAddMeal: (dayId: string, mealType: string) => void;
-  onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => void;
+  onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
 }
 
 const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ 
