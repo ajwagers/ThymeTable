@@ -5,7 +5,7 @@ import { getRandomRecipes, getRecipeDetails } from '../services/spoonacular';
 import { useDietary } from '../contexts/DietaryContext';
 
 export const useMealPlanState = () => {
-  const { getSpoonacularParams } = useDietary();
+  const { getSpoonacularParams, isRecipeAllowed } = useDietary();
   const [days, setDays] = useState<Day[]>(() => {
     const saved = localStorage.getItem('mealPlan');
     return saved ? JSON.parse(saved) : createEmptyWeek();
@@ -19,8 +19,23 @@ export const useMealPlanState = () => {
   };
 
   const createMealFromRecipe = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
+    // CRITICAL: Double-check that this recipe is allowed before creating the meal
+    if (!isRecipeAllowed(recipe.title)) {
+      console.error(`🚫 BLOCKED: Recipe "${recipe.title}" violates dietary restrictions`);
+      throw new Error(`Recipe "${recipe.title}" contains forbidden ingredients`);
+    }
+
     // Fetch full recipe details to get ingredients
     const fullRecipe = await getRecipeDetails(recipe.id);
+    
+    // Additional check with full ingredient list
+    if (fullRecipe?.ingredients) {
+      const ingredientNames = fullRecipe.ingredients.map(ing => ing.name);
+      if (!isRecipeAllowed(recipe.title, ingredientNames)) {
+        console.error(`🚫 BLOCKED: Recipe "${recipe.title}" has forbidden ingredients in detailed list`);
+        throw new Error(`Recipe "${recipe.title}" contains forbidden ingredients in ingredient list`);
+      }
+    }
     
     const meal: Meal = {
       id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`, // Use timestamp for unique ID
@@ -36,7 +51,7 @@ export const useMealPlanState = () => {
       ingredients: fullRecipe?.ingredients || []
     };
 
-    console.log('Created meal with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
+    console.log('✅ Created APPROVED meal with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
     return meal;
   };
 
@@ -48,24 +63,33 @@ export const useMealPlanState = () => {
       const mealTypes = ['breakfast', 'lunch', 'dinner'];
       const dietaryParams = getSpoonacularParams();
       
+      console.log('🚀 Starting autofill with dietary params:', dietaryParams);
+      
       for (const day of newDays) {
         for (const mealType of mealTypes) {
-          // Add main dish
-          const mainRecipes = await getRandomRecipes(mealType, 'main', dietaryParams);
-          if (mainRecipes.length > 0) {
-            const recipe = mainRecipes[0];
-            const newMeal = await createMealFromRecipe(recipe, day.id, mealType, 'main');
-            day.meals.push(newMeal);
+          try {
+            // Add main dish with STRICT filtering
+            const mainRecipes = await getRandomRecipes(mealType, 'main', dietaryParams, isRecipeAllowed);
+            if (mainRecipes.length > 0) {
+              const recipe = mainRecipes[0];
+              const newMeal = await createMealFromRecipe(recipe, day.id, mealType, 'main');
+              day.meals.push(newMeal);
 
-            // Add side dishes for lunch and dinner
-            if (mealType !== 'breakfast') {
-              const sideRecipes = await getRandomRecipes(mealType, 'side', dietaryParams);
-              if (sideRecipes.length > 0) {
-                const sideRecipe = sideRecipes[0];
-                const sideMeal = await createMealFromRecipe(sideRecipe, day.id, mealType, 'side');
-                day.meals.push(sideMeal);
+              // Add side dishes for lunch and dinner with STRICT filtering
+              if (mealType !== 'breakfast') {
+                const sideRecipes = await getRandomRecipes(mealType, 'side', dietaryParams, isRecipeAllowed);
+                if (sideRecipes.length > 0) {
+                  const sideRecipe = sideRecipes[0];
+                  const sideMeal = await createMealFromRecipe(sideRecipe, day.id, mealType, 'side');
+                  day.meals.push(sideMeal);
+                }
               }
+            } else {
+              console.warn(`⚠️ No suitable ${mealType} recipes found for ${day.name} with current dietary restrictions`);
             }
+          } catch (error) {
+            console.error(`Error adding ${mealType} for ${day.name}:`, error);
+            // Continue with other meals even if one fails
           }
         }
       }
@@ -85,7 +109,9 @@ export const useMealPlanState = () => {
   const fetchRandomRecipe = async (dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
     try {
       const dietaryParams = getSpoonacularParams();
-      const recipes = await getRandomRecipes(mealType, category, dietaryParams);
+      console.log('🔍 Fetching single recipe with dietary params:', dietaryParams);
+      
+      const recipes = await getRandomRecipes(mealType, category, dietaryParams, isRecipeAllowed);
       if (recipes.length > 0) {
         const recipe = recipes[0];
         const newMeal = await createMealFromRecipe(recipe, dayId, mealType, category);
@@ -100,11 +126,20 @@ export const useMealPlanState = () => {
               : day
           )
         );
+      } else {
+        console.warn(`⚠️ No suitable ${category} ${mealType} recipes found with current dietary restrictions`);
+        setApiError(`No suitable ${mealType} recipes found that match your dietary restrictions. Try adjusting your filters or try again.`);
       }
     } catch (error) {
       console.error('Error fetching random recipe:', error);
       if (error instanceof Error && error.message.includes('quota exceeded')) {
         setApiError('Spoonacular API quota exceeded. Please try again later or contact support for assistance.');
+      } else if (error instanceof Error && error.message.includes('forbidden ingredients')) {
+        setApiError('Recipe was blocked due to dietary restrictions. Trying again...');
+        // Automatically retry once
+        setTimeout(() => fetchRandomRecipe(dayId, mealType, category), 1000);
+      } else {
+        setApiError('Failed to fetch recipe. Please try again.');
       }
     }
   };

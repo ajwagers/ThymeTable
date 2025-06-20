@@ -41,129 +41,314 @@ interface DietaryContextType {
     intolerances?: string;
     excludeIngredients?: string;
   };
+  getAllForbiddenIngredients: () => string[];
+  isRecipeAllowed: (recipeTitle: string, ingredients?: string[]) => boolean;
 }
 
 const DietaryContext = createContext<DietaryContextType | undefined>(undefined);
 
-// Enhanced mapping with comprehensive ingredient exclusions
+// MASSIVELY ENHANCED mapping with comprehensive ingredient exclusions
 const dietaryMappings: Record<DietaryFilter, { diet?: string; intolerances?: string[]; excludeIngredients?: string[] }> = {
   'gluten-free': { 
     intolerances: ['gluten'],
     excludeIngredients: [
+      // Primary gluten sources
       'wheat', 'barley', 'rye', 'spelt', 'kamut', 'triticale', 'bulgur', 'semolina', 'durum',
-      'bread', 'pasta', 'noodles', 'flour', 'breadcrumbs', 'croutons', 'couscous',
-      'beer', 'malt', 'brewer\'s yeast', 'wheat germ', 'wheat bran', 'graham flour',
-      'farro', 'einkorn', 'emmer', 'seitan', 'vital wheat gluten'
+      'farro', 'einkorn', 'emmer', 'seitan', 'vital wheat gluten', 'wheat germ', 'wheat bran',
+      
+      // Flour types containing gluten
+      'flour', 'all-purpose flour', 'bread flour', 'cake flour', 'pastry flour', 'self-rising flour',
+      'whole wheat flour', 'graham flour', 'rye flour', 'barley flour', 'spelt flour',
+      
+      // Bread and baked goods
+      'bread', 'breadcrumbs', 'croutons', 'bagel', 'bagels', 'muffin', 'muffins', 'croissant', 'croissants',
+      'biscuit', 'biscuits', 'scone', 'scones', 'roll', 'rolls', 'bun', 'buns', 'toast',
+      'sandwich bread', 'pita bread', 'naan', 'focaccia', 'sourdough',
+      
+      // Pasta and noodles
+      'pasta', 'spaghetti', 'penne', 'linguine', 'fettuccine', 'lasagna', 'ravioli', 'gnocchi',
+      'noodles', 'egg noodles', 'ramen', 'udon', 'soba', 'couscous', 'orzo',
+      
+      // Crackers and snacks
+      'crackers', 'pretzels', 'goldfish', 'cheez-its', 'wheat thins', 'triscuits',
+      
+      // Cereals and grains
+      'cereal', 'granola', 'muesli', 'oatmeal', 'porridge', 'cream of wheat',
+      
+      // Beer and malt
+      'beer', 'ale', 'lager', 'malt', 'malted', 'malt vinegar', 'brewer\'s yeast', 'malt extract',
+      
+      // Sauces and seasonings that often contain gluten
+      'soy sauce', 'teriyaki sauce', 'worcestershire sauce', 'malt vinegar',
+      'seasoning mix', 'soup mix', 'gravy mix', 'bouillon cubes',
+      
+      // Processed foods that often contain gluten
+      'imitation crab', 'surimi', 'processed cheese', 'blue cheese', 'roquefort',
+      'licorice', 'communion wafers', 'play dough'
     ]
   },
   'dairy-free': { 
     intolerances: ['dairy'],
     excludeIngredients: [
-      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'sour cream', 'cottage cheese',
-      'ricotta', 'mozzarella', 'cheddar', 'parmesan', 'swiss', 'goat cheese', 'feta',
-      'cream cheese', 'mascarpone', 'whey', 'casein', 'lactose', 'buttermilk',
-      'heavy cream', 'half and half', 'evaporated milk', 'condensed milk',
-      'ice cream', 'sherbet', 'frozen yogurt', 'kefir', 'ghee', 'clarified butter'
+      // Milk and milk products
+      'milk', 'whole milk', 'skim milk', '2% milk', 'low-fat milk', 'non-fat milk',
+      'evaporated milk', 'condensed milk', 'sweetened condensed milk', 'powdered milk',
+      'dry milk', 'milk powder', 'buttermilk', 'chocolate milk',
+      
+      // Cream products
+      'cream', 'heavy cream', 'heavy whipping cream', 'light cream', 'half and half',
+      'whipping cream', 'sour cream', 'crème fraîche', 'clotted cream',
+      
+      // Cheese varieties
+      'cheese', 'cheddar', 'mozzarella', 'parmesan', 'swiss', 'american cheese',
+      'goat cheese', 'feta', 'brie', 'camembert', 'blue cheese', 'roquefort',
+      'cream cheese', 'cottage cheese', 'ricotta', 'mascarpone', 'gouda',
+      'provolone', 'monterey jack', 'colby', 'pepper jack', 'string cheese',
+      'processed cheese', 'cheese spread', 'cheese sauce', 'nacho cheese',
+      
+      // Butter and butter products
+      'butter', 'salted butter', 'unsalted butter', 'clarified butter', 'ghee',
+      'butter flavoring', 'butter extract', 'margarine', 'butter substitute',
+      
+      // Yogurt and fermented dairy
+      'yogurt', 'greek yogurt', 'frozen yogurt', 'kefir', 'lassi',
+      
+      // Ice cream and frozen desserts
+      'ice cream', 'gelato', 'sherbet', 'frozen custard', 'soft serve',
+      
+      // Dairy proteins and derivatives
+      'whey', 'whey protein', 'casein', 'caseinate', 'lactose', 'lactalbumin',
+      'lactoglobulin', 'milk solids', 'milk fat', 'anhydrous milk fat',
+      
+      // Hidden dairy ingredients
+      'caramel', 'nougat', 'custard', 'pudding', 'mousse', 'ganache',
+      'white chocolate', 'milk chocolate', 'butter cookies', 'creamy',
+      
+      // Processed foods often containing dairy
+      'ranch dressing', 'caesar dressing', 'alfredo sauce', 'bechamel',
+      'quiche', 'pizza', 'gratin', 'au gratin', 'scalloped'
     ]
   },
   'ketogenic': { 
     diet: 'ketogenic',
     excludeIngredients: [
-      'sugar', 'honey', 'maple syrup', 'agave', 'corn syrup', 'brown sugar',
+      // Sugars and sweeteners
+      'sugar', 'brown sugar', 'white sugar', 'cane sugar', 'coconut sugar',
+      'honey', 'maple syrup', 'agave', 'corn syrup', 'high fructose corn syrup',
+      'molasses', 'golden syrup', 'rice syrup', 'date syrup',
+      
+      // Grains and grain products
       'bread', 'pasta', 'rice', 'quinoa', 'oats', 'cereal', 'crackers',
-      'potato', 'sweet potato', 'corn', 'beans', 'lentils', 'chickpeas',
-      'banana', 'apple', 'orange', 'grapes', 'pineapple', 'mango',
-      'flour', 'wheat', 'barley', 'rye'
+      'wheat', 'barley', 'rye', 'corn', 'millet', 'buckwheat', 'amaranth',
+      'flour', 'breadcrumbs', 'couscous', 'bulgur',
+      
+      // Starchy vegetables
+      'potato', 'potatoes', 'sweet potato', 'sweet potatoes', 'yam', 'yams',
+      'corn', 'peas', 'carrots', 'beets', 'parsnips', 'turnips',
+      
+      // Legumes
+      'beans', 'black beans', 'kidney beans', 'pinto beans', 'navy beans',
+      'lentils', 'chickpeas', 'garbanzo beans', 'split peas', 'soybeans',
+      'edamame', 'peanuts', 'peanut butter',
+      
+      // High-carb fruits
+      'banana', 'bananas', 'apple', 'apples', 'orange', 'oranges',
+      'grapes', 'pineapple', 'mango', 'papaya', 'dates', 'figs',
+      'raisins', 'dried fruit', 'fruit juice',
+      
+      // Processed and high-carb foods
+      'pizza', 'sandwich', 'burger bun', 'tortilla', 'wrap',
+      'chips', 'french fries', 'onion rings', 'breaded'
     ]
   },
   'vegan': { 
     diet: 'vegan',
     excludeIngredients: [
-      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
-      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
-      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'eggs', 'honey',
-      'gelatin', 'lard', 'bacon', 'ham', 'sausage', 'pepperoni'
+      // All meat and poultry
+      'meat', 'beef', 'pork', 'lamb', 'veal', 'venison', 'bison', 'goat',
+      'chicken', 'turkey', 'duck', 'goose', 'quail', 'pheasant',
+      'bacon', 'ham', 'sausage', 'pepperoni', 'salami', 'prosciutto',
+      'hot dog', 'bratwurst', 'chorizo', 'ground beef', 'ground turkey',
+      'steak', 'roast', 'ribs', 'chops', 'cutlet', 'tenderloin',
+      
+      // All seafood
+      'fish', 'salmon', 'tuna', 'cod', 'halibut', 'tilapia', 'mahi mahi',
+      'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams', 'oysters',
+      'squid', 'octopus', 'calamari', 'anchovy', 'anchovies', 'sardines',
+      'crab sticks', 'surimi', 'fish sauce', 'worcestershire sauce',
+      
+      // All dairy products
+      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'ice cream',
+      'whey', 'casein', 'lactose', 'ghee', 'buttermilk',
+      
+      // Eggs and egg products
+      'egg', 'eggs', 'egg white', 'egg whites', 'egg yolk', 'egg yolks',
+      'mayonnaise', 'aioli', 'hollandaise', 'custard', 'meringue',
+      
+      // Honey and bee products
+      'honey', 'beeswax', 'propolis', 'royal jelly',
+      
+      // Gelatin and animal-derived ingredients
+      'gelatin', 'collagen', 'isinglass', 'carmine', 'cochineal',
+      'shellac', 'lanolin', 'tallow', 'lard', 'suet',
+      
+      // Hidden animal ingredients
+      'vitamin d3', 'omega-3', 'glucosamine', 'chondroitin',
+      'l-cysteine', 'albumin', 'pepsin', 'rennet'
     ]
   },
   'vegetarian': { 
     diet: 'vegetarian',
     excludeIngredients: [
-      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
-      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
-      'bacon', 'ham', 'sausage', 'pepperoni', 'anchovy', 'gelatin', 'lard'
+      // All meat and poultry
+      'meat', 'beef', 'pork', 'lamb', 'veal', 'venison', 'bison', 'goat',
+      'chicken', 'turkey', 'duck', 'goose', 'quail', 'pheasant',
+      'bacon', 'ham', 'sausage', 'pepperoni', 'salami', 'prosciutto',
+      'hot dog', 'bratwurst', 'chorizo', 'ground beef', 'ground turkey',
+      'steak', 'roast', 'ribs', 'chops', 'cutlet', 'tenderloin',
+      
+      // All seafood
+      'fish', 'salmon', 'tuna', 'cod', 'halibut', 'tilapia', 'mahi mahi',
+      'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams', 'oysters',
+      'squid', 'octopus', 'calamari', 'anchovy', 'anchovies', 'sardines',
+      'crab sticks', 'surimi', 'fish sauce', 'worcestershire sauce',
+      
+      // Animal fats and by-products
+      'lard', 'tallow', 'suet', 'gelatin', 'rennet', 'isinglass'
     ]
   },
   'lacto-vegetarian': { 
     diet: 'lacto vegetarian',
     excludeIngredients: [
-      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
-      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
-      'eggs', 'bacon', 'ham', 'sausage', 'pepperoni', 'anchovy', 'gelatin', 'lard'
+      // All meat and poultry
+      'meat', 'beef', 'pork', 'lamb', 'veal', 'venison', 'bison', 'goat',
+      'chicken', 'turkey', 'duck', 'goose', 'quail', 'pheasant',
+      'bacon', 'ham', 'sausage', 'pepperoni', 'salami', 'prosciutto',
+      'hot dog', 'bratwurst', 'chorizo', 'ground beef', 'ground turkey',
+      'steak', 'roast', 'ribs', 'chops', 'cutlet', 'tenderloin',
+      
+      // All seafood
+      'fish', 'salmon', 'tuna', 'cod', 'halibut', 'tilapia', 'mahi mahi',
+      'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams', 'oysters',
+      'squid', 'octopus', 'calamari', 'anchovy', 'anchovies', 'sardines',
+      'crab sticks', 'surimi', 'fish sauce', 'worcestershire sauce',
+      
+      // Eggs and egg products
+      'egg', 'eggs', 'egg white', 'egg whites', 'egg yolk', 'egg yolks',
+      'mayonnaise', 'aioli', 'hollandaise', 'custard', 'meringue',
+      
+      // Animal fats and by-products
+      'lard', 'tallow', 'suet', 'gelatin', 'rennet', 'isinglass'
     ]
   },
   'ovo-vegetarian': { 
     diet: 'ovo vegetarian',
     excludeIngredients: [
-      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'fish', 'salmon',
-      'tuna', 'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams',
-      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'bacon', 'ham', 'sausage',
-      'pepperoni', 'anchovy', 'gelatin', 'lard'
+      // All meat and poultry
+      'meat', 'beef', 'pork', 'lamb', 'veal', 'venison', 'bison', 'goat',
+      'chicken', 'turkey', 'duck', 'goose', 'quail', 'pheasant',
+      'bacon', 'ham', 'sausage', 'pepperoni', 'salami', 'prosciutto',
+      'hot dog', 'bratwurst', 'chorizo', 'ground beef', 'ground turkey',
+      'steak', 'roast', 'ribs', 'chops', 'cutlet', 'tenderloin',
+      
+      // All seafood
+      'fish', 'salmon', 'tuna', 'cod', 'halibut', 'tilapia', 'mahi mahi',
+      'shrimp', 'crab', 'lobster', 'scallops', 'mussels', 'clams', 'oysters',
+      'squid', 'octopus', 'calamari', 'anchovy', 'anchovies', 'sardines',
+      'crab sticks', 'surimi', 'fish sauce', 'worcestershire sauce',
+      
+      // All dairy products
+      'milk', 'cheese', 'butter', 'cream', 'yogurt', 'ice cream',
+      'whey', 'casein', 'lactose', 'ghee', 'buttermilk',
+      
+      // Animal fats and by-products
+      'lard', 'tallow', 'suet', 'gelatin', 'rennet', 'isinglass'
     ]
   },
   'pescatarian': { 
     diet: 'pescetarian',
     excludeIngredients: [
-      'meat', 'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck',
-      'bacon', 'ham', 'sausage', 'pepperoni', 'lard'
+      // All meat and poultry
+      'meat', 'beef', 'pork', 'lamb', 'veal', 'venison', 'bison', 'goat',
+      'chicken', 'turkey', 'duck', 'goose', 'quail', 'pheasant',
+      'bacon', 'ham', 'sausage', 'pepperoni', 'salami', 'prosciutto',
+      'hot dog', 'bratwurst', 'chorizo', 'ground beef', 'ground turkey',
+      'steak', 'roast', 'ribs', 'chops', 'cutlet', 'tenderloin',
+      
+      // Animal fats from land animals
+      'lard', 'tallow', 'suet'
     ]
   },
   'paleo': { 
     diet: 'paleo',
     excludeIngredients: [
+      // All grains
       'grains', 'wheat', 'rice', 'oats', 'quinoa', 'barley', 'rye', 'corn',
-      'legumes', 'beans', 'lentils', 'chickpeas', 'peanuts', 'soy',
-      'dairy', 'milk', 'cheese', 'yogurt', 'butter',
-      'sugar', 'processed foods', 'refined oils', 'bread', 'pasta'
+      'bread', 'pasta', 'cereal', 'crackers', 'flour', 'bulgur', 'couscous',
+      
+      // All legumes
+      'legumes', 'beans', 'lentils', 'chickpeas', 'peanuts', 'soy', 'tofu',
+      'tempeh', 'edamame', 'peas', 'split peas', 'black beans', 'kidney beans',
+      
+      // All dairy
+      'dairy', 'milk', 'cheese', 'yogurt', 'butter', 'cream', 'ice cream',
+      
+      // Processed foods and sugars
+      'sugar', 'processed foods', 'refined oils', 'vegetable oil', 'canola oil',
+      'margarine', 'artificial sweeteners', 'high fructose corn syrup'
     ]
   },
   'primal': { 
     diet: 'primal',
     excludeIngredients: [
+      // All grains
       'grains', 'wheat', 'rice', 'oats', 'quinoa', 'barley', 'rye', 'corn',
-      'legumes', 'beans', 'lentils', 'chickpeas', 'peanuts', 'soy',
-      'sugar', 'processed foods', 'refined oils', 'bread', 'pasta'
+      'bread', 'pasta', 'cereal', 'crackers', 'flour', 'bulgur', 'couscous',
+      
+      // All legumes
+      'legumes', 'beans', 'lentils', 'chickpeas', 'peanuts', 'soy', 'tofu',
+      'tempeh', 'edamame', 'peas', 'split peas', 'black beans', 'kidney beans',
+      
+      // Processed foods and sugars
+      'sugar', 'processed foods', 'refined oils', 'vegetable oil', 'canola oil',
+      'margarine', 'artificial sweeteners', 'high fructose corn syrup'
     ]
   },
   'slow-carb': {
     excludeIngredients: [
-      'bread', 'pasta', 'rice', 'potato', 'sugar', 'flour', 'cereal', 'oats',
-      'quinoa', 'corn', 'wheat', 'barley', 'rye', 'crackers', 'bagels'
+      'bread', 'pasta', 'rice', 'potato', 'potatoes', 'sugar', 'flour', 'cereal', 'oats',
+      'quinoa', 'corn', 'wheat', 'barley', 'rye', 'crackers', 'bagels', 'muffins',
+      'cookies', 'cake', 'candy', 'soda', 'fruit juice', 'dried fruit'
     ]
   },
   'bulletproof': {
     excludeIngredients: [
       'sugar', 'gluten', 'corn', 'soy', 'vegetable oil', 'canola oil', 'margarine',
-      'processed foods', 'artificial sweeteners', 'grains', 'legumes'
+      'processed foods', 'artificial sweeteners', 'grains', 'legumes', 'beans',
+      'peanuts', 'cashews', 'high fructose corn syrup', 'msg', 'preservatives'
     ]
   },
   'low-fodmap': {
     excludeIngredients: [
-      'onion', 'garlic', 'wheat', 'beans', 'lentils', 'chickpeas', 'apple', 'pear',
-      'mango', 'watermelon', 'honey', 'agave', 'cashews', 'pistachios',
-      'artichoke', 'asparagus', 'cauliflower', 'mushrooms'
+      'onion', 'onions', 'garlic', 'wheat', 'beans', 'lentils', 'chickpeas', 
+      'apple', 'apples', 'pear', 'pears', 'mango', 'watermelon', 'honey', 'agave', 
+      'cashews', 'pistachios', 'artichoke', 'asparagus', 'cauliflower', 'mushrooms',
+      'avocado', 'stone fruits', 'dried fruits', 'high fructose corn syrup'
     ]
   },
   'whole30': {
     excludeIngredients: [
-      'sugar', 'honey', 'maple syrup', 'agave', 'alcohol', 'grains', 'wheat', 'rice',
-      'oats', 'quinoa', 'beans', 'lentils', 'peanuts', 'soy', 'dairy', 'cheese',
-      'milk', 'yogurt', 'processed foods', 'carrageenan', 'msg', 'sulfites'
+      'sugar', 'honey', 'maple syrup', 'agave', 'artificial sweeteners', 'alcohol', 
+      'grains', 'wheat', 'rice', 'oats', 'quinoa', 'beans', 'lentils', 'peanuts', 
+      'soy', 'tofu', 'dairy', 'cheese', 'milk', 'yogurt', 'processed foods', 
+      'carrageenan', 'msg', 'sulfites', 'corn', 'legumes'
     ]
   },
   'gaps': {
     excludeIngredients: [
-      'grains', 'wheat', 'rice', 'corn', 'oats', 'quinoa', 'potato', 'sweet potato',
-      'sugar', 'processed foods', 'soy', 'beans', 'lentils', 'chickpeas'
+      'grains', 'wheat', 'rice', 'corn', 'oats', 'quinoa', 'potato', 'potatoes',
+      'sweet potato', 'sweet potatoes', 'sugar', 'processed foods', 'soy', 
+      'beans', 'lentils', 'chickpeas', 'starchy vegetables'
     ]
   },
   'mediterranean': {
@@ -172,13 +357,14 @@ const dietaryMappings: Record<DietaryFilter, { diet?: string; intolerances?: str
   'grain-free': {
     excludeIngredients: [
       'wheat', 'rice', 'oats', 'barley', 'rye', 'corn', 'quinoa', 'millet',
-      'buckwheat', 'amaranth', 'bread', 'pasta', 'cereal', 'crackers', 'flour'
+      'buckwheat', 'amaranth', 'bread', 'pasta', 'cereal', 'crackers', 'flour',
+      'bulgur', 'couscous', 'farro', 'spelt', 'kamut'
     ]
   },
   'fruitarian': {
     excludeIngredients: [
       'meat', 'fish', 'dairy', 'eggs', 'grains', 'vegetables', 'legumes',
-      'nuts', 'seeds', 'roots', 'tubers', 'leaves', 'stems'
+      'nuts', 'seeds', 'roots', 'tubers', 'leaves', 'stems', 'bark'
     ]
   },
   'custom': {}
@@ -246,10 +432,61 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Get ALL forbidden ingredients from active dietary filters
+  const getAllForbiddenIngredients = (): string[] => {
+    const allForbidden: string[] = [];
+
+    // Process standard dietary filters
+    activeDiets.forEach(diet => {
+      if (diet === 'custom') return; // Handle custom separately
+      
+      const mapping = dietaryMappings[diet];
+      if (mapping.excludeIngredients) {
+        allForbidden.push(...mapping.excludeIngredients);
+      }
+    });
+
+    // Process custom filters
+    if (activeDiets.includes('custom')) {
+      customFilters.forEach(filter => {
+        allForbidden.push(...filter.excludeIngredients);
+      });
+    }
+
+    // Remove duplicates and return
+    return [...new Set(allForbidden.map(ingredient => ingredient.toLowerCase()))];
+  };
+
+  // Check if a recipe is allowed based on title and ingredients
+  const isRecipeAllowed = (recipeTitle: string, ingredients: string[] = []): boolean => {
+    const forbiddenIngredients = getAllForbiddenIngredients();
+    
+    if (forbiddenIngredients.length === 0) {
+      return true; // No restrictions
+    }
+
+    const titleLower = recipeTitle.toLowerCase();
+    const allText = [titleLower, ...ingredients.map(ing => ing.toLowerCase())];
+
+    // Check if ANY forbidden ingredient appears in the recipe title or ingredients
+    for (const forbidden of forbiddenIngredients) {
+      for (const text of allText) {
+        // Use word boundaries to avoid false positives (e.g., "rice" in "price")
+        const regex = new RegExp(`\\b${forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(text)) {
+          console.log(`🚫 Recipe "${recipeTitle}" REJECTED: Contains forbidden ingredient "${forbidden}" in "${text}"`);
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
   const getSpoonacularParams = () => {
     const params: { diet?: string; intolerances?: string; excludeIngredients?: string } = {};
     
-    // Collect all dietary requirements with STRICT PRIORITY on exclusions
+    // Collect all dietary requirements with ABSOLUTE PRIORITY on exclusions
     const allIntolerances: string[] = [];
     const allExcludeIngredients: string[] = [];
     let primaryDiet: string | undefined;
@@ -316,11 +553,12 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
     
     // 2. ALWAYS include ingredient exclusions - these override everything
     if (allExcludeIngredients.length > 0) {
-      params.excludeIngredients = [...new Set(allExcludeIngredients)].join(',');
+      // Limit to first 50 ingredients to avoid URL length issues
+      const limitedExclusions = [...new Set(allExcludeIngredients)].slice(0, 50);
+      params.excludeIngredients = limitedExclusions.join(',');
     }
     
     // 3. Only include diet if it doesn't conflict with exclusions
-    // For strict filtering, we might want to be more conservative here
     if (primaryDiet) {
       // Check if the diet conflicts with our exclusions
       const hasConflicts = (
@@ -334,10 +572,11 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    console.log('🔍 Dietary Filter Debug:', {
+    console.log('🔍 Enhanced Dietary Filter Debug:', {
       activeDiets,
+      totalExclusions: allExcludeIngredients.length,
+      limitedExclusions: params.excludeIngredients?.split(',').length || 0,
       allIntolerances,
-      allExcludeIngredients: allExcludeIngredients.slice(0, 10), // Show first 10 for debugging
       primaryDiet,
       finalParams: params
     });
@@ -353,7 +592,9 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
       addCustomFilter,
       removeCustomFilter,
       updateCustomFilter,
-      getSpoonacularParams
+      getSpoonacularParams,
+      getAllForbiddenIngredients,
+      isRecipeAllowed
     }}>
       {children}
     </DietaryContext.Provider>

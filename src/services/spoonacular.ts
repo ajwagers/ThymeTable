@@ -35,7 +35,8 @@ export const getRandomRecipes = async (
     diet?: string;
     intolerances?: string;
     excludeIngredients?: string;
-  }
+  },
+  isRecipeAllowedFn?: (title: string, ingredients?: string[]) => boolean
 ): Promise<SpoonacularRecipe[]> => {
   try {
     if (!API_KEY) {
@@ -52,7 +53,7 @@ export const getRandomRecipes = async (
 
     const params: any = {
       apiKey: API_KEY,
-      number: 20, // Increased from 10 to get more options for filtering
+      number: 50, // Increased significantly to get more options for strict filtering
       tags: tags.join(','),
     };
 
@@ -80,10 +81,10 @@ export const getRandomRecipes = async (
 
     const response = await axios.get(`${BASE_URL}/random`, {
       params,
-      timeout: 15000, // Increased timeout for more complex filtering
+      timeout: 20000, // Increased timeout for more complex filtering
     });
 
-    const recipes = response.data.recipes.map((recipe: any) => ({
+    let recipes = response.data.recipes.map((recipe: any) => ({
       id: recipe.id,
       title: recipe.title,
       readyInMinutes: recipe.readyInMinutes,
@@ -96,18 +97,43 @@ export const getRandomRecipes = async (
 
     console.log(`✅ Received ${recipes.length} recipes from Spoonacular for ${mealType} (${category})`);
     
-    // Additional client-side filtering for extra safety
-    if (dietaryParams?.excludeIngredients) {
-      const excludeList = dietaryParams.excludeIngredients.toLowerCase().split(',');
-      const filteredRecipes = recipes.filter((recipe: SpoonacularRecipe) => {
-        const titleLower = recipe.title.toLowerCase();
-        return !excludeList.some(excluded => 
-          titleLower.includes(excluded.trim())
-        );
+    // ENHANCED CLIENT-SIDE FILTERING - ABSOLUTELY CRITICAL
+    if (isRecipeAllowedFn) {
+      const originalCount = recipes.length;
+      recipes = recipes.filter((recipe: SpoonacularRecipe) => {
+        // Extract potential ingredients from the recipe title for additional checking
+        const titleWords = recipe.title.toLowerCase().split(/[\s,&-]+/);
+        return isRecipeAllowedFn(recipe.title, titleWords);
       });
       
-      console.log(`🔍 Client-side filtering: ${recipes.length} → ${filteredRecipes.length} recipes after excluding ingredients`);
-      return filteredRecipes;
+      console.log(`🔍 STRICT Client-side filtering: ${originalCount} → ${recipes.length} recipes after dietary restrictions`);
+      
+      if (recipes.length === 0) {
+        console.warn('⚠️ All recipes were filtered out due to dietary restrictions. Consider broadening search criteria.');
+      }
+    }
+    
+    // Additional safety check for specific forbidden ingredients in titles
+    if (dietaryParams?.excludeIngredients) {
+      const excludeList = dietaryParams.excludeIngredients.toLowerCase().split(',').map(item => item.trim());
+      const originalCount = recipes.length;
+      
+      recipes = recipes.filter((recipe: SpoonacularRecipe) => {
+        const titleLower = recipe.title.toLowerCase();
+        
+        // Check each excluded ingredient against the recipe title
+        for (const excluded of excludeList) {
+          // Use word boundaries to avoid false positives
+          const regex = new RegExp(`\\b${excluded.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          if (regex.test(titleLower)) {
+            console.log(`🚫 TITLE FILTER: Rejected "${recipe.title}" for containing "${excluded}"`);
+            return false;
+          }
+        }
+        return true;
+      });
+      
+      console.log(`🔍 Title-based filtering: ${originalCount} → ${recipes.length} recipes after title screening`);
     }
 
     return recipes;
