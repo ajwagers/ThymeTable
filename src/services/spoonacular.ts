@@ -28,6 +28,107 @@ const handleSpoonacularError = (error: AxiosError) => {
   throw new Error(`API Error: ${error.message}`);
 };
 
+// Helper function to check if a recipe is appropriate for the meal type
+const isAppropriateForMealType = (recipe: any, mealType: string, category: 'main' | 'side'): boolean => {
+  const title = recipe.title.toLowerCase();
+  const dishTypes = (recipe.dishTypes || []).map((type: string) => type.toLowerCase());
+  
+  // Define inappropriate dish types for each meal
+  const inappropriateDishTypes = {
+    breakfast: {
+      main: ['dessert', 'cake', 'cookies', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'mousse', 'sorbet', 'gelato'],
+      side: ['dessert', 'cake', 'cookies', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'mousse', 'sorbet', 'gelato']
+    },
+    lunch: {
+      main: ['dessert', 'cake', 'cookies', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'mousse', 'sorbet', 'gelato'],
+      side: ['dessert', 'cake', 'cookies', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'mousse', 'sorbet', 'gelato']
+    },
+    dinner: {
+      main: ['dessert', 'cake', 'cookies', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'mousse', 'sorbet', 'gelato'],
+      side: ['dessert', 'cake', 'cookies', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'mousse', 'sorbet', 'gelato']
+    }
+  };
+
+  // Define appropriate dish types for each meal
+  const appropriateDishTypes = {
+    breakfast: {
+      main: ['breakfast', 'brunch', 'morning meal', 'pancakes', 'waffles', 'french toast', 'omelette', 'scrambled eggs', 'cereal', 'oatmeal', 'smoothie', 'toast'],
+      side: ['side dish', 'fruit', 'yogurt', 'juice', 'coffee', 'tea', 'muffin', 'bagel']
+    },
+    lunch: {
+      main: ['lunch', 'main course', 'main dish', 'entree', 'sandwich', 'salad', 'soup', 'pasta', 'rice dish', 'stir fry', 'burger', 'wrap'],
+      side: ['side dish', 'appetizer', 'bread', 'rolls', 'vegetables', 'fruit', 'chips', 'fries']
+    },
+    dinner: {
+      main: ['dinner', 'main course', 'main dish', 'entree', 'roast', 'grilled', 'baked', 'pasta', 'rice dish', 'stir fry', 'casserole', 'stew'],
+      side: ['side dish', 'appetizer', 'bread', 'rolls', 'vegetables', 'salad', 'rice', 'potatoes']
+    }
+  };
+
+  // Define inappropriate keywords in recipe titles
+  const inappropriateKeywords = {
+    breakfast: {
+      main: ['dessert', 'cake', 'cookie', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'chocolate chip', 'frosting', 'icing'],
+      side: ['dessert', 'cake', 'cookie', 'candy', 'ice cream', 'pie', 'tart', 'pudding']
+    },
+    lunch: {
+      main: ['dessert', 'cake', 'cookie', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'chocolate chip', 'frosting', 'icing'],
+      side: ['dessert', 'cake', 'cookie', 'candy', 'ice cream', 'pie', 'tart', 'pudding']
+    },
+    dinner: {
+      main: ['dessert', 'cake', 'cookie', 'candy', 'ice cream', 'pie', 'tart', 'pudding', 'chocolate chip', 'frosting', 'icing'],
+      side: ['dessert', 'cake', 'cookie', 'candy', 'ice cream', 'pie', 'tart', 'pudding']
+    }
+  };
+
+  const mealTypeKey = mealType as keyof typeof inappropriateDishTypes;
+  const categoryKey = category as keyof typeof inappropriateDishTypes[typeof mealTypeKey];
+
+  // Check for inappropriate dish types
+  const inappropriateTypes = inappropriateDishTypes[mealTypeKey]?.[categoryKey] || [];
+  for (const inappropriateType of inappropriateTypes) {
+    if (dishTypes.some(dishType => dishType.includes(inappropriateType))) {
+      console.log(`🚫 MEAL TYPE FILTER: Rejected "${recipe.title}" - inappropriate dish type "${inappropriateType}" for ${mealType} ${category}`);
+      return false;
+    }
+  }
+
+  // Check for inappropriate keywords in title
+  const inappropriateWords = inappropriateKeywords[mealTypeKey]?.[categoryKey] || [];
+  for (const keyword of inappropriateWords) {
+    if (title.includes(keyword)) {
+      console.log(`🚫 MEAL TYPE FILTER: Rejected "${recipe.title}" - inappropriate keyword "${keyword}" for ${mealType} ${category}`);
+      return false;
+    }
+  }
+
+  // For main dishes, ensure they're substantial enough
+  if (category === 'main') {
+    const appropriateTypes = appropriateDishTypes[mealTypeKey]?.[categoryKey] || [];
+    
+    // Check if it has appropriate dish types OR appropriate keywords in title
+    const hasAppropriateDishType = dishTypes.some(dishType => 
+      appropriateTypes.some(appropriateType => dishType.includes(appropriateType))
+    );
+    
+    const hasAppropriateKeyword = appropriateTypes.some(keyword => title.includes(keyword));
+    
+    // For main dishes, be more strict - require either appropriate dish type or keyword
+    if (!hasAppropriateDishType && !hasAppropriateKeyword) {
+      // Additional check for general main course indicators
+      const mainCourseIndicators = ['protein', 'chicken', 'beef', 'pork', 'fish', 'salmon', 'turkey', 'lamb', 'tofu', 'beans', 'lentils'];
+      const hasProtein = mainCourseIndicators.some(indicator => title.includes(indicator));
+      
+      if (!hasProtein) {
+        console.log(`🚫 MEAL TYPE FILTER: Rejected "${recipe.title}" - not substantial enough for ${mealType} main dish`);
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
+
 export const getRandomRecipes = async (
   mealType: string, 
   category: 'main' | 'side' = 'main',
@@ -43,35 +144,52 @@ export const getRandomRecipes = async (
       throw new Error('Spoonacular API key is missing');
     }
 
-    const tags = [mealType];
+    // Enhanced tag selection based on meal type and category
+    const tags = [];
     
-    if (category === 'side') {
-      tags.push('side dish');
-    } else {
-      tags.push('main course');
+    // Add meal-specific tags
+    if (mealType === 'breakfast') {
+      tags.push('breakfast');
+      if (category === 'main') {
+        tags.push('main course');
+      } else {
+        tags.push('side dish');
+      }
+    } else if (mealType === 'lunch') {
+      tags.push('lunch');
+      if (category === 'main') {
+        tags.push('main course');
+      } else {
+        tags.push('side dish');
+      }
+    } else if (mealType === 'dinner') {
+      tags.push('dinner');
+      if (category === 'main') {
+        tags.push('main course');
+      } else {
+        tags.push('side dish');
+      }
     }
 
     const params: any = {
       apiKey: API_KEY,
-      number: 50, // Increased significantly to get more options for strict filtering
+      number: 50, // Get more recipes to filter through
       tags: tags.join(','),
+      addRecipeInformation: true, // Get dish types for better filtering
     };
 
-    // Add dietary parameters if provided - WITH STRICT ENFORCEMENT
+    // Add dietary parameters if provided
     if (dietaryParams) {
       console.log('🔍 Spoonacular API Request with dietary params:', dietaryParams);
       
-      // CRITICAL: Intolerances are hard restrictions
       if (dietaryParams.intolerances) {
         params.intolerances = dietaryParams.intolerances;
       }
       
-      // CRITICAL: Excluded ingredients are absolute restrictions
       if (dietaryParams.excludeIngredients) {
         params.excludeIngredients = dietaryParams.excludeIngredients;
       }
       
-      // Diet is a preference, but exclusions override
       if (dietaryParams.diet) {
         params.diet = dietaryParams.diet;
       }
@@ -81,7 +199,7 @@ export const getRandomRecipes = async (
 
     const response = await axios.get(`${BASE_URL}/random`, {
       params,
-      timeout: 20000, // Increased timeout for more complex filtering
+      timeout: 20000,
     });
 
     let recipes = response.data.recipes.map((recipe: any) => ({
@@ -97,33 +215,33 @@ export const getRandomRecipes = async (
 
     console.log(`✅ Received ${recipes.length} recipes from Spoonacular for ${mealType} (${category})`);
     
-    // ENHANCED CLIENT-SIDE FILTERING - ABSOLUTELY CRITICAL
+    // STEP 1: Filter by meal type appropriateness
+    const originalCount = recipes.length;
+    recipes = recipes.filter((recipe: SpoonacularRecipe) => 
+      isAppropriateForMealType(recipe, mealType, category)
+    );
+    console.log(`🍽️ Meal type filtering: ${originalCount} → ${recipes.length} recipes after meal appropriateness check`);
+    
+    // STEP 2: Apply dietary restrictions if provided
     if (isRecipeAllowedFn) {
-      const originalCount = recipes.length;
+      const beforeDietaryCount = recipes.length;
       recipes = recipes.filter((recipe: SpoonacularRecipe) => {
-        // Extract potential ingredients from the recipe title for additional checking
         const titleWords = recipe.title.toLowerCase().split(/[\s,&-]+/);
         return isRecipeAllowedFn(recipe.title, titleWords);
       });
       
-      console.log(`🔍 STRICT Client-side filtering: ${originalCount} → ${recipes.length} recipes after dietary restrictions`);
-      
-      if (recipes.length === 0) {
-        console.warn('⚠️ All recipes were filtered out due to dietary restrictions. Consider broadening search criteria.');
-      }
+      console.log(`🔍 Dietary filtering: ${beforeDietaryCount} → ${recipes.length} recipes after dietary restrictions`);
     }
     
-    // Additional safety check for specific forbidden ingredients in titles
+    // STEP 3: Additional safety check for specific forbidden ingredients in titles
     if (dietaryParams?.excludeIngredients) {
       const excludeList = dietaryParams.excludeIngredients.toLowerCase().split(',').map(item => item.trim());
-      const originalCount = recipes.length;
+      const beforeTitleCount = recipes.length;
       
       recipes = recipes.filter((recipe: SpoonacularRecipe) => {
         const titleLower = recipe.title.toLowerCase();
         
-        // Check each excluded ingredient against the recipe title
         for (const excluded of excludeList) {
-          // Use word boundaries to avoid false positives
           const regex = new RegExp(`\\b${excluded.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
           if (regex.test(titleLower)) {
             console.log(`🚫 TITLE FILTER: Rejected "${recipe.title}" for containing "${excluded}"`);
@@ -133,7 +251,11 @@ export const getRandomRecipes = async (
         return true;
       });
       
-      console.log(`🔍 Title-based filtering: ${originalCount} → ${recipes.length} recipes after title screening`);
+      console.log(`🔍 Title-based filtering: ${beforeTitleCount} → ${recipes.length} recipes after title screening`);
+    }
+
+    if (recipes.length === 0) {
+      console.warn(`⚠️ No suitable ${category} ${mealType} recipes found after all filtering. Consider broadening search criteria.`);
     }
 
     return recipes;
