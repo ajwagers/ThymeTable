@@ -4,8 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "npm run migrate && vite",
+    "build": "npm run migrate && vite build",
+    "migrate": "node scripts/migrate.js",
+    "migrate:manual": "echo 'Please run the SQL from supabase/migrations/20250620184438_lively_unit.sql in your Supabase dashboard'",
     "lint": "eslint .",
     "preview": "vite preview"
   },
