@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import ChangeRecipeModal from '../components/ChangeRecipeModal';
 import { AddRecipeModal } from '../components/AddRecipeModal';
+import SearchRecipeModal from '../components/SearchRecipeModal';
 import { useMealPlanState } from '../hooks/useMealPlanState';
 import { useFavorites } from '../contexts/FavoritesContext';
 
@@ -15,6 +16,7 @@ function WeeklyPlannerPage() {
     getListStyle,
     fetchRandomRecipe,
     addManualRecipe,
+    addSearchRecipe,
     changeRecipe,
     autofillCalendar,
     isAutofilling,
@@ -41,6 +43,13 @@ function WeeklyPlannerPage() {
   // Add Recipe Modal State
   const [showAddRecipeModal, setShowAddRecipeModal] = useState(false);
   const [addRecipeData, setAddRecipeData] = useState<{
+    dayId: string;
+    mealType: string;
+  } | null>(null);
+
+  // Search Recipe Modal State
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchRecipeData, setSearchRecipeData] = useState<{
     dayId: string;
     mealType: string;
   } | null>(null);
@@ -122,8 +131,8 @@ function WeeklyPlannerPage() {
   };
 
   const handleSearchRecipeRequest = (dayId: string, mealType: string) => {
-    // TODO: Implement search functionality
-    console.log('Search recipe requested for:', dayId, mealType);
+    setSearchRecipeData({ dayId, mealType });
+    setShowSearchModal(true);
   };
 
   const handleSaveManualRecipe = async (recipe: any) => {
@@ -131,6 +140,14 @@ function WeeklyPlannerPage() {
       await addManualRecipe(addRecipeData.dayId, addRecipeData.mealType, recipe);
       setShowAddRecipeModal(false);
       setAddRecipeData(null);
+    }
+  };
+
+  const handleSelectSearchRecipe = async (recipe: any) => {
+    if (searchRecipeData) {
+      await addSearchRecipe(searchRecipeData.dayId, searchRecipeData.mealType, recipe);
+      setShowSearchModal(false);
+      setSearchRecipeData(null);
     }
   };
 
@@ -214,6 +231,7 @@ function WeeklyPlannerPage() {
         category={changeModalData?.category || 'main'}
         onSelectRandom={handleChangeRecipeRandom}
         onSelectFavorite={handleChangeRecipeFavorite}
+        isLoading={changeModalData ? isRecipeLoading(`change-${changeModalData.mealId}`) : false}
       />
 
       {/* Add Recipe Modal */}
@@ -225,6 +243,18 @@ function WeeklyPlannerPage() {
         }}
         onSave={handleSaveManualRecipe}
         mealType={addRecipeData?.mealType}
+        category="main"
+      />
+
+      {/* Search Recipe Modal */}
+      <SearchRecipeModal
+        isOpen={showSearchModal}
+        onClose={() => {
+          setShowSearchModal(false);
+          setSearchRecipeData(null);
+        }}
+        onSelectRecipe={handleSelectSearchRecipe}
+        mealType={searchRecipeData?.mealType || 'dinner'}
         category="main"
       />
 

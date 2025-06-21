@@ -267,6 +267,92 @@ export const getRandomRecipes = async (
   }
 };
 
+export const searchRecipes = async (
+  searchParams: {
+    query: string;
+    type?: string;
+    includeIngredients?: string;
+    excludeIngredients?: string;
+    diet?: string;
+    intolerances?: string;
+    number?: number;
+  },
+  isRecipeAllowedFn?: (title: string, ingredients?: string[]) => boolean
+): Promise<SpoonacularRecipe[]> => {
+  try {
+    if (!API_KEY) {
+      throw new Error('Spoonacular API key is missing');
+    }
+
+    const params: any = {
+      apiKey: API_KEY,
+      query: searchParams.query,
+      number: searchParams.number || 20,
+      addRecipeInformation: true,
+      fillIngredients: true,
+    };
+
+    // Add optional parameters
+    if (searchParams.type) {
+      params.type = searchParams.type;
+    }
+    
+    if (searchParams.includeIngredients) {
+      params.includeIngredients = searchParams.includeIngredients;
+    }
+    
+    if (searchParams.excludeIngredients) {
+      params.excludeIngredients = searchParams.excludeIngredients;
+    }
+    
+    if (searchParams.diet) {
+      params.diet = searchParams.diet;
+    }
+    
+    if (searchParams.intolerances) {
+      params.intolerances = searchParams.intolerances;
+    }
+
+    console.log('🔍 Searching recipes with params:', params);
+
+    const response = await axios.get(`${BASE_URL}/complexSearch`, {
+      params,
+      timeout: 15000,
+    });
+
+    let recipes = response.data.results.map((recipe: any) => ({
+      id: recipe.id,
+      title: recipe.title,
+      readyInMinutes: recipe.readyInMinutes || 30,
+      servings: recipe.servings || 4,
+      calories: Math.round(recipe.nutrition?.nutrients?.[0]?.amount || 0),
+      image: recipe.image,
+      cuisines: recipe.cuisines || [],
+      dishTypes: recipe.dishTypes || [],
+    }));
+
+    console.log(`✅ Found ${recipes.length} recipes from search`);
+
+    // Apply dietary restrictions if provided
+    if (isRecipeAllowedFn) {
+      const beforeDietaryCount = recipes.length;
+      recipes = recipes.filter((recipe: SpoonacularRecipe) => {
+        const titleWords = recipe.title.toLowerCase().split(/[\s,&-]+/);
+        return isRecipeAllowedFn(recipe.title, titleWords);
+      });
+      
+      console.log(`🔍 Dietary filtering: ${beforeDietaryCount} → ${recipes.length} recipes after dietary restrictions`);
+    }
+
+    return recipes;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      handleSpoonacularError(error);
+    }
+    throw new Error(`Failed to search recipes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
 export const getRecipeDetails = async (recipeId: number): Promise<SpoonacularRecipe | null> => {
   try {
     if (!API_KEY) {

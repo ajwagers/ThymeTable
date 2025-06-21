@@ -130,6 +130,48 @@ export const useMealPlanState = () => {
     return meal;
   };
 
+  const createMealFromSearchResult = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Promise<Meal | null> => {
+    try {
+      // Check if this search result recipe is allowed with current dietary restrictions
+      if (!isRecipeAllowed(recipe.title)) {
+        console.log(`🚫 SKIPPED: Search result recipe "${recipe.title}" violates dietary restrictions`);
+        return null;
+      }
+
+      // Fetch full recipe details to get ingredients
+      const fullRecipe = await getRecipeDetails(recipe.id);
+      
+      // Additional check with full ingredient list
+      if (fullRecipe?.ingredients) {
+        const ingredientNames = fullRecipe.ingredients.map(ing => ing.name);
+        if (!isRecipeAllowed(recipe.title, ingredientNames)) {
+          console.log(`🚫 SKIPPED: Search result recipe "${recipe.title}" has forbidden ingredients in detailed list`);
+          return null;
+        }
+      }
+
+      const meal: Meal = {
+        id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`,
+        recipeId: recipe.id,
+        name: recipe.title,
+        type: mealType as 'breakfast' | 'lunch' | 'dinner',
+        category,
+        cuisine: recipe.cuisines?.[0] || 'Various',
+        prepTime: recipe.readyInMinutes,
+        servings: recipe.servings,
+        calories: recipe.calories,
+        image: recipe.image,
+        ingredients: fullRecipe?.ingredients || []
+      };
+
+      console.log('✅ Created meal from search result with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
+      return meal;
+    } catch (error) {
+      console.log(`🚫 ERROR creating meal from search result "${recipe.title}":`, error);
+      return null;
+    }
+  };
+
   const createPlaceholderMeal = (dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Meal => {
     const mealNames = {
       breakfast: category === 'main' ? 'Simple Breakfast' : 'Breakfast Side',
@@ -317,6 +359,35 @@ export const useMealPlanState = () => {
     }
   };
 
+  const addSearchRecipe = async (dayId: string, mealType: string, recipe: any) => {
+    try {
+      const category = 'main'; // Default to main for search recipes
+      const meal = await createMealFromSearchResult(recipe, dayId, mealType, category);
+      
+      if (meal) {
+        setDays(prevDays => 
+          prevDays.map(day => 
+            day.id === dayId
+              ? {
+                  ...day,
+                  meals: [...day.meals, meal]
+                }
+              : day
+          )
+        );
+        
+        console.log('✅ Successfully added search recipe');
+        setApiError(null); // Clear any previous errors
+      } else {
+        console.warn(`⚠️ Search recipe "${recipe.title}" violates current dietary restrictions`);
+        setApiError(`The selected recipe doesn't match your current dietary restrictions.`);
+      }
+    } catch (error) {
+      console.error('Error adding search recipe:', error);
+      setApiError('Failed to add search recipe. Please try again.');
+    }
+  };
+
   const changeRecipe = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom: boolean = true, favoriteRecipeId?: number) => {
     const loadingKey = `change-${mealId}`;
     setRecipeLoading(loadingKey, true);
@@ -448,6 +519,7 @@ export const useMealPlanState = () => {
     getListStyle, 
     fetchRandomRecipe,
     addManualRecipe,
+    addSearchRecipe,
     changeRecipe,
     autofillCalendar,
     isAutofilling,
