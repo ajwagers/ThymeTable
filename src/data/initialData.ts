@@ -1,7 +1,7 @@
 import { Day } from '../types';
 
 // Helper function to get date strings for the current week (Sunday-first)
-const getDatesForCurrentWeek = () => {
+export const getDatesForCurrentWeek = () => {
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
   const dates = [];
@@ -32,4 +32,4 @@ export const createEmptyWeek = (): Day[] => {
   }));
 };
 
-const initialDays: Day[] = [];
+export const initialDays: Day[] = [];
