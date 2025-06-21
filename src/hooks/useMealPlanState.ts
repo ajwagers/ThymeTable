@@ -14,10 +14,27 @@ export const useMealPlanState = () => {
   });
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [loadingRecipes, setLoadingRecipes] = useState<Set<string>>(new Set());
 
   const resetWeek = () => {
     setDays(createEmptyWeek());
     setApiError(null);
+  };
+
+  const setRecipeLoading = (recipeKey: string, isLoading: boolean) => {
+    setLoadingRecipes(prev => {
+      const newSet = new Set(prev);
+      if (isLoading) {
+        newSet.add(recipeKey);
+      } else {
+        newSet.delete(recipeKey);
+      }
+      return newSet;
+    });
+  };
+
+  const isRecipeLoading = (recipeKey: string) => {
+    return loadingRecipes.has(recipeKey);
   };
 
   const createMealFromRecipe = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Promise<Meal | null> => {
@@ -213,6 +230,9 @@ export const useMealPlanState = () => {
   };
 
   const fetchRandomRecipe = async (dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
+    const loadingKey = `${dayId}-${mealType}-${category}`;
+    setRecipeLoading(loadingKey, true);
+    
     try {
       const dietaryParams = getSpoonacularParams();
       console.log('🔍 Fetching single recipe with dietary params:', dietaryParams);
@@ -268,6 +288,8 @@ export const useMealPlanState = () => {
           )
         );
       }
+    } finally {
+      setRecipeLoading(loadingKey, false);
     }
   };
 
@@ -296,6 +318,9 @@ export const useMealPlanState = () => {
   };
 
   const changeRecipe = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom: boolean = true, favoriteRecipeId?: number) => {
+    const loadingKey = `change-${mealId}`;
+    setRecipeLoading(loadingKey, true);
+    
     try {
       let newMeal: Meal | null = null;
 
@@ -358,6 +383,8 @@ export const useMealPlanState = () => {
       } else {
         setApiError('Failed to change recipe. Please try again later.');
       }
+    } finally {
+      setRecipeLoading(loadingKey, false);
     }
   };
 
@@ -425,6 +452,7 @@ export const useMealPlanState = () => {
     autofillCalendar,
     isAutofilling,
     resetWeek,
-    apiError
+    apiError,
+    isRecipeLoading
   };
 };

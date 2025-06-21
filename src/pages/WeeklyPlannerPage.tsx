@@ -19,7 +19,8 @@ function WeeklyPlannerPage() {
     autofillCalendar,
     isAutofilling,
     resetWeek,
-    apiError
+    apiError,
+    isRecipeLoading
   } = useMealPlanState();
 
   const { saveMealPlan } = useFavorites();
@@ -198,6 +199,7 @@ function WeeklyPlannerPage() {
           onAddManualRecipe={handleAddManualRecipeRequest}
           onSearchRecipe={handleSearchRecipeRequest}
           onChangeRecipe={handleChangeRecipeRequest}
+          isRecipeLoading={isRecipeLoading}
         />
       </DragDropContext>
 

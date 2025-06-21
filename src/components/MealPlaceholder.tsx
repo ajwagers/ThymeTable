@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlusCircle, Shuffle, Search, Edit3 } from 'lucide-react';
+import { PlusCircle, Shuffle, Search, Edit3, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MealPlaceholderProps {
@@ -7,13 +7,15 @@ interface MealPlaceholderProps {
   onAddMeal: () => void;
   onAddManualRecipe?: () => void;
   onSearchRecipe?: () => void;
+  isLoading?: boolean;
 }
 
 const MealPlaceholder: React.FC<MealPlaceholderProps> = ({ 
   mealType, 
   onAddMeal, 
   onAddManualRecipe,
-  onSearchRecipe 
+  onSearchRecipe,
+  isLoading = false
 }) => {
   const [showOptions, setShowOptions] = useState(false);
 
@@ -53,6 +55,38 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
       default: return 'hover:bg-gray-100 text-gray-600';
     }
   };
+
+  const getLoadingColor = () => {
+    switch (mealType) {
+      case 'breakfast': return 'text-lemon';
+      case 'lunch': return 'text-terra-500';
+      case 'dinner': return 'text-primary-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className={`meal-placeholder ${getMealTypeColor()}`}>
+        <motion.div
+          className="flex flex-col items-center w-full h-full justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="mb-3"
+          >
+            <Loader2 className={`w-8 h-8 ${getLoadingColor()}`} />
+          </motion.div>
+          <span className="text-sm font-medium text-gray-600">Finding recipe...</span>
+          <span className="text-xs text-gray-500 mt-1">Please wait</span>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className={`meal-placeholder ${getMealTypeColor()}`}>

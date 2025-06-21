@@ -10,6 +10,7 @@ interface DayColumnProps {
   onAddManualRecipe?: (dayId: string, mealType: string) => void;
   onSearchRecipe?: (dayId: string, mealType: string) => void;
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
+  isRecipeLoading?: (recipeKey: string) => boolean;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({ 
@@ -18,7 +19,8 @@ const DayColumn: React.FC<DayColumnProps> = ({
   onAddMeal,
   onAddManualRecipe,
   onSearchRecipe,
-  onChangeRecipe 
+  onChangeRecipe,
+  isRecipeLoading
 }) => {
   const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => {
     if (onChangeRecipe) {
@@ -45,37 +47,43 @@ const DayColumn: React.FC<DayColumnProps> = ({
         <p className="text-sm text-primary-600 text-center">{day.date}</p>
       </div>
       
-      {['breakfast', 'lunch', 'dinner'].map((mealType) => (
-        <div key={mealType} className="mb-2">
-          <h4 className="text-sm font-medium text-primary-700 mb-1 px-1 capitalize">
-            {mealType}
-          </h4>
-          
-          <Droppable 
-            droppableId={`${day.id}-${mealType}`} 
-            type={mealType}
-          >
-            {(provided, snapshot) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className={getListStyle(snapshot.isDraggingOver)}
-              >
-                <MealList 
-                  meals={day.meals.filter(meal => meal.type === mealType)}
-                  mealType={mealType}
-                  onAddMeal={() => onAddMeal(day.id, mealType)}
-                  onAddManualRecipe={() => handleAddManualRecipe(mealType)}
-                  onSearchRecipe={() => handleSearchRecipe(mealType)}
-                  onChangeRecipe={handleChangeRecipe}
-                  dayId={day.id}
-                />
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </div>
-      ))}
+      {['breakfast', 'lunch', 'dinner'].map((mealType) => {
+        const loadingKey = `${day.id}-${mealType}-main`;
+        const isLoading = isRecipeLoading ? isRecipeLoading(loadingKey) : false;
+        
+        return (
+          <div key={mealType} className="mb-2">
+            <h4 className="text-sm font-medium text-primary-700 mb-1 px-1 capitalize">
+              {mealType}
+            </h4>
+            
+            <Droppable 
+              droppableId={`${day.id}-${mealType}`} 
+              type={mealType}
+            >
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={getListStyle(snapshot.isDraggingOver)}
+                >
+                  <MealList 
+                    meals={day.meals.filter(meal => meal.type === mealType)}
+                    mealType={mealType}
+                    onAddMeal={() => onAddMeal(day.id, mealType)}
+                    onAddManualRecipe={() => handleAddManualRecipe(mealType)}
+                    onSearchRecipe={() => handleSearchRecipe(mealType)}
+                    onChangeRecipe={handleChangeRecipe}
+                    dayId={day.id}
+                    isLoading={isLoading}
+                  />
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+        );
+      })}
     </div>
   );
 };
