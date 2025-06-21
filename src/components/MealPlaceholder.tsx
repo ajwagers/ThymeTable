@@ -1,18 +1,133 @@
-import React from 'react';
-import { PlusCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { PlusCircle, Shuffle, Search, Edit3 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MealPlaceholderProps {
   mealType: string;
   onAddMeal: () => void;
+  onAddManualRecipe?: () => void;
+  onSearchRecipe?: () => void;
 }
 
-const MealPlaceholder: React.FC<MealPlaceholderProps> = ({ mealType, onAddMeal }) => {
+const MealPlaceholder: React.FC<MealPlaceholderProps> = ({ 
+  mealType, 
+  onAddMeal, 
+  onAddManualRecipe,
+  onSearchRecipe 
+}) => {
+  const [showOptions, setShowOptions] = useState(false);
+
+  const handleRandomRecipe = () => {
+    onAddMeal();
+    setShowOptions(false);
+  };
+
+  const handleManualRecipe = () => {
+    if (onAddManualRecipe) {
+      onAddManualRecipe();
+    }
+    setShowOptions(false);
+  };
+
+  const handleSearchRecipe = () => {
+    if (onSearchRecipe) {
+      onSearchRecipe();
+    }
+    setShowOptions(false);
+  };
+
+  const getMealTypeColor = () => {
+    switch (mealType) {
+      case 'breakfast': return 'border-lemon bg-lemon/5';
+      case 'lunch': return 'border-terra-400 bg-terra-50';
+      case 'dinner': return 'border-primary-500 bg-primary-50';
+      default: return 'border-gray-300 bg-gray-50';
+    }
+  };
+
+  const getButtonColor = () => {
+    switch (mealType) {
+      case 'breakfast': return 'hover:bg-lemon/10 text-gray-700';
+      case 'lunch': return 'hover:bg-terra-100 text-terra-700';
+      case 'dinner': return 'hover:bg-primary-100 text-primary-700';
+      default: return 'hover:bg-gray-100 text-gray-600';
+    }
+  };
+
   return (
-    <div className="meal-placeholder\" onClick={onAddMeal}>
-      <div className="flex flex-col items-center">
-        <PlusCircle className="w-5 h-5 mb-1" />
-        <span className="text-xs">Add {mealType}</span>
-      </div>
+    <div className={`meal-placeholder ${getMealTypeColor()}`}>
+      <AnimatePresence>
+        {!showOptions ? (
+          <motion.button
+            onClick={() => setShowOptions(true)}
+            className="flex flex-col items-center w-full h-full justify-center transition-all duration-200 hover:scale-105"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <PlusCircle className="w-8 h-8 mb-2 text-gray-400" />
+            <span className="text-sm font-medium text-gray-600">Add {mealType}</span>
+          </motion.button>
+        ) : (
+          <motion.div
+            className="flex flex-col gap-2 w-full h-full justify-center p-2"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.button
+              onClick={handleRandomRecipe}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Shuffle className="w-4 h-4" />
+              <span className="text-xs font-medium">Random</span>
+            </motion.button>
+
+            <motion.button
+              onClick={handleSearchRecipe}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <Search className="w-4 h-4" />
+              <span className="text-xs font-medium">Search</span>
+            </motion.button>
+
+            <motion.button
+              onClick={handleManualRecipe}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Edit3 className="w-4 h-4" />
+              <span className="text-xs font-medium">Manual</span>
+            </motion.button>
+
+            <motion.button
+              onClick={() => setShowOptions(false)}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors mt-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Cancel
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

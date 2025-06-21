@@ -6,13 +6,17 @@ interface WeeklyCalendarProps {
   days: Day[];
   getListStyle: (isDraggingOver: boolean) => string;
   onAddMeal: (dayId: string, mealType: string) => void;
+  onAddManualRecipe?: (dayId: string, mealType: string) => void;
+  onSearchRecipe?: (dayId: string, mealType: string) => void;
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
 }
 
 const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ 
   days, 
   getListStyle, 
-  onAddMeal, 
+  onAddMeal,
+  onAddManualRecipe,
+  onSearchRecipe,
   onChangeRecipe 
 }) => {
   // Sort days to ensure Sunday is first
@@ -37,6 +41,8 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           day={day} 
           getListStyle={getListStyle}
           onAddMeal={onAddMeal}
+          onAddManualRecipe={onAddManualRecipe}
+          onSearchRecipe={onSearchRecipe}
           onChangeRecipe={onChangeRecipe}
         />
       ))}

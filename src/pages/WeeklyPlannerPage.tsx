@@ -4,6 +4,7 @@ import { Sparkles, RefreshCw, AlertCircle, X, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import ChangeRecipeModal from '../components/ChangeRecipeModal';
+import { AddRecipeModal } from '../components/AddRecipeModal';
 import { useMealPlanState } from '../hooks/useMealPlanState';
 import { useFavorites } from '../contexts/FavoritesContext';
 
@@ -13,6 +14,7 @@ function WeeklyPlannerPage() {
     handleDragEnd, 
     getListStyle,
     fetchRandomRecipe,
+    addManualRecipe,
     changeRecipe,
     autofillCalendar,
     isAutofilling,
@@ -33,6 +35,13 @@ function WeeklyPlannerPage() {
     mealId: string;
     mealType: string;
     category: 'main' | 'side';
+  } | null>(null);
+
+  // Add Recipe Modal State
+  const [showAddRecipeModal, setShowAddRecipeModal] = useState(false);
+  const [addRecipeData, setAddRecipeData] = useState<{
+    dayId: string;
+    mealType: string;
   } | null>(null);
 
   const handleSaveMealPlan = async () => {
@@ -106,6 +115,24 @@ function WeeklyPlannerPage() {
     setChangeModalData(null);
   };
 
+  const handleAddManualRecipeRequest = (dayId: string, mealType: string) => {
+    setAddRecipeData({ dayId, mealType });
+    setShowAddRecipeModal(true);
+  };
+
+  const handleSearchRecipeRequest = (dayId: string, mealType: string) => {
+    // TODO: Implement search functionality
+    console.log('Search recipe requested for:', dayId, mealType);
+  };
+
+  const handleSaveManualRecipe = async (recipe: any) => {
+    if (addRecipeData) {
+      await addManualRecipe(addRecipeData.dayId, addRecipeData.mealType, recipe);
+      setShowAddRecipeModal(false);
+      setAddRecipeData(null);
+    }
+  };
+
   return (
     <div className="relative">
       {isAutofilling && (
@@ -168,6 +195,8 @@ function WeeklyPlannerPage() {
           days={days} 
           getListStyle={getListStyle} 
           onAddMeal={fetchRandomRecipe}
+          onAddManualRecipe={handleAddManualRecipeRequest}
+          onSearchRecipe={handleSearchRecipeRequest}
           onChangeRecipe={handleChangeRecipeRequest}
         />
       </DragDropContext>
@@ -183,6 +212,18 @@ function WeeklyPlannerPage() {
         category={changeModalData?.category || 'main'}
         onSelectRandom={handleChangeRecipeRandom}
         onSelectFavorite={handleChangeRecipeFavorite}
+      />
+
+      {/* Add Recipe Modal */}
+      <AddRecipeModal
+        isOpen={showAddRecipeModal}
+        onClose={() => {
+          setShowAddRecipeModal(false);
+          setAddRecipeData(null);
+        }}
+        onSave={handleSaveManualRecipe}
+        mealType={addRecipeData?.mealType}
+        category="main"
       />
 
       {/* Save Meal Plan Modal */}

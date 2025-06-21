@@ -94,6 +94,25 @@ export const useMealPlanState = () => {
     }
   };
 
+  const createMealFromUserRecipe = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Promise<Meal> => {
+    const meal: Meal = {
+      id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`,
+      recipeId: recipe.id, // This will be a negative number for user-created recipes
+      name: recipe.title,
+      type: mealType as 'breakfast' | 'lunch' | 'dinner',
+      category,
+      cuisine: recipe.cuisines?.[0] || 'Various',
+      prepTime: recipe.readyInMinutes,
+      servings: recipe.servings,
+      calories: recipe.calories,
+      image: recipe.image || '',
+      ingredients: recipe.ingredients || []
+    };
+
+    console.log('✅ Created meal from user recipe with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
+    return meal;
+  };
+
   const createPlaceholderMeal = (dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Meal => {
     const mealNames = {
       breakfast: category === 'main' ? 'Simple Breakfast' : 'Breakfast Side',
@@ -252,6 +271,30 @@ export const useMealPlanState = () => {
     }
   };
 
+  const addManualRecipe = async (dayId: string, mealType: string, recipe: any) => {
+    try {
+      const category = 'main'; // Default to main for manual recipes
+      const meal = await createMealFromUserRecipe(recipe, dayId, mealType, category);
+      
+      setDays(prevDays => 
+        prevDays.map(day => 
+          day.id === dayId
+            ? {
+                ...day,
+                meals: [...day.meals, meal]
+              }
+            : day
+        )
+      );
+      
+      console.log('✅ Successfully added manual recipe');
+      setApiError(null); // Clear any previous errors
+    } catch (error) {
+      console.error('Error adding manual recipe:', error);
+      setApiError('Failed to add manual recipe. Please try again.');
+    }
+  };
+
   const changeRecipe = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom: boolean = true, favoriteRecipeId?: number) => {
     try {
       let newMeal: Meal | null = null;
@@ -376,7 +419,8 @@ export const useMealPlanState = () => {
     days, 
     handleDragEnd, 
     getListStyle, 
-    fetchRandomRecipe, 
+    fetchRandomRecipe,
+    addManualRecipe,
     changeRecipe,
     autofillCalendar,
     isAutofilling,

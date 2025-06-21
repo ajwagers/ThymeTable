@@ -8,6 +8,8 @@ interface MealListProps {
   meals: Meal[];
   mealType: string;
   onAddMeal: () => void;
+  onAddManualRecipe?: () => void;
+  onSearchRecipe?: () => void;
   onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   dayId?: string;
 }
@@ -15,7 +17,9 @@ interface MealListProps {
 const MealList: React.FC<MealListProps> = ({ 
   meals, 
   mealType, 
-  onAddMeal, 
+  onAddMeal,
+  onAddManualRecipe,
+  onSearchRecipe,
   onChangeRecipe,
   dayId 
 }) => {
@@ -101,7 +105,12 @@ const MealList: React.FC<MealListProps> = ({
           </AnimatePresence>
         </div>
       ) : (
-        <MealPlaceholder mealType={mealType} onAddMeal={onAddMeal} />
+        <MealPlaceholder 
+          mealType={mealType} 
+          onAddMeal={onAddMeal}
+          onAddManualRecipe={onAddManualRecipe}
+          onSearchRecipe={onSearchRecipe}
+        />
       )}
     </div>
   );

@@ -7,18 +7,34 @@ interface DayColumnProps {
   day: Day;
   getListStyle: (isDraggingOver: boolean) => string;
   onAddMeal: (dayId: string, mealType: string) => void;
+  onAddManualRecipe?: (dayId: string, mealType: string) => void;
+  onSearchRecipe?: (dayId: string, mealType: string) => void;
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({ 
   day, 
   getListStyle, 
-  onAddMeal, 
+  onAddMeal,
+  onAddManualRecipe,
+  onSearchRecipe,
   onChangeRecipe 
 }) => {
   const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => {
     if (onChangeRecipe) {
       onChangeRecipe(day.id, mealId, mealType, category, useRandom, favoriteRecipeId);
+    }
+  };
+
+  const handleAddManualRecipe = (mealType: string) => {
+    if (onAddManualRecipe) {
+      onAddManualRecipe(day.id, mealType);
+    }
+  };
+
+  const handleSearchRecipe = (mealType: string) => {
+    if (onSearchRecipe) {
+      onSearchRecipe(day.id, mealType);
     }
   };
 
@@ -49,6 +65,8 @@ const DayColumn: React.FC<DayColumnProps> = ({
                   meals={day.meals.filter(meal => meal.type === mealType)}
                   mealType={mealType}
                   onAddMeal={() => onAddMeal(day.id, mealType)}
+                  onAddManualRecipe={() => handleAddManualRecipe(mealType)}
+                  onSearchRecipe={() => handleSearchRecipe(mealType)}
                   onChangeRecipe={handleChangeRecipe}
                   dayId={day.id}
                 />
