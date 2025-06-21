@@ -72,27 +72,6 @@ function LoginPage() {
 
   return (
     <div className="min-h-[80vh] bg-gradient-to-b from-primary-50 to-white overflow-hidden">
-      {/* Bolt Logo - Fixed Position */}
-      <div className="fixed top-4 right-4 z-50">
-        <a
-          href="https://bolt.new"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 bg-white/90 hover:bg-white shadow-lg rounded-lg transition-all group"
-          title="Powered by Bolt.new"
-        >
-          <img
-            src="/black_circle_360x360.png"
-            alt="Powered by Bolt"
-            className="w-5 h-5 rounded-full"
-          />
-          <span className="text-xs text-gray-700 group-hover:text-gray-900 hidden sm:inline">
-            Powered by Bolt
-          </span>
-          <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-gray-700" />
-        </a>
-      </div>
-      
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left side - Hero content */}

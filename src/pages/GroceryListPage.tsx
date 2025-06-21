@@ -325,24 +325,6 @@ function GroceryListPage() {
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-6 print:shadow-none print:p-0">
-      {/* Bolt Logo - Top Right (hidden in print) */}
-      <div className="absolute top-4 right-4 print:hidden">
-        <a
-          href="https://bolt.new"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors group"
-          title="Powered by Bolt.new"
-        >
-          <img
-            src="/black_circle_360x360.png"
-            alt="Powered by Bolt"
-            className="w-4 h-4 rounded-full"
-          />
-          <Globe className="w-3 h-3 text-gray-500 group-hover:text-gray-700" />
-        </a>
-      </div>
-      
       <div className="flex items-center justify-between mb-6 print:hidden">
         <button 
           onClick={() => navigate('/')}

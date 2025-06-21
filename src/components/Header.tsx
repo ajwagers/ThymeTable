@@ -52,7 +52,7 @@ const Header: React.FC = () => {
                   className="w-6 h-6 rounded-full"
                 />
                 <span className="text-xs text-white/80 group-hover:text-white hidden sm:inline">
-                  Powered by Bolt
+                  Powered by Bolt.new
                 </span>
                 <ExternalLink className="w-3 h-3 text-white/60 group-hover:text-white/80" />
               </a>
