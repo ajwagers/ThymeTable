@@ -18,22 +18,22 @@ function LoginPage() {
 
   const features = [
     {
-      icon: <Shield className="w-6 h-6 text-primary-600" />,
-      title: "Allergy-Safe Planning",
+      icon: <Shield className="w-6 h-6 text-terra-500" />,
+      title: "Allergy-Consious Planning",
       description: "Plan meals safely around food allergies and intolerances"
     },
     {
-      icon: <Filter className="w-6 h-6 text-terra-500" />,
+      icon: <Filter className="w-6 h-6 text-primary-500" />,
       title: "Dietary Compliance",
       description: "Strict filtering for keto, gluten-free, vegan, and more"
     },
     {
-      icon: <Users className="w-6 h-6 text-primary-500" />,
+      icon: <Users className="w-6 h-6 text-terra-500" />,
       title: "Family-Friendly",
       description: "Manage multiple dietary needs in one household"
     },
     {
-      icon: <Clock className="w-6 h-6 text-terra-400" />,
+      icon: <Clock className="w-6 h-6 text-primary-500" />,
       title: "Save Research Time",
       description: "Stop spending hours searching for compliant recipes"
     }
