@@ -10,6 +10,7 @@ interface MealListProps {
   onAddMeal: () => void;
   onAddManualRecipe?: () => void;
   onSearchRecipe?: () => void;
+  onImportRecipe?: () => void;
   onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   dayId?: string;
   isLoading?: boolean;
@@ -21,6 +22,7 @@ const MealList: React.FC<MealListProps> = ({
   onAddMeal,
   onAddManualRecipe,
   onSearchRecipe,
+  onImportRecipe,
   onChangeRecipe,
   dayId,
   isLoading = false
@@ -112,6 +114,7 @@ const MealList: React.FC<MealListProps> = ({
           onAddMeal={onAddMeal}
           onAddManualRecipe={onAddManualRecipe}
           onSearchRecipe={onSearchRecipe}
+          onImportRecipe={onImportRecipe}
           isLoading={isLoading}
         />
       )}

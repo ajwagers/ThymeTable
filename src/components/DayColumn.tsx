@@ -9,6 +9,7 @@ interface DayColumnProps {
   onAddMeal: (dayId: string, mealType: string) => void;
   onAddManualRecipe?: (dayId: string, mealType: string) => void;
   onSearchRecipe?: (dayId: string, mealType: string) => void;
+  onImportRecipe?: (dayId: string, mealType: string) => void;
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   isRecipeLoading?: (recipeKey: string) => boolean;
 }
@@ -19,6 +20,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
   onAddMeal,
   onAddManualRecipe,
   onSearchRecipe,
+  onImportRecipe,
   onChangeRecipe,
   isRecipeLoading
 }) => {
@@ -37,6 +39,12 @@ const DayColumn: React.FC<DayColumnProps> = ({
   const handleSearchRecipe = (mealType: string) => {
     if (onSearchRecipe) {
       onSearchRecipe(day.id, mealType);
+    }
+  };
+
+  const handleImportRecipe = (mealType: string) => {
+    if (onImportRecipe) {
+      onImportRecipe(day.id, mealType);
     }
   };
 
@@ -73,6 +81,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
                     onAddMeal={() => onAddMeal(day.id, mealType)}
                     onAddManualRecipe={() => handleAddManualRecipe(mealType)}
                     onSearchRecipe={() => handleSearchRecipe(mealType)}
+                    onImportRecipe={() => handleImportRecipe(mealType)}
                     onChangeRecipe={handleChangeRecipe}
                     dayId={day.id}
                     isLoading={isLoading}

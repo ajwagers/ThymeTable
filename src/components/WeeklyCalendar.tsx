@@ -8,6 +8,7 @@ interface WeeklyCalendarProps {
   onAddMeal: (dayId: string, mealType: string) => void;
   onAddManualRecipe?: (dayId: string, mealType: string) => void;
   onSearchRecipe?: (dayId: string, mealType: string) => void;
+  onImportRecipe?: (dayId: string, mealType: string) => void;
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   isRecipeLoading?: (recipeKey: string) => boolean;
 }
@@ -18,6 +19,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   onAddMeal,
   onAddManualRecipe,
   onSearchRecipe,
+  onImportRecipe,
   onChangeRecipe,
   isRecipeLoading
 }) => {
@@ -45,6 +47,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           onAddMeal={onAddMeal}
           onAddManualRecipe={onAddManualRecipe}
           onSearchRecipe={onSearchRecipe}
+          onImportRecipe={onImportRecipe}
           onChangeRecipe={onChangeRecipe}
           isRecipeLoading={isRecipeLoading}
         />

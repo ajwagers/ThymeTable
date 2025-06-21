@@ -6,6 +6,7 @@ import WeeklyCalendar from '../components/WeeklyCalendar';
 import ChangeRecipeModal from '../components/ChangeRecipeModal';
 import { AddRecipeModal } from '../components/AddRecipeModal';
 import SearchRecipeModal from '../components/SearchRecipeModal';
+import { ImportRecipeModal } from '../components/ImportRecipeModal';
 import { useMealPlanState } from '../hooks/useMealPlanState';
 import { useFavorites } from '../contexts/FavoritesContext';
 
@@ -51,6 +52,13 @@ function WeeklyPlannerPage() {
   // Search Recipe Modal State
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchRecipeData, setSearchRecipeData] = useState<{
+    dayId: string;
+    mealType: string;
+  } | null>(null);
+
+  // Import Recipe Modal State
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importRecipeData, setImportRecipeData] = useState<{
     dayId: string;
     mealType: string;
   } | null>(null);
@@ -151,6 +159,11 @@ function WeeklyPlannerPage() {
     setShowSearchModal(true);
   };
 
+  const handleImportRecipeRequest = (dayId: string, mealType: string) => {
+    setImportRecipeData({ dayId, mealType });
+    setShowImportModal(true);
+  };
+
   const handleSaveManualRecipe = async (recipe: any) => {
     if (addRecipeData) {
       await addManualRecipe(addRecipeData.dayId, addRecipeData.mealType, recipe);
@@ -164,6 +177,14 @@ function WeeklyPlannerPage() {
       await addSearchRecipe(searchRecipeData.dayId, searchRecipeData.mealType, recipe);
       setShowSearchModal(false);
       setSearchRecipeData(null);
+    }
+  };
+
+  const handleSaveImportedRecipe = async (recipe: any) => {
+    if (importRecipeData) {
+      await addManualRecipe(importRecipeData.dayId, importRecipeData.mealType, recipe);
+      setShowImportModal(false);
+      setImportRecipeData(null);
     }
   };
 
@@ -231,6 +252,7 @@ function WeeklyPlannerPage() {
           onAddMeal={fetchRandomRecipe}
           onAddManualRecipe={handleAddManualRecipeRequest}
           onSearchRecipe={handleSearchRecipeRequest}
+          onImportRecipe={handleImportRecipeRequest}
           onChangeRecipe={handleChangeRecipeRequest}
           isRecipeLoading={isRecipeLoading}
         />
@@ -272,6 +294,18 @@ function WeeklyPlannerPage() {
         }}
         onSelectRecipe={handleSelectSearchRecipe}
         mealType={searchRecipeData?.mealType || 'dinner'}
+        category="main"
+      />
+
+      {/* Import Recipe Modal */}
+      <ImportRecipeModal
+        isOpen={showImportModal}
+        onClose={() => {
+          setShowImportModal(false);
+          setImportRecipeData(null);
+        }}
+        onSave={handleSaveImportedRecipe}
+        mealType={importRecipeData?.mealType}
         category="main"
       />
 

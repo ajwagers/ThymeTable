@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlusCircle, Shuffle, Search, Edit3, Loader2 } from 'lucide-react';
+import { PlusCircle, Shuffle, Search, Edit3, Globe, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MealPlaceholderProps {
@@ -7,6 +7,7 @@ interface MealPlaceholderProps {
   onAddMeal: () => void;
   onAddManualRecipe?: () => void;
   onSearchRecipe?: () => void;
+  onImportRecipe?: () => void;
   isLoading?: boolean;
 }
 
@@ -15,6 +16,7 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
   onAddMeal, 
   onAddManualRecipe,
   onSearchRecipe,
+  onImportRecipe,
   isLoading = false
 }) => {
   const [showOptions, setShowOptions] = useState(false);
@@ -34,6 +36,13 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
   const handleSearchRecipe = () => {
     if (onSearchRecipe) {
       onSearchRecipe();
+    }
+    setShowOptions(false);
+  };
+
+  const handleImportRecipe = () => {
+    if (onImportRecipe) {
+      onImportRecipe();
     }
     setShowOptions(false);
   };
@@ -138,13 +147,26 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
             </motion.button>
 
             <motion.button
-              onClick={handleManualRecipe}
+              onClick={handleImportRecipe}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+            >
+              <Globe className="w-4 h-4" />
+              <span className="text-xs font-medium">Import</span>
+            </motion.button>
+
+            <motion.button
+              onClick={handleManualRecipe}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
             >
               <Edit3 className="w-4 h-4" />
               <span className="text-xs font-medium">Manual</span>
