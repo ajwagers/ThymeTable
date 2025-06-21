@@ -18,6 +18,7 @@ function WeeklyPlannerPage() {
     addManualRecipe,
     addSearchRecipe,
     changeRecipe,
+    changeRecipeToSearchResult,
     autofillCalendar,
     isAutofilling,
     resetWeek,
@@ -127,27 +128,13 @@ function WeeklyPlannerPage() {
 
   const handleChangeRecipeSearch = async (recipe: any) => {
     if (changeModalData) {
-      // Replace the existing meal with the search result
-      await addSearchRecipe(changeModalData.dayId, changeModalData.mealType, recipe);
-      
-      // Remove the old meal
-      const updatedDays = days.map(day => 
-        day.id === changeModalData.dayId
-          ? {
-              ...day,
-              meals: day.meals.filter(meal => meal.id !== changeModalData.mealId)
-            }
-          : day
-      );
-      
-      // This would need to be handled in the hook, but for now we'll use the existing pattern
-      changeRecipe(
+      // Use the proper method for replacing a meal with a search result
+      await changeRecipeToSearchResult(
         changeModalData.dayId, 
         changeModalData.mealId, 
         changeModalData.mealType, 
         changeModalData.category, 
-        false, 
-        recipe.id
+        recipe
       );
     }
     setShowChangeModal(false);
