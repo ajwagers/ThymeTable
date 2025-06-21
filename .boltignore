@@ -1,0 +1,63 @@
+# Configuration files
+eslint.config.js
+postcss.config.js
+tailwind.config.js
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+src/vite-env.d.ts
+
+# Environment and setup files
+.env.example
+README.md
+
+# Build and migration scripts
+scripts/migrate.js
+scripts/scrape_recipe.py
+
+# Supabase functions and migrations
+supabase/functions/scrape-recipe-python/index.ts
+supabase/functions/scrape-recipe/index.ts
+supabase/migrations/20250620184438_lively_unit.sql
+
+# Core setup files
+src/index.css
+src/main.tsx
+src/lib/supabase.ts
+
+# Data and utility files
+src/data/initialData.ts
+src/types/index.ts
+src/utils/groceryListUtils.ts
+
+# Service files (rarely modified)
+src/services/spoonacular.ts
+src/services/recipeParser.ts
+
+# Stable component files
+src/components/ServingsControl.tsx
+src/components/MeasurementToggle.tsx
+src/components/PrivateRoute.tsx
+src/components/AddRecipeModal.tsx
+src/components/SearchRecipeModal.tsx
+src/components/ImportRecipeModal.tsx
+src/components/DietaryFiltersModal.tsx
+src/components/MealCard.tsx
+
+# Context files (now stable after subscription implementation)
+src/contexts/AuthContext.tsx
+src/contexts/FavoritesContext.tsx
+src/contexts/ServingsContext.tsx
+src/contexts/MeasurementContext.tsx
+src/contexts/DietaryContext.tsx
+
+# Hook files
+src/hooks/useMealPlanState.ts
+
+# Static pages that rarely change
+src/pages/LoginPage.tsx
+src/pages/FavoritesPage.tsx
+src/pages/GroceryListPage.tsx
+src/pages/RecipeDetailsPage.tsx
+src/pages/SavedMealPlansPage.tsx
