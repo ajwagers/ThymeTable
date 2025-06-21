@@ -50,4 +50,4 @@ src/contexts/DietaryContext.tsx
 src/hooks/useMealPlanState.ts
 
 # Static pages that rarely change
-src/pages/LoginPage.tsx
+
