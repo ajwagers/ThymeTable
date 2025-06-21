@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Clock, Users, Utensils, Filter, ChevronDown, Loader2 } from 'lucide-react';
+import { X, Search, Clock, Users, Utensils, Filter, ChevronDown, Loader2, Crown, AlertTriangle } from 'lucide-react';
 import { useDietary } from '../contexts/DietaryContext';
+import { useFeatureAccess } from '../contexts/SubscriptionContext';
 import { searchRecipes } from '../services/spoonacular';
 import { SpoonacularRecipe } from '../types';
 
@@ -21,6 +22,7 @@ function SearchRecipeModal({
   onSelectRecipe 
 }: SearchRecipeModalProps) {
   const { getSpoonacularParams, getAllForbiddenIngredients, isRecipeAllowed } = useDietary();
+  const { currentTier } = useFeatureAccess();
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +37,12 @@ function SearchRecipeModal({
   const [newIncludeIngredient, setNewIncludeIngredient] = useState('');
   const [newExcludeIngredient, setNewExcludeIngredient] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Search limits for free tier
+  const [dailySearchCount, setDailySearchCount] = useState(0);
+  const [lastSearchDate, setLastSearchDate] = useState<string>('');
+  const FREE_TIER_DAILY_LIMIT = 5;
+  const FREE_TIER_RESULTS_LIMIT = 6;
 
   // Pre-load dietary restrictions when modal opens
   useEffect(() => {
@@ -51,8 +59,31 @@ function SearchRecipeModal({
     }
   }, [isOpen, mealType, getAllForbiddenIngredients]);
 
+  // Load search usage for free tier
+  useEffect(() => {
+    if (isOpen && currentTier === 'free') {
+      const today = new Date().toDateString();
+      const savedDate = localStorage.getItem('lastSearchDate');
+      const savedCount = parseInt(localStorage.getItem('dailySearchCount') || '0');
+      
+      if (savedDate === today) {
+        setDailySearchCount(savedCount);
+      } else {
+        setDailySearchCount(0);
+        setLastSearchDate(today);
+        localStorage.setItem('lastSearchDate', today);
+        localStorage.setItem('dailySearchCount', '0');
+      }
+    }
+  }, [isOpen, currentTier]);
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+
+    // Check daily search limit for free tier
+    if (currentTier === 'free' && dailySearchCount >= FREE_TIER_DAILY_LIMIT) {
+      return; // Prevent search if limit reached
+    }
 
     setIsSearching(true);
     try {
@@ -71,7 +102,7 @@ function SearchRecipeModal({
         excludeIngredients: [...new Set(allExcludeIngredients)].join(','),
         diet: dietaryParams.diet,
         intolerances: dietaryParams.intolerances,
-        number: 20
+        number: currentTier === 'free' ? FREE_TIER_RESULTS_LIMIT : 20
       };
 
       console.log('🔍 Searching with params:', searchParams);
@@ -83,8 +114,20 @@ function SearchRecipeModal({
         return isAppropriateForMealType(recipe, selectedMealType, category);
       });
 
-      setSearchResults(filteredResults);
+      // Limit results for free tier
+      const limitedResults = currentTier === 'free' 
+        ? filteredResults.slice(0, FREE_TIER_RESULTS_LIMIT)
+        : filteredResults;
+      
+      setSearchResults(limitedResults);
       setHasSearched(true);
+      
+      // Update search count for free tier
+      if (currentTier === 'free') {
+        const newCount = dailySearchCount + 1;
+        setDailySearchCount(newCount);
+        localStorage.setItem('dailySearchCount', newCount.toString());
+      }
     } catch (error) {
       console.error('Search error:', error);
       setSearchResults([]);
@@ -229,18 +272,47 @@ function SearchRecipeModal({
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 text-lg"
                     />
                   </div>
-                  <button
-                    onClick={handleSearch}
-                    disabled={!searchQuery.trim() || isSearching}
-                    className="btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSearching ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Search className="w-5 h-5" />
-                    )}
-                  </button>
+                  
+                  {/* Search Button with Free Tier Limits */}
+                  {currentTier === 'free' && dailySearchCount >= FREE_TIER_DAILY_LIMIT ? (
+                    <button
+                      disabled
+                      className="btn-primary px-6 py-3 opacity-50 cursor-not-allowed relative"
+                      title="Daily search limit reached. Upgrade for unlimited searches."
+                    >
+                      <AlertTriangle className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSearch}
+                      disabled={!searchQuery.trim() || isSearching}
+                      className="btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSearching ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Search className="w-5 h-5" />
+                      )}
+                    </button>
+                  )}
                 </div>
+
+                {/* Free Tier Usage Indicator */}
+                {currentTier === 'free' && (
+                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-amber-600" />
+                      <span className="text-sm font-medium text-amber-800">
+                        Free Plan: {dailySearchCount}/{FREE_TIER_DAILY_LIMIT} daily searches used
+                      </span>
+                    </div>
+                    {dailySearchCount >= FREE_TIER_DAILY_LIMIT && (
+                      <span className="text-xs text-amber-700 font-medium">
+                        Upgrade for unlimited searches
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* Meal Type Selector */}
                 <div className="flex items-center gap-3 mb-4">
@@ -389,7 +461,23 @@ function SearchRecipeModal({
                   </div>
                 ) : hasSearched ? (
                   searchResults.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <>
+                      {/* Free Tier Results Limit Notice */}
+                      {currentTier === 'free' && searchResults.length === FREE_TIER_RESULTS_LIMIT && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Crown className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-800">
+                              Showing {FREE_TIER_RESULTS_LIMIT} results (Free Plan limit)
+                            </span>
+                          </div>
+                          <p className="text-xs text-blue-700 mt-1">
+                            Upgrade to Standard or Premium to see all search results
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {searchResults.map((recipe, index) => (
                         <motion.button
                           key={recipe.id}
@@ -441,7 +529,8 @@ function SearchRecipeModal({
                           </div>
                         </motion.button>
                       ))}
-                    </div>
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-12 text-gray-500">
                       <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -458,9 +547,20 @@ function SearchRecipeModal({
                   <div className="text-center py-12 text-gray-500">
                     <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-medium text-gray-700 mb-2">Search for Recipes</h3>
-                    <p className="text-sm">
-                      Enter a search term above to find recipes that match your dietary preferences.
-                    </p>
+                    {currentTier === 'free' ? (
+                      <div>
+                        <p className="text-sm mb-2">
+                          Enter a search term above to find recipes. Free plan includes {FREE_TIER_DAILY_LIMIT} searches per day.
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Upgrade for unlimited searches and more results
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm">
+                        Enter a search term above to find recipes that match your dietary preferences.
+                      </p>
+                    )}
                     <p className="text-xs mt-2 text-gray-400">
                       Your dietary filters are automatically applied to all search results.
                     </p>

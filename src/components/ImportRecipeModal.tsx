@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Globe, Loader2, AlertCircle, Edit3, Check, RefreshCw, Zap } from 'lucide-react';
+import { X, Globe, Loader2, AlertCircle, Edit3, Check, RefreshCw, Zap, Crown, Lock } from 'lucide-react';
 import { SpoonacularRecipe, Ingredient } from '../types';
+import { useFeatureAccess } from '../contexts/SubscriptionContext';
 import { parseRecipeFromUrl, parseRecipeFromUrlFallback, validateImportedRecipe } from '../services/recipeParser';
 
 interface ImportRecipeModalProps {
@@ -19,6 +20,7 @@ export function ImportRecipeModal({
   mealType = 'dinner', 
   category = 'main' 
 }: ImportRecipeModalProps) {
+  const { currentTier } = useFeatureAccess();
   const [url, setUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState('');
@@ -27,6 +29,7 @@ export function ImportRecipeModal({
   const [saving, setSaving] = useState(false);
   const [usedFallback, setUsedFallback] = useState(false);
   const [parsingMethod, setParsingMethod] = useState<string>('');
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Editable recipe fields
   const [editedRecipe, setEditedRecipe] = useState<SpoonacularRecipe | null>(null);
@@ -41,9 +44,15 @@ export function ImportRecipeModal({
     setParsingMethod('');
   };
 
-  const handleImport = async (useFallback = false) => {
+  const handleImport = async (useFallback = false, forceBasic = false) => {
     if (!url.trim()) {
       setImportError('Please enter a valid URL');
+      return;
+    }
+
+    // Check if user is trying to use enhanced parser but doesn't have access
+    if (!useFallback && !forceBasic && currentTier === 'free') {
+      setShowUpgradePrompt(true);
       return;
     }
 
@@ -55,7 +64,7 @@ export function ImportRecipeModal({
     try {
       let recipe: SpoonacularRecipe;
       
-      if (useFallback) {
+      if (useFallback || forceBasic || currentTier === 'free') {
         console.log('🔄 Using fallback parser...');
         recipe = await parseRecipeFromUrlFallback(url.trim());
         setUsedFallback(true);
@@ -253,8 +262,15 @@ export function ImportRecipeModal({
                     {/* Enhanced Features Badge */}
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 mb-4">
                       <Zap className="w-4 h-4" />
-                      <span className="font-medium">Enhanced with Python recipe_scrapers</span>
-                      <span className="text-green-600">• 500+ supported sites</span>
+                      <span className="font-medium">
+                        {currentTier === 'free' ? 'Basic Parser Available' : 'Enhanced with Python recipe_scrapers'}
+                      </span>
+                      <span className="text-green-600">
+                        {currentTier === 'free' ? '• Limited compatibility' : '• 500+ supported sites'}
+                      </span>
+                      {currentTier === 'free' && (
+                        <Crown className="w-4 h-4 text-yellow-500" />
+                      )}
                     </div>
                   </div>
 
@@ -277,17 +293,45 @@ export function ImportRecipeModal({
                             disabled={isImporting}
                           />
                         </div>
-                        <button
-                          onClick={() => handleImport()}
-                          disabled={!url.trim() || isImporting}
-                          className="btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isImporting ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            'Import'
-                          )}
-                        </button>
+                        
+                        {/* Import Button - Different behavior based on tier */}
+                        {currentTier === 'free' ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleImport(false, true)}
+                              disabled={!url.trim() || isImporting}
+                              className="btn-secondary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isImporting ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                              ) : (
+                                'Basic Import'
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleImport()}
+                              disabled={!url.trim() || isImporting}
+                              className="btn-primary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed relative"
+                              title="Upgrade to Standard for enhanced parsing"
+                            >
+                              <Crown className="w-4 h-4 mr-1" />
+                              Enhanced
+                              <Lock className="w-3 h-3 ml-1" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleImport()}
+                            disabled={!url.trim() || isImporting}
+                            className="btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isImporting ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              'Import'
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -322,7 +366,7 @@ export function ImportRecipeModal({
                             <p className="text-sm text-red-700 mt-1 whitespace-pre-line">{importError}</p>
                             {!usedFallback && (
                               <button
-                                onClick={() => handleImport(true)}
+                                onClick={() => handleImport(true, true)}
                                 disabled={isImporting}
                                 className="mt-3 btn-secondary text-sm"
                               >
@@ -337,10 +381,17 @@ export function ImportRecipeModal({
 
                     <div className="text-center">
                       <p className="text-xs text-gray-500 mb-2">
-                        <strong>Supported sites include:</strong> AllRecipes, Food Network, Bon Appétit, Serious Eats, NYT Cooking, BBC Good Food, and 500+ more recipe sites.
+                        <strong>Supported sites include:</strong> 
+                        {currentTier === 'free' 
+                          ? ' Basic parsing for most recipe sites with structured data'
+                          : ' AllRecipes, Food Network, Bon Appétit, Serious Eats, NYT Cooking, BBC Good Food, and 500+ more recipe sites'
+                        }
                       </p>
                       <p className="text-xs text-gray-400">
-                        Our enhanced parser uses the Python recipe_scrapers library for maximum compatibility and accuracy.
+                        {currentTier === 'free'
+                          ? 'Upgrade to Standard or Premium for enhanced parsing with Python recipe_scrapers library'
+                          : 'Our enhanced parser uses the Python recipe_scrapers library for maximum compatibility and accuracy'
+                        }
                       </p>
                     </div>
                   </div>
@@ -635,6 +686,66 @@ export function ImportRecipeModal({
               )}
             </div>
           </motion.div>
+          
+          {/* Upgrade Prompt Modal */}
+          <AnimatePresence>
+            {showUpgradePrompt && (
+              <motion.div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 m-4"
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                >
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full mb-4">
+                      <Crown className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      Unlock Enhanced Recipe Import
+                    </h3>
+                    <p className="text-gray-600">
+                      Get access to our Python-powered parser that supports 500+ recipe sites with maximum accuracy and reliability.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Standard Plan - $4.99/month</h4>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        <li>• Enhanced Python recipe parser</li>
+                        <li>• 500+ supported recipe sites</li>
+                        <li>• Advanced dietary filters</li>
+                        <li>• 15 saved meal plans</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowUpgradePrompt(false);
+                        handleImport(false, true);
+                      }}
+                      className="flex-1 btn-secondary"
+                    >
+                      Use Basic Parser
+                    </button>
+                    <button
+                      onClick={() => setShowUpgradePrompt(false)}
+                      className="flex-1 btn-primary"
+                    >
+                      Upgrade Now
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </AnimatePresence>
