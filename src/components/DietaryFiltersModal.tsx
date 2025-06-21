@@ -548,6 +548,10 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
                 <div className="text-sm text-gray-600">
                   {activeDiets.length > 0 ? (
                     <span>{activeDiets.length} filter{activeDiets.length !== 1 ? 's' : ''} active</span>
+                  ) : (
+                    <span>No filters active</span>
+                  )}
+                </div>
                 {!canCreateCustomFilters ? (
                   <button
                     onClick={handleCreateCustomFilter}
@@ -627,9 +631,6 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
                   </ul>
                 </div>
               </div>
-    </AnimatePresence>
-  );
-}
 
               <div className="flex gap-3">
                 <button
@@ -649,4 +650,8 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
           </div>
         )}
       </AnimatePresence>
+    </AnimatePresence>
+  );
+}
+
 export default DietaryFiltersModal;
