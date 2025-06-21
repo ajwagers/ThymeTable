@@ -36,13 +36,7 @@ src/services/spoonacular.ts
 src/services/recipeParser.ts
 
 # Stable component files
-src/components/ServingsControl.tsx
-src/components/MeasurementToggle.tsx
 src/components/PrivateRoute.tsx
-src/components/AddRecipeModal.tsx
-src/components/SearchRecipeModal.tsx
-src/components/ImportRecipeModal.tsx
-src/components/DietaryFiltersModal.tsx
 src/components/MealCard.tsx
 
 # Context files (now stable after subscription implementation)
@@ -57,7 +51,3 @@ src/hooks/useMealPlanState.ts
 
 # Static pages that rarely change
 src/pages/LoginPage.tsx
-src/pages/FavoritesPage.tsx
-src/pages/GroceryListPage.tsx
-src/pages/RecipeDetailsPage.tsx
-src/pages/SavedMealPlansPage.tsx
