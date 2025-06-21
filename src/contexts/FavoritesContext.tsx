@@ -25,6 +25,7 @@ interface FavoritesContextType {
   // Saved meal plans methods
   saveMealPlan: (name: string, description: string, mealPlanData: Day[]) => Promise<void>;
   loadMealPlan: (mealPlanId: string) => Promise<Day[] | null>;
+  importMealPlan: (name: string, description: string, mealPlanData: Day[]) => Promise<void>;
   deleteMealPlan: (mealPlanId: string) => Promise<void>;
   updateMealPlan: (mealPlanId: string, name: string, description: string, mealPlanData: Day[]) => Promise<void>;
   
@@ -207,6 +208,11 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Import meal plan (same as save but with different naming)
+  const importMealPlan = async (name: string, description: string, mealPlanData: Day[]) => {
+    return saveMealPlan(name, description, mealPlanData);
+  };
+
   // Load meal plan
   const loadMealPlan = async (mealPlanId: string): Promise<Day[] | null> => {
     if (!user) {
@@ -325,6 +331,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       isFavorite,
       saveMealPlan,
       loadMealPlan,
+      importMealPlan,
       deleteMealPlan,
       updateMealPlan,
       refreshData,

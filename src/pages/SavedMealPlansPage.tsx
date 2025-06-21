@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X, Crown, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X, Crown, AlertTriangle, Upload, FileText, Check } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import UpgradePrompt from '../components/UpgradePrompt';
@@ -8,13 +8,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function SavedMealPlansPage() {
   const navigate = useNavigate();
-  const { savedMealPlans, deleteMealPlan, loadMealPlan, loading, mealPlansRemaining } = useFavorites();
+  const { savedMealPlans, deleteMealPlan, loadMealPlan, loading, mealPlansRemaining, saveMealPlan } = useFavorites();
   const { currentTier, limits } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importData, setImportData] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState('');
 
   const handleDeletePlan = async (planId: string) => {
     try {
@@ -48,6 +52,63 @@ function SavedMealPlansPage() {
     setEditingPlan(null);
     setEditName('');
     setEditDescription('');
+  };
+
+  const handleImportPlan = async () => {
+    if (!importData.trim()) {
+      setImportError('Please paste meal plan data');
+      return;
+    }
+
+    setImporting(true);
+    setImportError('');
+
+    try {
+      // Try to parse the imported data
+      const parsedData = JSON.parse(importData);
+      
+      // Validate the structure
+      if (!parsedData.name || !parsedData.meal_plan_data || !Array.isArray(parsedData.meal_plan_data)) {
+        throw new Error('Invalid meal plan format');
+      }
+
+      // Save the imported meal plan
+      await saveMealPlan(
+        `${parsedData.name} (Imported)`,
+        parsedData.description || 'Imported meal plan',
+        parsedData.meal_plan_data
+      );
+
+      setShowImportModal(false);
+      setImportData('');
+    } catch (error) {
+      console.error('Error importing meal plan:', error);
+      setImportError('Invalid meal plan data. Please check the format and try again.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleExportPlan = (plan: any) => {
+    const exportData = {
+      name: plan.name,
+      description: plan.description,
+      meal_plan_data: plan.meal_plan_data,
+      exported_at: new Date().toISOString(),
+      version: '1.0'
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${plan.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_meal_plan.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const formatDate = (dateString: string) => {
@@ -89,6 +150,19 @@ function SavedMealPlansPage() {
             <BookOpen className="w-6 h-6 mr-2 text-primary-500" />
             Saved Meal Plans
           </h1>
+          
+          {/* Import/Export Actions */}
+          <div className="flex items-center justify-center gap-3 mt-3">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="btn-secondary text-sm"
+              title="Import a meal plan from JSON data"
+            >
+              <Upload className="w-4 h-4 mr-1" />
+              Import Plan
+            </button>
+          </div>
+          
           {/* Usage indicator for non-unlimited plans */}
           {limits.maxSavedMealPlans !== -1 && (
             <div className="flex items-center justify-center gap-2 mt-2">
@@ -251,6 +325,13 @@ function SavedMealPlansPage() {
                       Load Plan
                     </button>
                     <button
+                      onClick={() => handleExportPlan(plan)}
+                      className="btn-secondary text-sm"
+                      title="Export meal plan as JSON"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => startEditing(plan)}
                       className="btn-secondary text-sm"
                       title="Edit plan details"
@@ -336,6 +417,99 @@ function SavedMealPlansPage() {
                   className="flex-1 btn-secondary"
                 >
                   Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      
+      {/* Import Modal */}
+      <AnimatePresence>
+        {showImportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowImportModal(false)}
+            />
+            
+            <motion.div
+              className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Upload className="w-5 h-5 mr-2 text-primary-500" />
+                  Import Meal Plan
+                </h3>
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="import-data" className="block text-sm font-medium text-gray-700 mb-2">
+                    Meal Plan Data (JSON)
+                  </label>
+                  <textarea
+                    id="import-data"
+                    value={importData}
+                    onChange={(e) => setImportData(e.target.value)}
+                    className="w-full h-64 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
+                    placeholder="Paste your exported meal plan JSON data here..."
+                  />
+                </div>
+
+                {importError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-700">{importError}</p>
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">How to import:</h4>
+                  <ol className="text-sm text-blue-700 space-y-1">
+                    <li>1. Export a meal plan from another ThymeTable account</li>
+                    <li>2. Copy the JSON data from the exported file</li>
+                    <li>3. Paste it in the text area above</li>
+                    <li>4. Click "Import Plan" to add it to your saved plans</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="flex-1 btn-secondary"
+                  disabled={importing}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImportPlan}
+                  disabled={!importData.trim() || importing}
+                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {importing ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                      Importing...
+                    </div>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Import Plan
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
