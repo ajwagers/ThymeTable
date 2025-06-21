@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X, ExternalLink } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -72,6 +72,24 @@ function SavedMealPlansPage() {
 
   return (
     <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-6">
+      {/* Bolt Logo - Top Right */}
+      <div className="absolute top-4 right-4">
+        <a
+          href="https://bolt.new"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors group"
+          title="Powered by Bolt.new"
+        >
+          <img
+            src="/black_circle_360x360.png"
+            alt="Powered by Bolt"
+            className="w-4 h-4 rounded-full"
+          />
+          <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-gray-700" />
+        </a>
+      </div>
+      
       <div className="flex items-center justify-between mb-6">
         <button 
           onClick={() => navigate('/')}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { Sparkles, RefreshCw, AlertCircle, X, Save } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertCircle, X, Save, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import ChangeRecipeModal from '../components/ChangeRecipeModal';
@@ -190,6 +190,24 @@ function WeeklyPlannerPage() {
 
   return (
     <div className="relative">
+      {/* Bolt Logo - Top Right */}
+      <div className="absolute top-4 right-4 z-40">
+        <a
+          href="https://bolt.new"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 px-2 py-1 bg-white/90 hover:bg-white shadow-sm rounded-lg transition-colors group"
+          title="Powered by Bolt.new"
+        >
+          <img
+            src="/black_circle_360x360.png"
+            alt="Powered by Bolt"
+            className="w-4 h-4 rounded-full"
+          />
+          <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-gray-700" />
+        </a>
+      </div>
+      
       {isAutofilling && (
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="text-center">

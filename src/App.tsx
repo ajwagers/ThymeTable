@@ -69,8 +69,28 @@ function App() {
                   </Routes>
                 </main>
                 <footer className="py-6 bg-white border-t border-gray-200">
-                  <div className="px-2 text-center text-gray-500 text-sm">
-                    © {new Date().getFullYear()} ThymeTable. All rights reserved.
+                  <div className="px-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-center sm:text-left text-gray-500 text-sm">
+                      © {new Date().getFullYear()} ThymeTable. All rights reserved.
+                    </div>
+                    
+                    {/* Bolt Logo in Footer */}
+                    <a
+                      href="https://bolt.new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group"
+                      title="Powered by Bolt.new"
+                    >
+                      <img
+                        src="/black_circle_360x360.png"
+                        alt="Powered by Bolt"
+                        className="w-4 h-4 rounded-full"
+                      />
+                      <span className="text-xs text-gray-600 group-hover:text-gray-800">
+                        Made with Bolt.new
+                      </span>
+                    </a>
                   </div>
                 </footer>
               </div>

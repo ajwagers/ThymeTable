@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Utensils, Clock, Filter, LogOut, ShoppingCart, Heart, BookOpen } from 'lucide-react';
+import { Utensils, Clock, Filter, LogOut, ShoppingCart, Heart, BookOpen, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDietary } from '../contexts/DietaryContext';
 import ServingsControl from './ServingsControl';
@@ -30,13 +30,32 @@ const Header: React.FC = () => {
       <header className="bg-primary-500 border-b border-primary-600 text-white">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
               <div className="mr-2 p-2 bg-white/10 rounded-lg">
                 <Utensils className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-2xl font-semibold tracking-tight">
                 Thyme<span className="text-lemon">Table</span>
               </h1>
+              
+              {/* Bolt Logo */}
+              <a
+                href="https://bolt.new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors group"
+                title="Powered by Bolt.new"
+              >
+                <img
+                  src="/black_circle_360x360.png"
+                  alt="Powered by Bolt"
+                  className="w-6 h-6 rounded-full"
+                />
+                <span className="text-xs text-white/80 group-hover:text-white hidden sm:inline">
+                  Powered by Bolt
+                </span>
+                <ExternalLink className="w-3 h-3 text-white/60 group-hover:text-white/80" />
+              </a>
             </div>
             
             {user && (
