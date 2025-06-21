@@ -125,6 +125,35 @@ function WeeklyPlannerPage() {
     setChangeModalData(null);
   };
 
+  const handleChangeRecipeSearch = async (recipe: any) => {
+    if (changeModalData) {
+      // Replace the existing meal with the search result
+      await addSearchRecipe(changeModalData.dayId, changeModalData.mealType, recipe);
+      
+      // Remove the old meal
+      const updatedDays = days.map(day => 
+        day.id === changeModalData.dayId
+          ? {
+              ...day,
+              meals: day.meals.filter(meal => meal.id !== changeModalData.mealId)
+            }
+          : day
+      );
+      
+      // This would need to be handled in the hook, but for now we'll use the existing pattern
+      changeRecipe(
+        changeModalData.dayId, 
+        changeModalData.mealId, 
+        changeModalData.mealType, 
+        changeModalData.category, 
+        false, 
+        recipe.id
+      );
+    }
+    setShowChangeModal(false);
+    setChangeModalData(null);
+  };
+
   const handleAddManualRecipeRequest = (dayId: string, mealType: string) => {
     setAddRecipeData({ dayId, mealType });
     setShowAddRecipeModal(true);
@@ -231,6 +260,7 @@ function WeeklyPlannerPage() {
         category={changeModalData?.category || 'main'}
         onSelectRandom={handleChangeRecipeRandom}
         onSelectFavorite={handleChangeRecipeFavorite}
+        onSelectSearchResult={handleChangeRecipeSearch}
         isLoading={changeModalData ? isRecipeLoading(`change-${changeModalData.mealId}`) : false}
       />
 

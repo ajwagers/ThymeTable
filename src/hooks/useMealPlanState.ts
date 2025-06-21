@@ -459,6 +459,44 @@ export const useMealPlanState = () => {
     }
   };
 
+  const changeRecipeToSearchResult = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', recipe: any) => {
+    const loadingKey = `change-${mealId}`;
+    setRecipeLoading(loadingKey, true);
+    
+    try {
+      const newMeal = await createMealFromSearchResult(recipe, dayId, mealType, category);
+      
+      if (newMeal) {
+        // Use the same ID as the meal being replaced to maintain position
+        newMeal.id = mealId;
+        
+        setDays(prevDays => 
+          prevDays.map(day => 
+            day.id === dayId
+              ? {
+                  ...day,
+                  meals: day.meals.map(meal => 
+                    meal.id === mealId ? newMeal : meal
+                  )
+                }
+              : day
+          )
+        );
+        
+        console.log('✅ Successfully replaced recipe with search result');
+        setApiError(null); // Clear any previous errors
+      } else {
+        console.warn(`⚠️ Search result recipe "${recipe.title}" violates current dietary restrictions`);
+        setApiError(`The selected recipe doesn't match your current dietary restrictions.`);
+      }
+    } catch (error) {
+      console.error('Error changing recipe to search result:', error);
+      setApiError('Failed to change recipe. Please try again later.');
+    } finally {
+      setRecipeLoading(loadingKey, false);
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem('mealPlan', JSON.stringify(days));
   }, [days]);
@@ -521,6 +559,7 @@ export const useMealPlanState = () => {
     addManualRecipe,
     addSearchRecipe,
     changeRecipe,
+    changeRecipeToSearchResult,
     autofillCalendar,
     isAutofilling,
     resetWeek,
