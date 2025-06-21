@@ -1,14 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Clock, Users, Utensils, Trash2, ExternalLink, Crown, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Heart, Clock, Users, Utensils, Trash2, Crown, AlertTriangle } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import UpgradePrompt from '../components/UpgradePrompt';
 import { motion } from 'framer-motion';
 
 function FavoritesPage() {
   const navigate = useNavigate();
   const { favorites, removeFromFavorites, loading, favoritesRemaining } = useFavorites();
   const { currentTier, limits } = useSubscription();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const handleRemoveFavorite = async (recipeId: number) => {
     try {
@@ -65,6 +67,15 @@ function FavoritesPage() {
           )}
         </div>
         <div></div>
+      
+      {/* Upgrade Modal */}
+      <UpgradePrompt
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="More Favorite Recipes"
+        description="Save more of your favorite recipes and never lose track of the dishes you love."
+        requiredTier="standard"
+      />
       </div>
 
       {/* Upgrade prompt when near or at limit */}
@@ -91,7 +102,7 @@ function FavoritesPage() {
               </p>
             </div>
             <button
-              onClick={() => {/* TODO: Open upgrade modal */}}
+              onClick={() => setShowUpgradeModal(true)}
               className="btn-primary text-sm"
             >
               Upgrade

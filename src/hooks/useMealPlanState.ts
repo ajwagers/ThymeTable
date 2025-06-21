@@ -5,10 +5,12 @@ import { getRandomRecipes, getRecipeDetails } from '../services/spoonacular';
 import { useDietary } from '../contexts/DietaryContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 export const useMealPlanState = () => {
   const { getSpoonacularParams, isRecipeAllowed } = useDietary();
   const { favorites } = useFavorites();
+  const { currentTier, limits } = useSubscription();
   const { currentTier } = useSubscription();
   const [days, setDays] = useState<Day[]>(() => {
     const saved = localStorage.getItem('mealPlan');
@@ -17,6 +19,36 @@ export const useMealPlanState = () => {
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [loadingRecipes, setLoadingRecipes] = useState<Set<string>>(new Set());
+
+  // Daily random recipe tracking for free tier
+  const [dailyRandomRecipeCount, setDailyRandomRecipeCount] = useState(0);
+  const [lastRandomRecipeDate, setLastRandomRecipeDate] = useState<string>('');
+  const FREE_TIER_DAILY_LIMIT = 10;
+
+  // Load daily usage for free tier
+  useEffect(() => {
+    if (currentTier === 'free') {
+      const today = new Date().toDateString();
+      const savedDate = localStorage.getItem('lastRandomRecipeDate');
+      const savedCount = parseInt(localStorage.getItem('dailyRandomRecipeCount') || '0');
+      
+      if (savedDate === today) {
+        setDailyRandomRecipeCount(savedCount);
+        setLastRandomRecipeDate(savedDate);
+      } else {
+        setDailyRandomRecipeCount(0);
+        setLastRandomRecipeDate(today);
+        localStorage.setItem('lastRandomRecipeDate', today);
+        localStorage.setItem('dailyRandomRecipeCount', '0');
+      }
+    }
+  }, [currentTier]);
+
+  // Check if user can use random recipes
+  const canUseRandomRecipes = currentTier !== 'free' || dailyRandomRecipeCount < FREE_TIER_DAILY_LIMIT;
+  
+  // Check if user can use autofill (Premium only)
+  const canUseAutofill = currentTier === 'premium';
 
   // Daily limits for free tier
   const [dailyRandomRecipeCount, setDailyRandomRecipeCount] = useState(0);
@@ -241,6 +273,12 @@ export const useMealPlanState = () => {
   };
 
   const autofillCalendar = async () => {
+    // Check if user can use autofill (Premium feature)
+    if (currentTier !== 'premium') {
+      setApiError('Autofill Calendar is a Premium feature. Upgrade to Premium to use AI-powered meal planning.');
+      return;
+    }
+
     // Autofill is a Premium-only feature
     if (currentTier !== 'premium') {
       setApiError('Autofill Calendar is a Premium feature. Upgrade to access AI-powered meal planning.');
@@ -305,6 +343,12 @@ export const useMealPlanState = () => {
 
   const fetchRandomRecipe = async (dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
     // Check daily limit for free tier
+    if (currentTier === 'free' && dailyRandomRecipeCount >= FREE_TIER_DAILY_LIMIT) {
+      setApiError(`Daily random recipe limit reached (${FREE_TIER_DAILY_LIMIT}). Upgrade to Standard or Premium for unlimited random recipes.`);
+      return;
+    }
+
+    // Check daily limit for free tier
     if (currentTier === 'free' && dailyRandomRecipeCount >= FREE_TIER_DAILY_RANDOM_LIMIT) {
       setApiError(`Daily random recipe limit reached (${FREE_TIER_DAILY_RANDOM_LIMIT}). Upgrade to Standard or Premium for unlimited random recipes.`);
       return;
@@ -332,6 +376,13 @@ export const useMealPlanState = () => {
               : day
           )
         );
+        
+        // Update daily count for free tier
+        if (currentTier === 'free') {
+          const newCount = dailyRandomRecipeCount + 1;
+          setDailyRandomRecipeCount(newCount);
+          localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
+        }
       } else {
         console.warn(`⚠️ No suitable ${category} ${mealType} recipes found with current dietary restrictions, adding placeholder`);
         const placeholderMeal = createPlaceholderMeal(dayId, mealType, category);
@@ -644,6 +695,10 @@ export const useMealPlanState = () => {
     resetWeek,
     apiError,
     isRecipeLoading,
+    dailyRandomRecipeCount,
+    dailyRandomRecipeLimit: FREE_TIER_DAILY_LIMIT,
+    canUseRandomRecipes,
+    canUseAutofill
     // Expose usage info for UI
     dailyRandomRecipeCount,
     dailyRandomRecipeLimit: FREE_TIER_DAILY_RANDOM_LIMIT,

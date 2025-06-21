@@ -215,6 +215,22 @@ function LoginPage() {
                     animate={{ opacity: 1, y: 0 }}
                   >
                     {error}
+                    
+                    {/* Subscription Link */}
+                    <motion.div
+                      className="mt-4 text-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.6, delay: 0.9 }}
+                    >
+                      <button
+                        onClick={() => navigate('/subscription')}
+                        className="text-primary-600 hover:text-primary-700 text-sm font-medium inline-flex items-center gap-1"
+                      >
+                        View Plans & Pricing
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    </motion.div>
                   </motion.div>
                 )}
 

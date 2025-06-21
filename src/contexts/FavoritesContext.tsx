@@ -2,12 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useSubscription } from './SubscriptionContext';
+import { useSubscription } from './SubscriptionContext';
 import { FavoriteRecipe, SavedMealPlan, SpoonacularRecipe, Day } from '../types';
 
 interface FavoritesContextType {
   favorites: FavoriteRecipe[];
   savedMealPlans: SavedMealPlan[];
   loading: boolean;
+  favoritesRemaining: number;
+  mealPlansRemaining: number;
   
   // Usage tracking
   canAddFavorite: boolean;
@@ -34,11 +37,20 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { limits } = useSubscription();
   const { currentTier, limits } = useSubscription();
   const [favorites, setFavorites] = useState<FavoriteRecipe[]>([]);
   const [savedMealPlans, setSavedMealPlans] = useState<SavedMealPlan[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Calculate remaining usage
+  const favoritesRemaining = limits.maxFavoriteRecipes === -1 
+    ? -1 // unlimited
+    : Math.max(0, limits.maxFavoriteRecipes - favorites.length);
+    
+  const mealPlansRemaining = limits.maxSavedMealPlans === -1 
+    ? -1 // unlimited
+    : Math.max(0, limits.maxSavedMealPlans - savedMealPlans.length);
   // Calculate usage limits
   const favoritesRemaining = limits.maxFavoriteRecipes === -1 
     ? -1 // unlimited
@@ -103,6 +115,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       throw new Error('User must be logged in to add favorites');
     }
 
+    // Check if user has reached their favorites limit
+    if (limits.maxFavoriteRecipes !== -1 && favorites.length >= limits.maxFavoriteRecipes) {
+      throw new Error('You have reached your favorites limit. Upgrade your plan to save more recipes.');
+    }
     // Check if user can add more favorites
     if (!canAddFavorite) {
       throw new Error(`You've reached your limit of ${limits.maxFavoriteRecipes} favorite recipes. Upgrade your plan to save more favorites.`);
@@ -166,6 +182,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       throw new Error('User must be logged in to save meal plans');
     }
 
+    // Check if user has reached their meal plans limit
+    if (limits.maxSavedMealPlans !== -1 && savedMealPlans.length >= limits.maxSavedMealPlans) {
+      throw new Error('You have reached your saved meal plans limit. Upgrade your plan to save more meal plans.');
+    }
     // Check if user can save more meal plans
     if (!canSaveMealPlan) {
       if (limits.maxSavedMealPlans === 0) {
@@ -306,6 +326,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       favorites,
       savedMealPlans,
       loading,
+      favoritesRemaining,
+      mealPlansRemaining,
       canAddFavorite,
       canSaveMealPlan,
       favoritesRemaining,

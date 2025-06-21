@@ -162,7 +162,7 @@ const Header: React.FC = () => {
                 {/* Upgrade Button for Free and Standard users */}
                 {currentTier !== 'premium' && (
                   <button
-                    onClick={() => setShowUpgradeModal(true)}
+                    onClick={() => navigate('/subscription')}
                     className="btn-primary bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium"
                   >
                     <Crown className="h-4 w-4 mr-1" />

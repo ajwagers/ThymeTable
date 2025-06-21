@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X, ExternalLink, Crown, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X, Crown, AlertTriangle } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import UpgradePrompt from '../components/UpgradePrompt';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function SavedMealPlansPage() {
   const navigate = useNavigate();
   const { savedMealPlans, deleteMealPlan, loadMealPlan, loading, mealPlansRemaining } = useFavorites();
   const { currentTier, limits } = useSubscription();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -133,7 +135,7 @@ function SavedMealPlansPage() {
               </p>
             </div>
             <button
-              onClick={() => {/* TODO: Open upgrade modal */}}
+              onClick={() => setShowUpgradeModal(true)}
               className="btn-primary text-sm"
             >
               Upgrade
@@ -340,6 +342,15 @@ function SavedMealPlansPage() {
           </div>
         )}
       </AnimatePresence>
+      
+      {/* Upgrade Modal */}
+      <UpgradePrompt
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="More Saved Meal Plans"
+        description="Save and organize more weekly meal plans for easy meal planning and preparation."
+        requiredTier={currentTier === 'free' ? 'standard' : 'premium'}
+      />
     </div>
   );
 }

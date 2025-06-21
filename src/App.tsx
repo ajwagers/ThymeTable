@@ -14,6 +14,7 @@ import GroceryListPage from './pages/GroceryListPage';
 import FavoritesPage from './pages/FavoritesPage';
 import SavedMealPlansPage from './pages/SavedMealPlansPage';
 import LoginPage from './pages/LoginPage';
+import SubscriptionPage from './pages/SubscriptionPage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
                   <main className="flex-1 px-2 py-4">
                     <Routes>
                       <Route path="/login" element={<LoginPage />} />
+                      <Route path="/subscription" element={<SubscriptionPage />} />
                       <Route
                         path="/"
                         element={
