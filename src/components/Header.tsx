@@ -170,9 +170,11 @@ const Header: React.FC = () => {
                   </button>
                 )}
 
+                {/* Enhanced Logout Button */}
                 <button
                   onClick={handleSignOut}
-                  className="btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                  className="btn-secondary bg-white/10 hover:bg-red-500/20 border-white/20 text-white hover:border-red-300 transition-all duration-200"
+                  title="Sign out of your account"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
                   <span>Sign Out</span>
