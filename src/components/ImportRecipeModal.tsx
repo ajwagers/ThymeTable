@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Globe, Loader2, AlertCircle, Edit3, Check } from 'lucide-react';
+import { X, Globe, Loader2, AlertCircle, Edit3, Check, RefreshCw } from 'lucide-react';
 import { SpoonacularRecipe, Ingredient } from '../types';
-import { parseRecipeFromUrl, validateImportedRecipe } from '../services/recipeParser';
+import { parseRecipeFromUrl, parseRecipeFromUrlFallback, validateImportedRecipe } from '../services/recipeParser';
 
 interface ImportRecipeModalProps {
   isOpen: boolean;
@@ -25,6 +25,7 @@ export function ImportRecipeModal({
   const [importedRecipe, setImportedRecipe] = useState<SpoonacularRecipe | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [usedFallback, setUsedFallback] = useState(false);
 
   // Editable recipe fields
   const [editedRecipe, setEditedRecipe] = useState<SpoonacularRecipe | null>(null);
@@ -35,9 +36,10 @@ export function ImportRecipeModal({
     setImportedRecipe(null);
     setEditedRecipe(null);
     setIsEditing(false);
+    setUsedFallback(false);
   };
 
-  const handleImport = async () => {
+  const handleImport = async (useFallback = false) => {
     if (!url.trim()) {
       setImportError('Please enter a valid URL');
       return;
@@ -45,9 +47,25 @@ export function ImportRecipeModal({
 
     setIsImporting(true);
     setImportError('');
+    setUsedFallback(false);
 
     try {
-      const recipe = await parseRecipeFromUrl(url.trim());
+      let recipe: SpoonacularRecipe;
+      
+      if (useFallback) {
+        console.log('🔄 Using fallback parser...');
+        recipe = await parseRecipeFromUrlFallback(url.trim());
+        setUsedFallback(true);
+      } else {
+        try {
+          recipe = await parseRecipeFromUrl(url.trim());
+        } catch (error) {
+          console.warn('Primary parser failed, trying fallback:', error);
+          recipe = await parseRecipeFromUrlFallback(url.trim());
+          setUsedFallback(true);
+        }
+      }
+      
       setImportedRecipe(recipe);
       setEditedRecipe({ ...recipe });
       setIsEditing(false);
@@ -226,7 +244,7 @@ export function ImportRecipeModal({
                           />
                         </div>
                         <button
-                          onClick={handleImport}
+                          onClick={() => handleImport()}
                           disabled={!url.trim() || isImporting}
                           className="btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -265,9 +283,19 @@ export function ImportRecipeModal({
                       >
                         <div className="flex items-start gap-3">
                           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                          <div>
+                          <div className="flex-1">
                             <h4 className="text-sm font-medium text-red-800">Import Failed</h4>
                             <p className="text-sm text-red-700 mt-1 whitespace-pre-line">{importError}</p>
+                            {!usedFallback && (
+                              <button
+                                onClick={() => handleImport(true)}
+                                disabled={isImporting}
+                                className="mt-3 btn-secondary text-sm"
+                              >
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Try Alternative Parser
+                              </button>
+                            )}
                           </div>
                         </div>
                       </motion.div>
@@ -284,9 +312,16 @@ export function ImportRecipeModal({
                 /* Recipe Preview/Edit Section */
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {isEditing ? 'Edit Recipe' : 'Review Imported Recipe'}
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {isEditing ? 'Edit Recipe' : 'Review Imported Recipe'}
+                      </h3>
+                      {usedFallback && (
+                        <p className="text-sm text-amber-600 mt-1">
+                          ⚠️ Used fallback parser - please review and edit as needed
+                        </p>
+                      )}
+                    </div>
                     <div className="flex gap-2">
                       {!isEditing ? (
                         <button
@@ -535,6 +570,7 @@ export function ImportRecipeModal({
                     setEditedRecipe(null);
                     setIsEditing(false);
                     setImportError('');
+                    setUsedFallback(false);
                   } else {
                     handleClose();
                   }
