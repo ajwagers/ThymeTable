@@ -4,10 +4,12 @@ import { createEmptyWeek } from '../data/initialData';
 import { getRandomRecipes, getRecipeDetails } from '../services/spoonacular';
 import { useDietary } from '../contexts/DietaryContext';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 export const useMealPlanState = () => {
   const { getSpoonacularParams, isRecipeAllowed } = useDietary();
   const { favorites } = useFavorites();
+  const { currentTier } = useSubscription();
   const [days, setDays] = useState<Day[]>(() => {
     const saved = localStorage.getItem('mealPlan');
     return saved ? JSON.parse(saved) : createEmptyWeek();
@@ -15,6 +17,30 @@ export const useMealPlanState = () => {
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [loadingRecipes, setLoadingRecipes] = useState<Set<string>>(new Set());
+
+  // Daily limits for free tier
+  const [dailyRandomRecipeCount, setDailyRandomRecipeCount] = useState(0);
+  const [lastRandomRecipeDate, setLastRandomRecipeDate] = useState<string>('');
+  const FREE_TIER_DAILY_RANDOM_LIMIT = 10;
+
+  // Load daily usage for free tier
+  useEffect(() => {
+    if (currentTier === 'free') {
+      const today = new Date().toDateString();
+      const savedDate = localStorage.getItem('lastRandomRecipeDate');
+      const savedCount = parseInt(localStorage.getItem('dailyRandomRecipeCount') || '0');
+      
+      if (savedDate === today) {
+        setDailyRandomRecipeCount(savedCount);
+        setLastRandomRecipeDate(savedDate);
+      } else {
+        setDailyRandomRecipeCount(0);
+        setLastRandomRecipeDate(today);
+        localStorage.setItem('lastRandomRecipeDate', today);
+        localStorage.setItem('dailyRandomRecipeCount', '0');
+      }
+    }
+  }, [currentTier]);
 
   const resetWeek = () => {
     setDays(createEmptyWeek());
@@ -215,6 +241,12 @@ export const useMealPlanState = () => {
   };
 
   const autofillCalendar = async () => {
+    // Autofill is a Premium-only feature
+    if (currentTier !== 'premium') {
+      setApiError('Autofill Calendar is a Premium feature. Upgrade to access AI-powered meal planning.');
+      return;
+    }
+
     setIsAutofilling(true);
     setApiError(null);
     try {
@@ -272,6 +304,12 @@ export const useMealPlanState = () => {
   };
 
   const fetchRandomRecipe = async (dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
+    // Check daily limit for free tier
+    if (currentTier === 'free' && dailyRandomRecipeCount >= FREE_TIER_DAILY_RANDOM_LIMIT) {
+      setApiError(`Daily random recipe limit reached (${FREE_TIER_DAILY_RANDOM_LIMIT}). Upgrade to Standard or Premium for unlimited random recipes.`);
+      return;
+    }
+
     const loadingKey = `${dayId}-${mealType}-${category}`;
     setRecipeLoading(loadingKey, true);
     
@@ -310,6 +348,20 @@ export const useMealPlanState = () => {
         );
         
         setApiError(`No suitable ${mealType} recipes found that match your dietary restrictions. A placeholder meal was added instead.`);
+        
+        // Still count this as a usage for free tier since we made an API call
+        if (currentTier === 'free') {
+          const newCount = dailyRandomRecipeCount + 1;
+          setDailyRandomRecipeCount(newCount);
+          localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
+        }
+      }
+      
+      // Update daily count for free tier on successful recipe fetch
+      if (currentTier === 'free' && meal) {
+        const newCount = dailyRandomRecipeCount + 1;
+        setDailyRandomRecipeCount(newCount);
+        localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
       }
     } catch (error) {
       console.error('Error fetching random recipe:', error);
@@ -329,6 +381,13 @@ export const useMealPlanState = () => {
               : day
           )
         );
+      }
+      
+      // Count failed attempts for free tier too (to prevent abuse)
+      if (currentTier === 'free') {
+        const newCount = dailyRandomRecipeCount + 1;
+        setDailyRandomRecipeCount(newCount);
+        localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
       }
     } finally {
       setRecipeLoading(loadingKey, false);
@@ -389,6 +448,12 @@ export const useMealPlanState = () => {
   };
 
   const changeRecipe = async (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom: boolean = true, favoriteRecipeId?: number) => {
+    // Check daily limit for free tier when using random recipe change
+    if (useRandom && currentTier === 'free' && dailyRandomRecipeCount >= FREE_TIER_DAILY_RANDOM_LIMIT) {
+      setApiError(`Daily random recipe limit reached (${FREE_TIER_DAILY_RANDOM_LIMIT}). Upgrade to Standard or Premium for unlimited recipe changes.`);
+      return;
+    }
+
     const loadingKey = `change-${mealId}`;
     setRecipeLoading(loadingKey, true);
     
@@ -446,6 +511,13 @@ export const useMealPlanState = () => {
         
         console.log('✅ Successfully replaced recipe');
         setApiError(null); // Clear any previous errors
+        
+        // Update daily count for free tier on successful random recipe change
+        if (useRandom && currentTier === 'free') {
+          const newCount = dailyRandomRecipeCount + 1;
+          setDailyRandomRecipeCount(newCount);
+          localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
+        }
       }
     } catch (error) {
       console.error('Error changing recipe:', error);
@@ -453,6 +525,13 @@ export const useMealPlanState = () => {
         setApiError('Spoonacular API quota exceeded. Please try again later or contact support for assistance.');
       } else {
         setApiError('Failed to change recipe. Please try again later.');
+      }
+      
+      // Count failed attempts for free tier too (to prevent abuse)
+      if (useRandom && currentTier === 'free') {
+        const newCount = dailyRandomRecipeCount + 1;
+        setDailyRandomRecipeCount(newCount);
+        localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
       }
     } finally {
       setRecipeLoading(loadingKey, false);
@@ -564,6 +643,11 @@ export const useMealPlanState = () => {
     isAutofilling,
     resetWeek,
     apiError,
-    isRecipeLoading
+    isRecipeLoading,
+    // Expose usage info for UI
+    dailyRandomRecipeCount,
+    dailyRandomRecipeLimit: FREE_TIER_DAILY_RANDOM_LIMIT,
+    canUseRandomRecipes: currentTier !== 'free' || dailyRandomRecipeCount < FREE_TIER_DAILY_RANDOM_LIMIT,
+    canUseAutofill: currentTier === 'premium'
   };
 };

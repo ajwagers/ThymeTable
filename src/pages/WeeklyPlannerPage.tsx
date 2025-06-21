@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { Sparkles, RefreshCw, AlertCircle, X, Save, ExternalLink, Crown, Lock } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertCircle, X, Save, ExternalLink, Crown, Lock, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import ChangeRecipeModal from '../components/ChangeRecipeModal';
@@ -10,6 +10,7 @@ import { ImportRecipeModal } from '../components/ImportRecipeModal';
 import { useMealPlanState } from '../hooks/useMealPlanState';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useSubscription, useFeatureAccess } from '../contexts/SubscriptionContext';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 function WeeklyPlannerPage() {
   const { 
@@ -25,7 +26,11 @@ function WeeklyPlannerPage() {
     isAutofilling,
     resetWeek,
     apiError,
-    isRecipeLoading
+    isRecipeLoading,
+    dailyRandomRecipeCount,
+    dailyRandomRecipeLimit,
+    canUseRandomRecipes,
+    canUseAutofill
   } = useMealPlanState();
 
   const { saveMealPlan } = useFavorites();
@@ -37,6 +42,9 @@ function WeeklyPlannerPage() {
   const [saving, setSaving] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [restrictedFeature, setRestrictedFeature] = useState<string>('');
+
+  // Usage tracking state
+  const [showUsageWarning, setShowUsageWarning] = useState(false);
 
   // Change Recipe Modal State
   const [showChangeModal, setShowChangeModal] = useState(false);
@@ -114,7 +122,7 @@ function WeeklyPlannerPage() {
 
   const handleAutofill = () => {
     // Check if user can use autofill (Premium feature)
-    if (currentTier !== 'premium') {
+    if (!canUseAutofill) {
       setRestrictedFeature('Autofill Calendar');
       setShowUpgradeModal(true);
       return;
@@ -260,6 +268,36 @@ function WeeklyPlannerPage() {
         </div>
       )}
 
+      {/* Free Tier Usage Warning */}
+      {currentTier === 'free' && dailyRandomRecipeCount >= dailyRandomRecipeLimit - 2 && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <TrendingUp className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-amber-800 font-medium">
+              {dailyRandomRecipeCount >= dailyRandomRecipeLimit 
+                ? 'Daily Random Recipe Limit Reached' 
+                : `${dailyRandomRecipeLimit - dailyRandomRecipeCount} random recipes remaining today`
+              }
+            </p>
+            <p className="text-amber-700 text-sm mt-1">
+              {dailyRandomRecipeCount >= dailyRandomRecipeLimit
+                ? 'Upgrade to Standard or Premium for unlimited random recipes.'
+                : 'Upgrade for unlimited random recipes and advanced features.'
+              }
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setRestrictedFeature('Unlimited Random Recipes');
+              setShowUpgradeModal(true);
+            }}
+            className="btn-primary text-sm"
+          >
+            Upgrade
+          </button>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-medium text-gray-800 px-1">Weekly Meal Plan</h2>
         <div className="flex gap-2">
@@ -294,7 +332,7 @@ function WeeklyPlannerPage() {
           </button>
           
           {/* Autofill Calendar Button - Premium feature */}
-          {currentTier !== 'premium' ? (
+          {!canUseAutofill ? (
             <button
               onClick={handleAutofill}
               className="btn-primary opacity-75 relative"
@@ -456,96 +494,12 @@ function WeeklyPlannerPage() {
       </AnimatePresence>
 
       {/* Upgrade Modal */}
-      <AnimatePresence>
-        {showUpgradeModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowUpgradeModal(false)}
-            />
-            
-            <motion.div
-              className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            >
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full mb-4">
-                  <Crown className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Unlock {restrictedFeature}
-                </h3>
-                <p className="text-gray-600">
-                  {restrictedFeature === 'Autofill Calendar' 
-                    ? 'Get AI-powered meal planning with our Premium plan'
-                    : restrictedFeature === 'Save Meal Plans'
-                    ? 'Save and reuse your meal plans with Standard or Premium'
-                    : 'Access advanced features with a paid plan'
-                  }
-                </p>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                {(currentTier === 'free' && restrictedFeature !== 'Autofill Calendar') && (
-                  <button
-                    onClick={() => handleUpgrade('standard')}
-                    className="w-full p-4 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 hover:border-blue-300 rounded-lg transition-all text-left"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-gray-900">Standard Plan</h4>
-                        <p className="text-sm text-gray-600">15 saved plans, advanced filters, recipe import</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-blue-600">$4.99</div>
-                        <div className="text-xs text-gray-500">/month</div>
-                      </div>
-                    </div>
-                  </button>
-                )}
-                
-                <button
-                  onClick={() => handleUpgrade('premium')}
-                  className="w-full p-4 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 border-2 border-yellow-200 rounded-lg transition-all text-left"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-gray-900 flex items-center">
-                        Premium Plan
-                        <Crown className="w-4 h-4 ml-2 text-yellow-500" />
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {restrictedFeature === 'Autofill Calendar' 
-                          ? 'AI-powered autofill + unlimited everything'
-                          : 'Unlimited everything + AI recommendations'
-                        }
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-orange-600">$9.99</div>
-                      <div className="text-xs text-gray-500">/month</div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowUpgradeModal(false)}
-                  className="flex-1 btn-secondary"
-                >
-                  Maybe Later
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <UpgradePrompt
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature={restrictedFeature}
+        requiredTier={restrictedFeature === 'Autofill Calendar' ? 'premium' : 'standard'}
+      />
     </div>
   );
 }

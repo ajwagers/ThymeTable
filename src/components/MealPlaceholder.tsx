@@ -27,6 +27,15 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
   const [showOptions, setShowOptions] = useState(false);
 
   const handleRandomRecipe = () => {
+    // Check if user can use random recipes (free tier daily limit)
+    if (currentTier === 'free' && !canUseRandomRecipes) {
+      if (onRestrictedFeature) {
+        onRestrictedFeature('Random Recipes');
+      }
+      setShowOptions(false);
+      return;
+    }
+    
     onAddMeal();
     setShowOptions(false);
   };
@@ -150,8 +159,18 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Shuffle className="w-4 h-4" />
-              <span className="text-xs font-medium">Random</span>
+              {currentTier === 'free' && !canUseRandomRecipes ? (
+                <>
+                  <Shuffle className="w-4 h-4" />
+                  <span className="text-xs font-medium">Random</span>
+                  <Lock className="w-3 h-3" />
+                </>
+              ) : (
+                <>
+                  <Shuffle className="w-4 h-4" />
+                  <span className="text-xs font-medium">Random</span>
+                </>
+              )}
             </motion.button>
 
             {/* Search Recipe - Free users see locked version */}
