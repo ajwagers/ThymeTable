@@ -74,23 +74,44 @@ function App() {
                       © {new Date().getFullYear()} ThymeTable. All rights reserved.
                     </div>
                     
-                    {/* Bolt Logo in Footer */}
-                    <a
-                      href="https://bolt.new"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group"
-                      title="Powered by Bolt.new"
-                    >
-                      <img
-                        src="/black_circle_360x360.png"
-                        alt="Powered by Bolt"
-                        className="w-4 h-4 rounded-full"
-                      />
-                      <span className="text-xs text-gray-600 group-hover:text-gray-800">
-                        Made with Bolt.new
-                      </span>
-                    </a>
+                    {/* Powered by logos */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      {/* Bolt Logo */}
+                      <a
+                        href="https://bolt.new"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group"
+                        title="Made with Bolt.new"
+                      >
+                        <img
+                          src="/black_circle_360x360.png"
+                          alt="Powered by Bolt"
+                          className="w-4 h-4 rounded-full"
+                        />
+                        <span className="text-xs text-gray-600 group-hover:text-gray-800">
+                          Made with Bolt.new
+                        </span>
+                      </a>
+                      
+                      {/* Supabase Logo */}
+                      <a
+                        href="https://supabase.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors group"
+                        title="Powered by Supabase"
+                      >
+                        <img
+                          src="/supabase-logo-wordmark--light.png"
+                          alt="Powered by Supabase"
+                          className="h-4 w-auto"
+                        />
+                        <span className="text-xs text-gray-600 group-hover:text-gray-800">
+                          Powered by Supabase
+                        </span>
+                      </a>
+                    </div>
                   </div>
                 </footer>
               </div>
