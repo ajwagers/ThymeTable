@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shuffle, Heart, Clock, Users, Utensils, Search, Loader2, ChevronDown, Filter } from 'lucide-react';
+import { X, Shuffle, Heart, Clock, Users, Utensils, Search, Loader2, ChevronDown, Filter, Lock } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useDietary } from '../contexts/DietaryContext';
+import { useFeatureAccess } from '../contexts/SubscriptionContext';
 import { searchRecipes } from '../services/spoonacular';
 import { FavoriteRecipe, SpoonacularRecipe } from '../types';
 
@@ -15,6 +16,7 @@ interface ChangeRecipeModalProps {
   onSelectFavorite: (favoriteRecipeId: number) => void;
   onSelectSearchResult: (recipe: SpoonacularRecipe) => void;
   isLoading?: boolean;
+  onRestrictedFeature?: (feature: string) => void;
 }
 
 function ChangeRecipeModal({ 
@@ -25,10 +27,12 @@ function ChangeRecipeModal({
   onSelectRandom, 
   onSelectFavorite,
   onSelectSearchResult,
-  isLoading = false
+  isLoading = false,
+  onRestrictedFeature
 }: ChangeRecipeModalProps) {
   const { favorites } = useFavorites();
   const { getSpoonacularParams, getAllForbiddenIngredients, isRecipeAllowed } = useDietary();
+  const { currentTier } = useFeatureAccess();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'random' | 'search' | 'favorites'>('random');
 
@@ -221,6 +225,16 @@ function ChangeRecipeModal({
     });
   };
 
+  const handleTabClick = (tab: 'random' | 'search' | 'favorites') => {
+    if (currentTier === 'free' && (tab === 'search' || tab === 'favorites')) {
+      if (onRestrictedFeature) {
+        onRestrictedFeature(tab === 'search' ? 'Search Recipes' : 'Favorites');
+      }
+      return;
+    }
+    setActiveTab(tab);
+  };
+
   const relevantFavorites = getRelevantFavorites();
 
   const handleSelectFavorite = (favoriteRecipeId: number) => {
@@ -257,12 +271,20 @@ function ChangeRecipeModal({
   };
 
   const getTabButtonClass = (tab: string) => {
-    const isActive = activeTab === tab;
+    const isActive = activeTab === tab && !(currentTier === 'free' && (tab === 'search' || tab === 'favorites'));
     return `px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
       isActive 
         ? 'bg-primary-500 text-white shadow-md' 
         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
     }`;
+  };
+
+  const getTabButtonClassWithRestriction = (tab: string) => {
+    const baseClass = getTabButtonClass(tab);
+    if (currentTier === 'free' && (tab === 'search' || tab === 'favorites')) {
+      return `${baseClass} opacity-60 relative`;
+    }
+    return baseClass;
   };
 
   return (
@@ -305,29 +327,59 @@ function ChangeRecipeModal({
             <div className="px-6 pt-4 border-b border-gray-200">
               <div className="flex gap-2">
                 <button
-                  onClick={() => setActiveTab('random')}
-                  className={getTabButtonClass('random')}
+                  onClick={() => handleTabClick('random')}
+                  className={getTabButtonClassWithRestriction('random')}
                   disabled={isLoading}
                 >
                   <Shuffle className="w-4 h-4 mr-2 inline" />
                   Random
                 </button>
-                <button
-                  onClick={() => setActiveTab('search')}
-                  className={getTabButtonClass('search')}
-                  disabled={isLoading}
-                >
-                  <Search className="w-4 h-4 mr-2 inline" />
-                  Search
-                </button>
-                <button
-                  onClick={() => setActiveTab('favorites')}
-                  className={getTabButtonClass('favorites')}
-                  disabled={isLoading}
-                >
-                  <Heart className="w-4 h-4 mr-2 inline" />
-                  Favorites ({relevantFavorites.length})
-                </button>
+                
+                {/* Search Tab - Free users see locked version */}
+                {currentTier === 'free' ? (
+                  <button
+                    onClick={() => handleTabClick('search')}
+                    className={getTabButtonClassWithRestriction('search')}
+                    disabled={isLoading}
+                    title="Upgrade to Standard to search recipes"
+                  >
+                    <Search className="w-4 h-4 mr-2 inline" />
+                    Search
+                    <Lock className="w-3 h-3 ml-1 inline" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleTabClick('search')}
+                    className={getTabButtonClassWithRestriction('search')}
+                    disabled={isLoading}
+                  >
+                    <Search className="w-4 h-4 mr-2 inline" />
+                    Search
+                  </button>
+                )}
+                
+                {/* Favorites Tab - Free users see locked version */}
+                {currentTier === 'free' ? (
+                  <button
+                    onClick={() => handleTabClick('favorites')}
+                    className={getTabButtonClassWithRestriction('favorites')}
+                    disabled={isLoading}
+                    title="Upgrade to Standard to access favorites"
+                  >
+                    <Heart className="w-4 h-4 mr-2 inline" />
+                    Favorites ({relevantFavorites.length})
+                    <Lock className="w-3 h-3 ml-1 inline" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleTabClick('favorites')}
+                    className={getTabButtonClassWithRestriction('favorites')}
+                    disabled={isLoading}
+                  >
+                    <Heart className="w-4 h-4 mr-2 inline" />
+                    Favorites ({relevantFavorites.length})
+                  </button>
+                )}
               </div>
             </div>
 

@@ -12,6 +12,7 @@ interface DayColumnProps {
   onImportRecipe?: (dayId: string, mealType: string) => void;
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   isRecipeLoading?: (recipeKey: string) => boolean;
+  onRestrictedFeature?: (feature: string) => void;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({ 
@@ -22,7 +23,8 @@ const DayColumn: React.FC<DayColumnProps> = ({
   onSearchRecipe,
   onImportRecipe,
   onChangeRecipe,
-  isRecipeLoading
+  isRecipeLoading,
+  onRestrictedFeature
 }) => {
   const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => {
     if (onChangeRecipe) {
@@ -85,6 +87,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
                     onChangeRecipe={handleChangeRecipe}
                     dayId={day.id}
                     isLoading={isLoading}
+                    onRestrictedFeature={onRestrictedFeature}
                   />
                   {provided.placeholder}
                 </div>

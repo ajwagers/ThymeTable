@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { PlusCircle, Shuffle, Search, Edit3, Globe, Loader2 } from 'lucide-react';
+import { PlusCircle, Shuffle, Search, Edit3, Globe, Loader2, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useFeatureAccess } from '../contexts/SubscriptionContext';
 
 interface MealPlaceholderProps {
   mealType: string;
@@ -9,6 +10,7 @@ interface MealPlaceholderProps {
   onSearchRecipe?: () => void;
   onImportRecipe?: () => void;
   isLoading?: boolean;
+  onRestrictedFeature?: (feature: string) => void;
 }
 
 const MealPlaceholder: React.FC<MealPlaceholderProps> = ({ 
@@ -17,8 +19,11 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
   onAddManualRecipe,
   onSearchRecipe,
   onImportRecipe,
-  isLoading = false
+  isLoading = false,
+  onRestrictedFeature
 }) => {
+  const { canImportRecipes, currentTier } = useFeatureAccess();
+  
   const [showOptions, setShowOptions] = useState(false);
 
   const handleRandomRecipe = () => {
@@ -34,6 +39,14 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
   };
 
   const handleSearchRecipe = () => {
+    if (currentTier === 'free') {
+      if (onRestrictedFeature) {
+        onRestrictedFeature('Search Recipes');
+      }
+      setShowOptions(false);
+      return;
+    }
+    
     if (onSearchRecipe) {
       onSearchRecipe();
     }
@@ -41,6 +54,14 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
   };
 
   const handleImportRecipe = () => {
+    if (!canImportRecipes) {
+      if (onRestrictedFeature) {
+        onRestrictedFeature('Import Recipes');
+      }
+      setShowOptions(false);
+      return;
+    }
+    
     if (onImportRecipe) {
       onImportRecipe();
     }
@@ -133,31 +154,67 @@ const MealPlaceholder: React.FC<MealPlaceholderProps> = ({
               <span className="text-xs font-medium">Random</span>
             </motion.button>
 
-            <motion.button
-              onClick={handleSearchRecipe}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <Search className="w-4 h-4" />
-              <span className="text-xs font-medium">Search</span>
-            </motion.button>
+            {/* Search Recipe - Free users see locked version */}
+            {currentTier === 'free' ? (
+              <motion.button
+                onClick={handleSearchRecipe}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()} opacity-60 relative`}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                title="Upgrade to Standard to search recipes"
+              >
+                <Search className="w-4 h-4" />
+                <span className="text-xs font-medium">Search</span>
+                <Lock className="w-3 h-3" />
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={handleSearchRecipe}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <Search className="w-4 h-4" />
+                <span className="text-xs font-medium">Search</span>
+              </motion.button>
+            )}
 
-            <motion.button
-              onClick={handleImportRecipe}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-xs font-medium">Import</span>
-            </motion.button>
+            {/* Import Recipe - Standard+ users only */}
+            {!canImportRecipes ? (
+              <motion.button
+                onClick={handleImportRecipe}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()} opacity-60 relative`}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                title="Upgrade to Standard to import recipes"
+              >
+                <Globe className="w-4 h-4" />
+                <span className="text-xs font-medium">Import</span>
+                <Lock className="w-3 h-3" />
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={handleImportRecipe}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 ${getButtonColor()}`}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Globe className="w-4 h-4" />
+                <span className="text-xs font-medium">Import</span>
+              </motion.button>
+            )}
 
             <motion.button
               onClick={handleManualRecipe}

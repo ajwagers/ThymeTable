@@ -14,6 +14,7 @@ interface MealListProps {
   onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   dayId?: string;
   isLoading?: boolean;
+  onRestrictedFeature?: (feature: string) => void;
 }
 
 const MealList: React.FC<MealListProps> = ({ 
@@ -25,7 +26,8 @@ const MealList: React.FC<MealListProps> = ({
   onImportRecipe,
   onChangeRecipe,
   dayId,
-  isLoading = false
+  isLoading = false,
+  onRestrictedFeature
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -116,6 +118,7 @@ const MealList: React.FC<MealListProps> = ({
           onSearchRecipe={onSearchRecipe}
           onImportRecipe={onImportRecipe}
           isLoading={isLoading}
+          onRestrictedFeature={onRestrictedFeature}
         />
       )}
     </div>

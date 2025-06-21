@@ -203,6 +203,11 @@ function WeeklyPlannerPage() {
     setShowImportModal(true);
   };
 
+  const handleRestrictedFeature = (feature: string) => {
+    setRestrictedFeature(feature);
+    setShowUpgradeModal(true);
+  };
+
   const handleSaveManualRecipe = async (recipe: any) => {
     if (addRecipeData) {
       await addManualRecipe(addRecipeData.dayId, addRecipeData.mealType, recipe);
@@ -322,6 +327,7 @@ function WeeklyPlannerPage() {
           onImportRecipe={handleImportRecipeRequest}
           onChangeRecipe={handleChangeRecipeRequest}
           isRecipeLoading={isRecipeLoading}
+          onRestrictedFeature={handleRestrictedFeature}
         />
       </DragDropContext>
 
@@ -338,6 +344,7 @@ function WeeklyPlannerPage() {
         onSelectFavorite={handleChangeRecipeFavorite}
         onSelectSearchResult={handleChangeRecipeSearch}
         isLoading={changeModalData ? isRecipeLoading(`change-${changeModalData.mealId}`) : false}
+        onRestrictedFeature={handleRestrictedFeature}
       />
 
       {/* Add Recipe Modal */}
