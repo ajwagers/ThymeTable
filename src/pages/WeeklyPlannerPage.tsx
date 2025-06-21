@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { Sparkles, RefreshCw, AlertCircle, X, Save, ExternalLink } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertCircle, X, Save, ExternalLink, Crown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import ChangeRecipeModal from '../components/ChangeRecipeModal';
@@ -9,6 +9,7 @@ import SearchRecipeModal from '../components/SearchRecipeModal';
 import { ImportRecipeModal } from '../components/ImportRecipeModal';
 import { useMealPlanState } from '../hooks/useMealPlanState';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useSubscription, useFeatureAccess } from '../contexts/SubscriptionContext';
 
 function WeeklyPlannerPage() {
   const { 
@@ -28,10 +29,14 @@ function WeeklyPlannerPage() {
   } = useMealPlanState();
 
   const { saveMealPlan } = useFavorites();
+  const { currentTier, upgradeToTier } = useSubscription();
+  const { canImportRecipes } = useFeatureAccess();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveDescription, setSaveDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [restrictedFeature, setRestrictedFeature] = useState<string>('');
 
   // Change Recipe Modal State
   const [showChangeModal, setShowChangeModal] = useState(false);
@@ -95,9 +100,36 @@ function WeeklyPlannerPage() {
   };
 
   const openSaveModal = () => {
+    // Check if user can save meal plans
+    if (currentTier === 'free') {
+      setRestrictedFeature('Save Meal Plans');
+      setShowUpgradeModal(true);
+      return;
+    }
+    
     setSaveName(generatePlanName());
     setSaveDescription('');
     setShowSaveModal(true);
+  };
+
+  const handleAutofill = () => {
+    // Check if user can use autofill (Premium feature)
+    if (currentTier !== 'premium') {
+      setRestrictedFeature('Autofill Calendar');
+      setShowUpgradeModal(true);
+      return;
+    }
+    
+    autofillCalendar();
+  };
+
+  const handleUpgrade = async (tier: 'standard' | 'premium') => {
+    try {
+      await upgradeToTier(tier);
+      setShowUpgradeModal(false);
+    } catch (error) {
+      console.error('Upgrade failed:', error);
+    }
   };
 
   const handleChangeRecipeRequest = (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => {
@@ -160,6 +192,13 @@ function WeeklyPlannerPage() {
   };
 
   const handleImportRecipeRequest = (dayId: string, mealType: string) => {
+    // Check if user can import recipes
+    if (!canImportRecipes) {
+      setRestrictedFeature('Import Recipes');
+      setShowUpgradeModal(true);
+      return;
+    }
+    
     setImportRecipeData({ dayId, mealType });
     setShowImportModal(true);
   };
@@ -219,14 +258,28 @@ function WeeklyPlannerPage() {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-medium text-gray-800 px-1">Weekly Meal Plan</h2>
         <div className="flex gap-2">
-          <button
-            onClick={openSaveModal}
-            className="btn-secondary"
-            disabled={days.every(day => day.meals.length === 0)}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save Plan
-          </button>
+          {/* Save Plan Button - Standard+ feature */}
+          {currentTier === 'free' ? (
+            <button
+              onClick={openSaveModal}
+              className="btn-secondary opacity-60 relative"
+              title="Upgrade to Standard to save meal plans"
+            >
+              <Save className="w-4 w-4 mr-2" />
+              Save Plan
+              <Lock className="w-3 h-3 ml-1" />
+            </button>
+          ) : (
+            <button
+              onClick={openSaveModal}
+              className="btn-secondary"
+              disabled={days.every(day => day.meals.length === 0)}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Plan
+            </button>
+          )}
+          
           <button
             onClick={resetWeek}
             className="btn-secondary"
@@ -234,14 +287,28 @@ function WeeklyPlannerPage() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Reset Week
           </button>
-          <button
-            onClick={autofillCalendar}
-            disabled={isAutofilling}
-            className={`btn-primary ${isAutofilling ? 'opacity-75 cursor-not-allowed' : ''}`}
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            {isAutofilling ? 'Generating Meals...' : 'Autofill Calendar'}
-          </button>
+          
+          {/* Autofill Calendar Button - Premium feature */}
+          {currentTier !== 'premium' ? (
+            <button
+              onClick={handleAutofill}
+              className="btn-primary opacity-75 relative"
+              title="Upgrade to Premium for AI-powered autofill"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Autofill Calendar
+              <Crown className="w-3 h-3 ml-1" />
+            </button>
+          ) : (
+            <button
+              onClick={autofillCalendar}
+              disabled={isAutofilling}
+              className={`btn-primary ${isAutofilling ? 'opacity-75 cursor-not-allowed' : ''}`}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isAutofilling ? 'Generating Meals...' : 'Autofill Calendar'}
+            </button>
+          )}
         </div>
       </div>
       
@@ -374,6 +441,98 @@ function WeeklyPlannerPage() {
                   disabled={saving}
                 >
                   Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Upgrade Modal */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowUpgradeModal(false)}
+            />
+            
+            <motion.div
+              className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            >
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full mb-4">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Unlock {restrictedFeature}
+                </h3>
+                <p className="text-gray-600">
+                  {restrictedFeature === 'Autofill Calendar' 
+                    ? 'Get AI-powered meal planning with our Premium plan'
+                    : restrictedFeature === 'Save Meal Plans'
+                    ? 'Save and reuse your meal plans with Standard or Premium'
+                    : 'Access advanced features with a paid plan'
+                  }
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                {(currentTier === 'free' && restrictedFeature !== 'Autofill Calendar') && (
+                  <button
+                    onClick={() => handleUpgrade('standard')}
+                    className="w-full p-4 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 hover:border-blue-300 rounded-lg transition-all text-left"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-gray-900">Standard Plan</h4>
+                        <p className="text-sm text-gray-600">15 saved plans, advanced filters, recipe import</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-blue-600">$4.99</div>
+                        <div className="text-xs text-gray-500">/month</div>
+                      </div>
+                    </div>
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => handleUpgrade('premium')}
+                  className="w-full p-4 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 border-2 border-yellow-200 rounded-lg transition-all text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-gray-900 flex items-center">
+                        Premium Plan
+                        <Crown className="w-4 h-4 ml-2 text-yellow-500" />
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {restrictedFeature === 'Autofill Calendar' 
+                          ? 'AI-powered autofill + unlimited everything'
+                          : 'Unlimited everything + AI recommendations'
+                        }
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-orange-600">$9.99</div>
+                      <div className="text-xs text-gray-500">/month</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="flex-1 btn-secondary"
+                >
+                  Maybe Later
                 </button>
               </div>
             </motion.div>
