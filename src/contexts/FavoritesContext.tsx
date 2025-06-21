@@ -1,12 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useSubscription } from './SubscriptionContext';
 import { FavoriteRecipe, SavedMealPlan, SpoonacularRecipe, Day } from '../types';
 
 interface FavoritesContextType {
   favorites: FavoriteRecipe[];
   savedMealPlans: SavedMealPlan[];
   loading: boolean;
+  
+  // Usage tracking
+  canAddFavorite: boolean;
+  canSaveMealPlan: boolean;
+  favoritesRemaining: number;
+  mealPlansRemaining: number;
   
   // Favorites methods
   addToFavorites: (recipe: SpoonacularRecipe) => Promise<void>;
@@ -27,10 +34,22 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { currentTier, limits } = useSubscription();
   const [favorites, setFavorites] = useState<FavoriteRecipe[]>([]);
   const [savedMealPlans, setSavedMealPlans] = useState<SavedMealPlan[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Calculate usage limits
+  const favoritesRemaining = limits.maxFavoriteRecipes === -1 
+    ? -1 // unlimited
+    : Math.max(0, limits.maxFavoriteRecipes - favorites.length);
+    
+  const mealPlansRemaining = limits.maxSavedMealPlans === -1 
+    ? -1 // unlimited
+    : Math.max(0, limits.maxSavedMealPlans - savedMealPlans.length);
+    
+  const canAddFavorite = limits.maxFavoriteRecipes === -1 || favorites.length < limits.maxFavoriteRecipes;
+  const canSaveMealPlan = limits.maxSavedMealPlans === -1 || savedMealPlans.length < limits.maxSavedMealPlans;
   // Load user's favorites and saved meal plans
   const loadUserData = async () => {
     if (!user) {
@@ -84,6 +103,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       throw new Error('User must be logged in to add favorites');
     }
 
+    // Check if user can add more favorites
+    if (!canAddFavorite) {
+      throw new Error(`You've reached your limit of ${limits.maxFavoriteRecipes} favorite recipes. Upgrade your plan to save more favorites.`);
+    }
     try {
       const { data, error } = await supabase
         .from('favorite_recipes')
@@ -143,6 +166,14 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       throw new Error('User must be logged in to save meal plans');
     }
 
+    // Check if user can save more meal plans
+    if (!canSaveMealPlan) {
+      if (limits.maxSavedMealPlans === 0) {
+        throw new Error('Saving meal plans is not available on the free plan. Upgrade to Standard or Premium to save meal plans.');
+      } else {
+        throw new Error(`You've reached your limit of ${limits.maxSavedMealPlans} saved meal plans. Upgrade your plan to save more meal plans.`);
+      }
+    }
     try {
       const { data, error } = await supabase
         .from('saved_meal_plans')
@@ -275,6 +306,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       favorites,
       savedMealPlans,
       loading,
+      canAddFavorite,
+      canSaveMealPlan,
+      favoritesRemaining,
+      mealPlansRemaining,
       addToFavorites,
       removeFromFavorites,
       isFavorite,
