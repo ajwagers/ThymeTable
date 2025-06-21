@@ -245,9 +245,6 @@ const Header: React.FC = () => {
                 </div>
               </button>
             </div>
-    </>
-  );
-};
 
             <div className="flex gap-3">
               <button
@@ -260,4 +257,8 @@ const Header: React.FC = () => {
           </div>
         </div>
       )}
+    </>
+  );
+};
+
 export default Header;
