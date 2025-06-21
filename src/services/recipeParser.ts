@@ -12,7 +12,7 @@ interface ParsedRecipe {
   dishTypes: string[];
 }
 
-// Main parsing function using Supabase Edge Function
+// Main parsing function using enhanced Supabase Edge Function with Python support
 export async function parseRecipeFromUrl(url: string): Promise<SpoonacularRecipe> {
   try {
     // Validate URL
@@ -23,13 +23,13 @@ export async function parseRecipeFromUrl(url: string): Promise<SpoonacularRecipe
 
     console.log('🔍 Fetching recipe from:', url);
 
-    // Call our Supabase Edge Function for server-side scraping
+    // Call our enhanced Supabase Edge Function with Python support
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     if (!supabaseUrl) {
       throw new Error('Supabase URL not configured');
     }
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/scrape-recipe`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/scrape-recipe-python`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,11 +45,12 @@ export async function parseRecipeFromUrl(url: string): Promise<SpoonacularRecipe
 
     const data = await response.json();
     
-    if (!data.recipe) {
-      throw new Error('No recipe data received from server');
+    if (!data.success || !data.recipe) {
+      throw new Error(data.error || 'No recipe data received from server');
     }
 
     const parsedRecipe = data.recipe;
+    const method = data.method || 'unknown';
 
     // Validate we got essential data
     if (!parsedRecipe.title) {
@@ -71,12 +72,13 @@ export async function parseRecipeFromUrl(url: string): Promise<SpoonacularRecipe
       isUserCreated: true
     };
 
-    console.log('✅ Successfully parsed recipe:', recipe.title);
+    console.log(`✅ Successfully parsed recipe using ${method}:`, recipe.title);
     console.log('📊 Recipe data:', {
       ingredients: recipe.ingredients.length,
       instructions: recipe.instructions.length,
       prepTime: recipe.readyInMinutes,
-      servings: recipe.servings
+      servings: recipe.servings,
+      method: method
     });
 
     return recipe;

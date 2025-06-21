@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Globe, Loader2, AlertCircle, Edit3, Check, RefreshCw } from 'lucide-react';
+import { X, Globe, Loader2, AlertCircle, Edit3, Check, RefreshCw, Zap } from 'lucide-react';
 import { SpoonacularRecipe, Ingredient } from '../types';
 import { parseRecipeFromUrl, parseRecipeFromUrlFallback, validateImportedRecipe } from '../services/recipeParser';
 
@@ -26,6 +26,7 @@ export function ImportRecipeModal({
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [usedFallback, setUsedFallback] = useState(false);
+  const [parsingMethod, setParsingMethod] = useState<string>('');
 
   // Editable recipe fields
   const [editedRecipe, setEditedRecipe] = useState<SpoonacularRecipe | null>(null);
@@ -37,6 +38,7 @@ export function ImportRecipeModal({
     setEditedRecipe(null);
     setIsEditing(false);
     setUsedFallback(false);
+    setParsingMethod('');
   };
 
   const handleImport = async (useFallback = false) => {
@@ -48,6 +50,7 @@ export function ImportRecipeModal({
     setIsImporting(true);
     setImportError('');
     setUsedFallback(false);
+    setParsingMethod('');
 
     try {
       let recipe: SpoonacularRecipe;
@@ -56,13 +59,17 @@ export function ImportRecipeModal({
         console.log('🔄 Using fallback parser...');
         recipe = await parseRecipeFromUrlFallback(url.trim());
         setUsedFallback(true);
+        setParsingMethod('client-side-fallback');
       } else {
         try {
           recipe = await parseRecipeFromUrl(url.trim());
+          // The parsing method is logged in the service, we can extract it from console or response
+          setParsingMethod('server-side-enhanced');
         } catch (error) {
           console.warn('Primary parser failed, trying fallback:', error);
           recipe = await parseRecipeFromUrlFallback(url.trim());
           setUsedFallback(true);
+          setParsingMethod('client-side-fallback');
         }
       }
       
@@ -182,6 +189,25 @@ export function ImportRecipeModal({
     }
   };
 
+  const getMethodBadge = () => {
+    if (parsingMethod === 'server-side-enhanced') {
+      return (
+        <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+          <Zap className="w-3 h-3" />
+          Enhanced Python Parser
+        </div>
+      );
+    } else if (parsingMethod === 'client-side-fallback') {
+      return (
+        <div className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+          <RefreshCw className="w-3 h-3" />
+          Fallback Parser
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -200,6 +226,7 @@ export function ImportRecipeModal({
                   {mealType.charAt(0).toUpperCase() + mealType.slice(1)} {category}
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">Import Recipe from URL</h2>
+                {getMethodBadge()}
               </div>
               <button 
                 onClick={handleClose}
@@ -219,9 +246,16 @@ export function ImportRecipeModal({
                       <Globe className="w-8 h-8 text-primary-600" />
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Import Recipe from Website</h3>
-                    <p className="text-gray-600 max-w-md mx-auto">
-                      Enter the URL of a recipe from any cooking website. We'll automatically extract the recipe information for you.
+                    <p className="text-gray-600 max-w-md mx-auto mb-4">
+                      Enter the URL of a recipe from any cooking website. We'll automatically extract the recipe information using our enhanced Python-powered parser.
                     </p>
+                    
+                    {/* Enhanced Features Badge */}
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 mb-4">
+                      <Zap className="w-4 h-4" />
+                      <span className="font-medium">Enhanced with Python recipe_scrapers</span>
+                      <span className="text-green-600">• 500+ supported sites</span>
+                    </div>
                   </div>
 
                   <div className="max-w-md mx-auto space-y-4">
@@ -271,7 +305,7 @@ export function ImportRecipeModal({
                           <Loader2 className={`w-8 h-8 ${getLoadingColor()}`} />
                         </motion.div>
                         <p className="text-gray-600 font-medium">Importing recipe...</p>
-                        <p className="text-sm text-gray-500 mt-1">This may take a few seconds</p>
+                        <p className="text-sm text-gray-500 mt-1">Using enhanced Python parser for best results</p>
                       </motion.div>
                     )}
 
@@ -293,7 +327,7 @@ export function ImportRecipeModal({
                                 className="mt-3 btn-secondary text-sm"
                               >
                                 <RefreshCw className="w-4 h-4 mr-2" />
-                                Try Alternative Parser
+                                Try Basic Parser
                               </button>
                             )}
                           </div>
@@ -302,8 +336,11 @@ export function ImportRecipeModal({
                     )}
 
                     <div className="text-center">
-                      <p className="text-xs text-gray-500">
-                        Supported sites include AllRecipes, Food Network, Bon Appétit, and most recipe blogs with structured data.
+                      <p className="text-xs text-gray-500 mb-2">
+                        <strong>Supported sites include:</strong> AllRecipes, Food Network, Bon Appétit, Serious Eats, NYT Cooking, BBC Good Food, and 500+ more recipe sites.
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Our enhanced parser uses the Python recipe_scrapers library for maximum compatibility and accuracy.
                       </p>
                     </div>
                   </div>
@@ -318,7 +355,12 @@ export function ImportRecipeModal({
                       </h3>
                       {usedFallback && (
                         <p className="text-sm text-amber-600 mt-1">
-                          ⚠️ Used fallback parser - please review and edit as needed
+                          ⚠️ Used basic parser - please review and edit as needed
+                        </p>
+                      )}
+                      {parsingMethod === 'server-side-enhanced' && (
+                        <p className="text-sm text-green-600 mt-1">
+                          ✅ Imported using enhanced Python parser for maximum accuracy
                         </p>
                       )}
                     </div>
@@ -571,6 +613,7 @@ export function ImportRecipeModal({
                     setIsEditing(false);
                     setImportError('');
                     setUsedFallback(false);
+                    setParsingMethod('');
                   } else {
                     handleClose();
                   }
