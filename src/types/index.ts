@@ -53,6 +53,7 @@ export interface SpoonacularRecipe {
   instructions?: string[];
   ingredients?: Ingredient[];
   dishTypes?: string[];
+  isUserCreated?: boolean;  // Add this field
 }
 
 export interface FavoriteRecipe {

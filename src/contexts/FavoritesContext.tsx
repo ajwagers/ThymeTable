@@ -252,6 +252,24 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     await loadUserData();
   };
 
+  // Save user recipe
+  const saveUserRecipe = async (recipe: SpoonacularRecipe) => {
+    if (!user) throw new Error('User must be logged in');
+
+    const { data, error } = await supabase
+      .from('user_recipes')
+      .insert({
+        id: recipe.id,
+        user_id: user.id,
+        recipe_data: recipe
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
   return (
     <FavoritesContext.Provider value={{
       favorites,
@@ -264,7 +282,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       loadMealPlan,
       deleteMealPlan,
       updateMealPlan,
-      refreshData
+      refreshData,
+      saveUserRecipe
     }}>
       {children}
     </FavoritesContext.Provider>
