@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Check, Filter, Leaf, Wheat, Milk, Zap, Heart, Salad, Fish, Mountain, Flame, Clock, Shield, AlertTriangle, Target, Dna, Waves, Wheat as GrainIcon, Apple } from 'lucide-react';
+import { X, Plus, Trash2, Check, Filter, Leaf, Wheat, Milk, Zap, Heart, Salad, Fish, Mountain, Flame, Clock, Shield, AlertTriangle, Target, Dna, Waves, Wheat as GrainIcon, Apple, Lock, Crown } from 'lucide-react';
 import { useDietary, DietaryFilter, CustomDietaryFilter } from '../contexts/DietaryContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 interface DietaryFiltersModalProps {
   isOpen: boolean;
@@ -152,8 +153,10 @@ const commonDiets = [
 ];
 
 function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
-  const { activeDiets, customFilters, toggleDiet, addCustomFilter, removeCustomFilter } = useDietary();
+  const { activeDiets, customFilters, canCreateCustomFilters, toggleDiet, addCustomFilter, removeCustomFilter } = useDietary();
+  const { currentTier } = useSubscription();
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [customForm, setCustomForm] = useState({
     name: '',
     diet: '',
@@ -167,23 +170,36 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
     e.preventDefault();
     if (!customForm.name.trim()) return;
 
-    addCustomFilter({
-      name: customForm.name,
-      diet: customForm.diet || undefined,
-      intolerances: customForm.intolerances,
-      excludeIngredients: customForm.excludeIngredients
-    });
+    try {
+      addCustomFilter({
+        name: customForm.name,
+        diet: customForm.diet || undefined,
+        intolerances: customForm.intolerances,
+        excludeIngredients: customForm.excludeIngredients
+      });
 
-    // Reset form
-    setCustomForm({
-      name: '',
-      diet: '',
-      intolerances: [],
-      excludeIngredients: [],
-      newIntolerance: '',
-      newIngredient: ''
-    });
-    setShowCustomForm(false);
+      // Reset form
+      setCustomForm({
+        name: '',
+        diet: '',
+        intolerances: [],
+        excludeIngredients: [],
+        newIntolerance: '',
+        newIngredient: ''
+      });
+      setShowCustomForm(false);
+    } catch (error) {
+      console.error('Error creating custom filter:', error);
+      setShowUpgradePrompt(true);
+    }
+  };
+
+  const handleCreateCustomFilter = () => {
+    if (!canCreateCustomFilters) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+    setShowCustomForm(true);
   };
 
   const addIntolerance = () => {
@@ -508,7 +524,19 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
                   <div className="text-center py-8 text-gray-500">
                     <Filter className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>No custom filters created yet.</p>
-                    <p className="text-sm">Create a custom filter to match your specific dietary needs.</p>
+                    {canCreateCustomFilters ? (
+                      <p className="text-sm">Create a custom filter to match your specific dietary needs.</p>
+                    ) : (
+                      <div>
+                        <p className="text-sm mb-2">Custom filters are available with Standard and Premium plans.</p>
+                        <button
+                          onClick={handleCreateCustomFilter}
+                          className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                        >
+                          Upgrade to unlock custom filters
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -520,20 +548,105 @@ function DietaryFiltersModal({ isOpen, onClose }: DietaryFiltersModalProps) {
                 <div className="text-sm text-gray-600">
                   {activeDiets.length > 0 ? (
                     <span>{activeDiets.length} filter{activeDiets.length !== 1 ? 's' : ''} active</span>
-                  ) : (
-                    <span>No filters active</span>
-                  )}
-                </div>
-                <button onClick={onClose} className="btn-primary">
-                  Apply Filters
-                </button>
+                {!canCreateCustomFilters ? (
+                  <button
+                    onClick={handleCreateCustomFilter}
+                    className="btn-primary opacity-75 relative"
+                    title="Upgrade to Standard for custom dietary filters"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Custom Filter
+                    <Lock className="w-3 h-3 ml-1" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowCustomForm(!showCustomForm)}
+                    className="btn-primary"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Custom Filter
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
         </div>
       )}
+      
+      {/* Upgrade Prompt Modal */}
+      <AnimatePresence>
+        {showUpgradePrompt && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+            <motion.div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowUpgradePrompt(false)}
+            />
+            
+            <motion.div
+              className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            >
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full mb-4">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Unlock Custom Dietary Filters
+                </h3>
+                <p className="text-gray-600">
+                  Create personalized dietary filters to match your specific needs and restrictions.
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Standard Plan - $4.99/month</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Custom dietary filters</li>
+                    <li>• Advanced ingredient exclusions</li>
+                    <li>• Recipe import capabilities</li>
+                    <li>• 15 saved meal plans</li>
+                  </ul>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    Premium Plan - $9.99/month
+                    <Crown className="w-4 h-4 ml-2 text-yellow-500" />
+                  </h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Everything in Standard</li>
+                    <li>• Unlimited custom filters</li>
+                    <li>• AI-powered recommendations</li>
+                    <li>• Unlimited saved meal plans</li>
+                  </ul>
+                </div>
+              </div>
     </AnimatePresence>
   );
 }
 
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowUpgradePrompt(false)}
+                  className="flex-1 btn-secondary"
+                >
+                  Maybe Later
+                </button>
+                <button
+                  onClick={() => setShowUpgradePrompt(false)}
+                  className="flex-1 btn-primary"
+                >
+                  Upgrade Now
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 export default DietaryFiltersModal;

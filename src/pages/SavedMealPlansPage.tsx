@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X, ExternalLink } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Trash2, Download, Edit3, Plus, Save, X, ExternalLink, Crown, AlertTriangle } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function SavedMealPlansPage() {
   const navigate = useNavigate();
-  const { savedMealPlans, deleteMealPlan, loadMealPlan, loading } = useFavorites();
+  const { savedMealPlans, deleteMealPlan, loadMealPlan, loading, mealPlansRemaining } = useFavorites();
+  const { currentTier, limits } = useSubscription();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -80,25 +82,91 @@ function SavedMealPlansPage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Planner
         </button>
-        <h1 className="text-2xl font-semibold text-gray-800 flex items-center">
-          <BookOpen className="w-6 h-6 mr-2 text-primary-500" />
-          Saved Meal Plans
-        </h1>
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-gray-800 flex items-center justify-center">
+            <BookOpen className="w-6 h-6 mr-2 text-primary-500" />
+            Saved Meal Plans
+          </h1>
+          {/* Usage indicator for non-unlimited plans */}
+          {limits.maxSavedMealPlans !== -1 && (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              {currentTier !== 'premium' && (
+                <Crown className="w-4 h-4 text-yellow-500" />
+              )}
+              <span className="text-sm text-gray-600">
+                {savedMealPlans.length}/{limits.maxSavedMealPlans} meal plans used
+              </span>
+              {mealPlansRemaining === 0 && (
+                <span className="text-xs text-amber-600 font-medium">
+                  (Limit reached)
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         <div></div>
       </div>
 
+      {/* Upgrade prompt when near or at limit */}
+      {currentTier !== 'premium' && mealPlansRemaining <= 2 && mealPlansRemaining >= 0 && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            {mealPlansRemaining === 0 ? (
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            ) : (
+              <Crown className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <h3 className="font-medium text-amber-800">
+                {mealPlansRemaining === 0 
+                  ? 'Meal Plans Limit Reached' 
+                  : `Only ${mealPlansRemaining} meal plan${mealPlansRemaining === 1 ? '' : 's'} remaining`
+                }
+              </h3>
+              <p className="text-sm text-amber-700 mt-1">
+                {mealPlansRemaining === 0 
+                  ? 'Upgrade your plan to save more meal plans.'
+                  : currentTier === 'free' 
+                    ? 'Upgrade to Standard or Premium to save meal plans.'
+                    : 'Upgrade to Premium for unlimited meal plans.'
+                }
+              </p>
+            </div>
+            <button
+              onClick={() => {/* TODO: Open upgrade modal */}}
+              className="btn-primary text-sm"
+            >
+              Upgrade
+            </button>
+          </div>
+        </div>
+      )}
       {savedMealPlans.length === 0 ? (
         <div className="text-center py-12">
           <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <h2 className="text-xl font-medium text-gray-600 mb-2">No Saved Meal Plans Yet</h2>
-          <p className="text-gray-500 mb-6">
-            Save your weekly meal plans to easily access them later or share with others.
-          </p>
+          <div className="text-gray-500 mb-6">
+            {currentTier === 'free' ? (
+              <div>
+                <p>Saving meal plans is available with Standard and Premium plans.</p>
+                <p className="text-sm mt-2">Upgrade to save and reuse your weekly meal plans.</p>
+              </div>
+            ) : (
+              <div>
+                <p>Save your weekly meal plans to easily access them later or share with others.</p>
+                {limits.maxSavedMealPlans !== -1 && (
+                  <p className="text-sm mt-2">
+                    You can save up to {limits.maxSavedMealPlans} meal plans on your {currentTier} plan.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
           <button
             onClick={() => navigate('/')}
             className="btn-primary"
           >
-            Create Meal Plan
+            {currentTier === 'free' ? 'View Meal Planner' : 'Create Meal Plan'}
           </button>
         </div>
       ) : (

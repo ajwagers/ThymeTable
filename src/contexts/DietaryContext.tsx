@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { useSubscription } from './SubscriptionContext';
 
 export type DietaryFilter = 
   | 'gluten-free' 
@@ -32,6 +33,7 @@ export interface CustomDietaryFilter {
 interface DietaryContextType {
   activeDiets: DietaryFilter[];
   customFilters: CustomDietaryFilter[];
+  canCreateCustomFilters: boolean;
   toggleDiet: (diet: DietaryFilter) => void;
   addCustomFilter: (filter: Omit<CustomDietaryFilter, 'id'>) => void;
   removeCustomFilter: (id: string) => void;
@@ -371,6 +373,7 @@ const dietaryMappings: Record<DietaryFilter, { diet?: string; intolerances?: str
 };
 
 export function DietaryProvider({ children }: { children: React.ReactNode }) {
+  const { currentTier, limits } = useSubscription();
   const [activeDiets, setActiveDiets] = useState<DietaryFilter[]>(() => {
     const saved = localStorage.getItem('dietaryFilters');
     return saved ? JSON.parse(saved) : [];
@@ -380,6 +383,9 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('customDietaryFilters');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // Check if user can create custom filters (Standard+ feature)
+  const canCreateCustomFilters = limits.canUseAdvancedFilters;
 
   const toggleDiet = (diet: DietaryFilter) => {
     setActiveDiets(prev => {
@@ -393,6 +399,11 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addCustomFilter = (filter: Omit<CustomDietaryFilter, 'id'>) => {
+    // Check if user has access to custom filters
+    if (!canCreateCustomFilters) {
+      throw new Error('Custom dietary filters are only available for Standard and Premium users. Upgrade your plan to create custom filters.');
+    }
+
     const newFilter: CustomDietaryFilter = {
       ...filter,
       id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -588,6 +599,7 @@ export function DietaryProvider({ children }: { children: React.ReactNode }) {
     <DietaryContext.Provider value={{
       activeDiets,
       customFilters,
+      canCreateCustomFilters,
       toggleDiet,
       addCustomFilter,
       removeCustomFilter,
