@@ -100,7 +100,7 @@ function SubscriptionPage() {
     <motion.div
       className={`relative p-6 rounded-xl border-2 transition-all ${
         popular 
-          ? 'border-terra-500 bg-gradient-to-br from-lemon to-terra-50 shadow-lg scale-105' 
+          ? 'border-terra-500 bg-gradient-to-br from-lemon to-terra-100 shadow-lg scale-105' 
           : current
             ? 'border-green-500 bg-green-50'
             : 'border-lemon bg-yellow-100 hover:border-yellow-300'
