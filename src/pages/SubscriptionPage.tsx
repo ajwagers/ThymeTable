@@ -128,11 +128,11 @@ function SubscriptionPage() {
 
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <h3 className="text-xl font-bold text-lemon">{title}</h3>
+          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
           {tier === 'premium' && <Crown className="w-5 h-5 text-yellow-500" />}
         </div>
-        <div className="text-3xl font-bold text-lemon mb-1">{price}</div>
-        <div className="text-sm text-lemon">{period}</div>
+        <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
+        <div className="text-sm text-gray-500">{period}</div>
         {annualPriceInfo && (
           <div className="text-sm text-green-600 font-medium mt-1">
             {annualPriceInfo}
@@ -143,7 +143,7 @@ function SubscriptionPage() {
       <ul className="space-y-3 mb-8">
         {features.map((feature, index) => (
           <li key={index} className={`flex items-center text-sm ${
-            feature.highlight ? 'text-lemon font-medium' : 'text-lemon'
+            feature.highlight ? 'text-gray-900 font-medium' : 'text-gray-700'
           }`}>
             <div className={`mr-3 ${
               tier === 'premium' ? 'text-terra-500' : 
@@ -167,7 +167,7 @@ function SubscriptionPage() {
       ) : tier === 'free' ? (
         <button
           onClick={() => navigate('/login')}
-          className="w-full py-3 px-4 bg-lemon text-lemon rounded-lg font-medium hover:bg-lemon transition-colors"
+          className="w-full py-3 px-4 bg-lemon text-gray-700 rounded-lg font-medium hover:bg-lemon transition-colors"
         >
           {user ? 'Downgrade' : 'Get Started Free'}
         </button>
@@ -177,8 +177,8 @@ function SubscriptionPage() {
           disabled={isUpgrading === tier}
           className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
             tier === 'premium'
-              ? 'bg-gradient-to-r from-lemon to-terra-500 hover:from-lemon hover:to-terra-600 text-white'
-              : 'bg-lemon hover:bg-lemon text-white'
+              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {isUpgrading === tier ? (
