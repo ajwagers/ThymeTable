@@ -163,7 +163,7 @@ const Header: React.FC = () => {
                 {currentTier !== 'premium' && (
                   <button
                     onClick={() => navigate('/subscription')}
-                    className="btn-primary bg-gradient-to-r from-lemon to-terra-500 hover:from-green hover:to-terra-600 text-white font-medium"
+                    className="btn-primary bg-gradient-to-r from-lemon to-terra-500 hover:from-terra-400 hover:to-terra-600 text-white font-medium"
                   >
                     <Crown className="h-4 w-4 mr-1" />
                     <span>Upgrade</span>
