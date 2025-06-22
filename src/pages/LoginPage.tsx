@@ -79,7 +79,7 @@ function LoginPage() {
             {/* Title */}
             <div>
               <h1 className="text-4xl font-bold text-charcoal sm:text-5xl">
-                <span className="text-terra-500">Safe</span> Meal Planning for{' '}
+                <span className="text-terra-500">Stress-free</span> Meal Planning for{' '}
                 <span className="text-primary-500 inline-block hover:scale-105 transition-transform duration-200">
                   Restrictive Diets
                 </span>
