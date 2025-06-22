@@ -87,7 +87,7 @@ function LoginPage() {
               <p className="mt-4 text-xl text-charcoal leading-relaxed">
                 Finally, a meal planner that <strong>understands your dietary challenges</strong>. 
                 Whether you're managing celiac disease, multiple food allergies, keto, or other strict diets, 
-                ThymeTable makes safe meal planning simple for your family.
+                ThymeTable makes complicated meal planning simple for you and your family.
               </p>
             </div>
 
