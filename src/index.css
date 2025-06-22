@@ -43,6 +43,8 @@ body {
   }
 
   .meal-placeholder {
-    @apply border-2 border-dashed border-primary-200 rounded-lg p-4 text-primary-400 flex items-center justify-center transition-all hover:border-primary-300 hover:text-primary-500 cursor-pointer min-h-[160px];
+    @apply border-2 border-dashed border-primary-200 rounded-lg p-4 text-primary-400 
+           flex items-center justify-center transition-all hover:border-primary-300 
+           hover:text-primary-500 cursor-pointer min-h-[160px];
   }
 }

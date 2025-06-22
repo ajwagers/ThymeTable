@@ -31,24 +31,10 @@ export default {
           900: '#6d3328',
         },
         charcoal: '#333333', // Charcoal Gray
-        lemon: {
-          DEFAULT: '#F6C244', // Lemon Zest
-        },
-          },
+        lemon: '#F6C244',   // Lemon Zest
       },
-      lemon: {
-        50: '#FFFBEB',
-        100: '#FEF3C7',
-        200: '#FDE68A',
-        300: '#FCD34D',
-        400: '#FBBF24',
-        500: '#F6C244', // Original lemon color
-        600: '#D9A000',
-        700: '#B38000',
-        800: '#8C6000',
-        900: '#664000',
-      },
-  }
+    },
+  },
   plugins: [
     require('@tailwindcss/line-clamp'),
   ],
