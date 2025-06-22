@@ -91,6 +91,8 @@ function SubscriptionPage() {
     price: string;
     period: string;
     features: PlanFeature[];
+    annualPriceInfo?: string;
+    annualPriceInfo?: string;
     tier: 'free' | 'standard' | 'premium';
     popular?: boolean;
     current?: boolean;
@@ -131,6 +133,11 @@ function SubscriptionPage() {
         </div>
         <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
         <div className="text-sm text-gray-500">{period}</div>
+        {annualPriceInfo && (
+          <div className="text-sm text-green-600 font-medium mt-1">
+            {annualPriceInfo}
+          </div>
+        )}
       </div>
 
       <ul className="space-y-3 mb-8">
@@ -231,6 +238,7 @@ function SubscriptionPage() {
             title="Standard"
             price="$4.99"
             period="/month"
+            annualPriceInfo="$49.99/year (saving $9.89)"
             features={standardFeatures}
             tier="standard"
             current={currentTier === 'standard'}
@@ -240,6 +248,7 @@ function SubscriptionPage() {
             title="Premium"
             price="$9.99"
             period="/month"
+            annualPriceInfo="$99.99/year (saving $19.89)"
             features={premiumFeatures}
             tier="premium"
             popular={true}
