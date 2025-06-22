@@ -31,7 +31,9 @@ export default {
           900: '#6d3328',
         },
         charcoal: '#333333', // Charcoal Gray
-        lemon: '#F6C244',   // Lemon Zest
+        lemon: {
+          DEFAULT: '#F6C244', // Lemon Zest
+        },
       },
     },
   },
