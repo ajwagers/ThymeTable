@@ -19,13 +19,13 @@ function LoginPage() {
   const features = [
     {
       icon: <Shield className="w-6 h-6 text-terra-500" />,
-      title: "Allergy-Consious Planning",
-      description: "Plan meals safely around food allergies and intolerances"
+      title: "Allergy-Conscious Planning",
+      description: "Plan meals tp avoid food allergies and intolerances"
     },
     {
       icon: <Filter className="w-6 h-6 text-primary-500" />,
       title: "Dietary Compliance",
-      description: "Strict filtering for keto, gluten-free, vegan, and more"
+      description: "Filtering for keto, gluten-free, vegan, and more"
     },
     {
       icon: <Users className="w-6 h-6 text-terra-500" />,
@@ -226,7 +226,7 @@ function LoginPage() {
                   <Shield className="w-5 h-5 mr-3 mt-1 flex-shrink-0 text-primary-500" />
                   <div>
                     <span className="font-medium">Recipes verified safe</span>
-                    <p className="text-sm text-gray-600 mt-1">for your specific restrictions</p>
+                    <span className="text-sm text-gray-600 mt-1">for your specific restrictions</span>
                   </div>
                   <ChevronRight className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0" />
                 </div>
