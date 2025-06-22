@@ -103,7 +103,7 @@ function SubscriptionPage() {
           ? 'border-orange-500 bg-gradient-to-br from-yellow-50 to-orange-50 shadow-lg scale-105' 
           : current
             ? 'border-green-500 bg-green-50'
-            : 'border-terra-200 bg-cream hover:border-terra-300'
+            : 'border-lemon-200 bg-lemon-70 hover:border-lemon-300'
       }`}
       whileHover={{ scale: popular ? 1.05 : 1.02 }}
       initial={{ opacity: 0, y: 20 }}
