@@ -83,6 +83,7 @@ function SubscriptionPage() {
     price, 
     period, 
     features, 
+    annualPriceInfo,
     tier, 
     popular = false,
     current = false 
@@ -91,7 +92,6 @@ function SubscriptionPage() {
     price: string;
     period: string;
     features: PlanFeature[];
-    annualPriceInfo?: string;
     annualPriceInfo?: string;
     tier: 'free' | 'standard' | 'premium';
     popular?: boolean;
