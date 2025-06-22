@@ -100,10 +100,10 @@ function SubscriptionPage() {
     <motion.div
       className={`relative p-6 rounded-xl border-2 transition-all ${
         popular 
-          ? 'border-terra-500 bg-gradient-to-br from-lemon-100 to-terra-100 shadow-lg scale-105' 
+          ? 'border-terra-500 bg-gradient-to-br from-lemon-200 to-terra-200 shadow-lg scale-105' 
           : current
             ? 'border-green-500 bg-green-50'
-            : 'border-lemon bg-lemon-100 hover:border-lemon-300'
+            : 'border-lemon bg-lemon-200 hover:border-lemon-300'
       }`}
       whileHover={{ scale: popular ? 1.05 : 1.02 }}
       initial={{ opacity: 0, y: 20 }}
