@@ -34,8 +34,8 @@ export default {
         lemon: {
           DEFAULT: '#F6C244', // Lemon Zest
         },
-    },
-  },
+          },
+      },
       lemon: {
         50: '#FFFBEB',
         100: '#FEF3C7',
@@ -48,6 +48,7 @@ export default {
         800: '#8C6000',
         900: '#664000',
       },
+  }
   plugins: [
     require('@tailwindcss/line-clamp'),
   ],
