@@ -178,7 +178,7 @@ function SubscriptionPage() {
           className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
             tier === 'premium'
               ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-lemon hover:bg-lemon text-white'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {isUpgrading === tier ? (
