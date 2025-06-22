@@ -112,7 +112,7 @@ function SubscriptionPage() {
     >
       {popular && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+          <div className="bg-gradient-to-r from-lemon to-terra-500 text-white px-4 py-1 rounded-full text-sm font-medium">
             Most Popular
           </div>
         </div>
@@ -128,11 +128,11 @@ function SubscriptionPage() {
 
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+          <h3 className="text-xl font-bold text-lemon">{title}</h3>
           {tier === 'premium' && <Crown className="w-5 h-5 text-yellow-500" />}
         </div>
-        <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
-        <div className="text-sm text-gray-500">{period}</div>
+        <div className="text-3xl font-bold text-lemon mb-1">{price}</div>
+        <div className="text-sm text-lemon">{period}</div>
         {annualPriceInfo && (
           <div className="text-sm text-green-600 font-medium mt-1">
             {annualPriceInfo}
@@ -143,11 +143,11 @@ function SubscriptionPage() {
       <ul className="space-y-3 mb-8">
         {features.map((feature, index) => (
           <li key={index} className={`flex items-center text-sm ${
-            feature.highlight ? 'text-gray-900 font-medium' : 'text-gray-700'
+            feature.highlight ? 'text-lemon font-medium' : 'text-lemon'
           }`}>
             <div className={`mr-3 ${
-              tier === 'premium' ? 'text-orange-500' : 
-              tier === 'standard' ? 'text-blue-500' : 
+              tier === 'premium' ? 'text-terra-500' : 
+              tier === 'standard' ? 'text-lemon' : 
               'text-green-500'
             }`}>
               {feature.icon}
@@ -167,7 +167,7 @@ function SubscriptionPage() {
       ) : tier === 'free' ? (
         <button
           onClick={() => navigate('/login')}
-          className="w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+          className="w-full py-3 px-4 bg-lemon text-lemon rounded-lg font-medium hover:bg-lemon transition-colors"
         >
           {user ? 'Downgrade' : 'Get Started Free'}
         </button>
@@ -177,8 +177,8 @@ function SubscriptionPage() {
           disabled={isUpgrading === tier}
           className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
             tier === 'premium'
-              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? 'bg-gradient-to-r from-lemon to-terra-500 hover:from-lemon hover:to-terra-600 text-white'
+              : 'bg-lemon hover:bg-lemon text-white'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {isUpgrading === tier ? (
