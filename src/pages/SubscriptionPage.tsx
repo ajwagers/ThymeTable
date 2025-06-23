@@ -36,7 +36,7 @@ function SubscriptionPage() {
   const handleUpgrade = async (tier: 'standard' | 'premium') => {
     setIsUpgrading(tier);
     try {
-      await upgradeToTier(tier);
+      await upgradeToTier(tier as 'free' | 'standard' | 'premium');
       // Show success message or redirect
       setTimeout(() => {
         navigate('/');
@@ -158,18 +158,28 @@ function SubscriptionPage() {
       </ul>
 
       {current ? (
-        <button
-          disabled
-          className="w-full py-3 px-4 bg-green-100 text-green-700 rounded-lg font-medium cursor-not-allowed"
-        >
-          Current Plan
-        </button>
+        <div className="space-y-2">
+          <button
+            disabled
+            className="w-full py-3 px-4 bg-green-100 text-green-700 rounded-lg font-medium cursor-not-allowed"
+          >
+            Current Plan
+          </button>
+          {tier !== 'free' && (
+            <button
+              onClick={() => handleUpgrade('free')}
+              className="w-full py-2 px-4 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
+            >
+              Downgrade Plan
+            </button>
+          )}
+        </div>
       ) : tier === 'free' ? (
         <button
           onClick={() => navigate('/login')}
           className="w-full py-3 px-4 bg-lemon text-gray-700 rounded-lg font-medium hover:bg-lemon transition-colors"
         >
-          {user ? 'Downgrade' : 'Get Started Free'}
+          {user ? 'Switch to Free' : 'Get Started Free'}
         </button>
       ) : (
         <button
@@ -190,6 +200,39 @@ function SubscriptionPage() {
             `Upgrade to ${title}`
           )}
         </button>
+      )}
+      
+      {/* Show upgrade/downgrade options for current plan */}
+      {current && (
+        <div className="mt-4 space-y-2">
+          {tier === 'free' && (
+            <>
+              <button
+                onClick={() => handleUpgrade('standard')}
+                disabled={isUpgrading === 'standard'}
+                className="w-full py-2 px-4 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors text-sm disabled:opacity-50"
+              >
+                {isUpgrading === 'standard' ? 'Upgrading...' : 'Upgrade to Standard'}
+              </button>
+              <button
+                onClick={() => handleUpgrade('premium')}
+                disabled={isUpgrading === 'premium'}
+                className="w-full py-2 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg font-medium hover:from-yellow-600 hover:to-orange-600 transition-colors text-sm disabled:opacity-50"
+              >
+                {isUpgrading === 'premium' ? 'Upgrading...' : 'Upgrade to Premium'}
+              </button>
+            </>
+          )}
+          {tier === 'standard' && (
+            <button
+              onClick={() => handleUpgrade('premium')}
+              disabled={isUpgrading === 'premium'}
+              className="w-full py-2 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg font-medium hover:from-yellow-600 hover:to-orange-600 transition-colors text-sm disabled:opacity-50"
+            >
+              {isUpgrading === 'premium' ? 'Upgrading...' : 'Upgrade to Premium'}
+            </button>
+          )}
+        </div>
       )}
     </motion.div>
   );

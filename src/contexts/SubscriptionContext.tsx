@@ -118,7 +118,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       localStorage.setItem(`subscription_tier_${user.id}`, tier);
       setCurrentTier(tier);
       
-      console.log(`Upgraded to ${tier} tier`);
+      if (tier === 'free') {
+        console.log(`Downgraded to ${tier} tier`);
+      } else {
+        console.log(`Upgraded to ${tier} tier`);
+      }
       
       // In a real implementation, this would:
       // 1. Call RevenueCat to initiate purchase
