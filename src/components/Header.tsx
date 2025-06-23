@@ -52,7 +52,7 @@ const Header: React.FC = () => {
                 <Utensils className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-2xl font-semibold tracking-tight">
-                Thyme<span className="text-lemon">Table</span>
+                Weekly Diet <span className="text-lemon">Planner</span>
               </h1>
               
               {/* Bolt Logo */}

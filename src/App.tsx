@@ -75,7 +75,7 @@ function App() {
                   <footer className="py-6 bg-white border-t border-gray-200">
                     <div className="px-2 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="text-center sm:text-left text-gray-500 text-sm">
-                        © {new Date().getFullYear()} ThymeTable. All rights reserved.
+                        © {new Date().getFullYear()} Weekly Diet Planner App. All rights reserved.
                       </div>
                       
                       {/* Powered by logos */}

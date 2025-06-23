@@ -261,7 +261,7 @@ function SubscriptionPage() {
               Choose Your Perfect Plan
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Unlock the full potential of ThymeTable with advanced features designed to make meal planning effortless and enjoyable.
+              Unlock the full potential of Weekly Diet Planner App with advanced features designed to make meal planning effortless and enjoyable.
             </p>
           </motion.div>
         </div>
@@ -427,7 +427,7 @@ function SubscriptionPage() {
             Ready to Transform Your Meal Planning?
           </h2>
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of users who have simplified their meal planning with ThymeTable. 
+            Join users who have simplified their meal planning with Weekly Diet Planner App. 
             Start your journey to stress-free cooking today.
           </p>
           

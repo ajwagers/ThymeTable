@@ -87,7 +87,7 @@ function LoginPage() {
               <p className="mt-4 text-xl text-charcoal leading-relaxed">
                 Finally, a meal planner that <strong>understands your dietary challenges</strong>. 
                 Whether you're managing celiac disease, multiple food allergies, keto, or other strict diets, 
-                ThymeTable makes complicated meal planning simple for you and your family.
+                Weekly Diet Planner App makes complicated meal planning simple for you and your family.
               </p>
             </div>
 
@@ -144,7 +144,7 @@ function LoginPage() {
                     </h2>
                     <p className="text-gray-600 mt-1 text-sm">
                       {isSignUp 
-                        ? 'Join thousands of families managing restrictive diets with confidence' 
+                        ? 'Join families managing restrictive diets with confidence' 
                         : 'Continue planning safe, compliant meals for your family'
                       }
                     </p>

@@ -632,7 +632,7 @@ function WeeklyPlannerPage() {
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                   <h4 className="text-sm font-medium text-blue-800 mb-2">How to import:</h4>
                   <ol className="text-sm text-blue-700 space-y-1">
-                    <li>1. Export a meal plan from ThymeTable or another source</li>
+                    <li>1. Export a meal plan from Weekly Diet Planner App or another source</li>
                     <li>2. Copy the JSON data from the exported file</li>
                     <li>3. Paste it in the text area above</li>
                     <li>4. Click "Import Plan" to load it into your current week</li>
