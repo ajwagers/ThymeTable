@@ -20,6 +20,7 @@ scripts/scrape_recipe.py
 supabase/functions/scrape-recipe-python/index.ts
 supabase/functions/scrape-recipe/index.ts
 supabase/migrations/20250620184438_lively_unit.sql
+supabase/migrations/20250625155346_tiny_lantern.sql
 
 # Core setup files
 src/index.css
