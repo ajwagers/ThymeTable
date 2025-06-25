@@ -9,7 +9,6 @@ function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [emailConfirmationRequired, setEmailConfirmationRequired] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,13 +61,6 @@ function LoginPage() {
     }
   };
 
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % features.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -96,11 +88,7 @@ function LoginPage() {
               {features.map((feature, index) => (
                 <div
                   key={feature.title}
-                  className={`p-6 bg-white rounded-lg shadow-sm border transition-all duration-300 hover:scale-105 ${
-                    activeFeature === index 
-                      ? 'scale-105 shadow-md border-primary-300' 
-                      : 'border-primary-100'
-                  }`}
+                  className="p-6 bg-white rounded-lg shadow-sm border border-primary-100 transition-all duration-300 hover:scale-105 hover:shadow-md hover:border-primary-300"
                 >
                   {feature.icon}
                   <h3 className="font-medium text-charcoal mt-3">{feature.title}</h3>

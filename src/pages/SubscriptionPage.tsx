@@ -35,7 +35,6 @@ function SubscriptionPage() {
   const { user } = useAuth();
   const { currentTier, subscriptionData, refreshSubscription } = useSubscription();
   const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   // Refresh subscription data when component mounts
   useEffect(() => {
@@ -70,6 +69,23 @@ function SubscriptionPage() {
     }
   };
 
+  const getCurrentSubscriptionStatus = () => {
+    if (!subscriptionData) return null;
+    
+    const product = stripeProducts.find(p => p.priceId === subscriptionData.price_id);
+    if (!product) return null;
+
+    return {
+      name: product.name,
+      status: subscriptionData.subscription_status,
+      cancelAtPeriodEnd: subscriptionData.cancel_at_period_end,
+      currentPeriodEnd: subscriptionData.current_period_end
+    };
+  };
+
+  const subscriptionStatus = getCurrentSubscriptionStatus();
+
+  // Define features for each plan
   const freeFeatures: PlanFeature[] = [
     { icon: <Heart className="w-4 h-4" />, text: '10 favorite recipes' },
     { icon: <TrendingUp className="w-4 h-4" />, text: '10 random recipes per day' },
@@ -99,22 +115,6 @@ function SubscriptionPage() {
     { icon: <Check className="w-4 h-4" />, text: 'Advanced analytics' },
     { icon: <Check className="w-4 h-4" />, text: 'Premium recipe collection' },
   ];
-
-  const getCurrentSubscriptionStatus = () => {
-    if (!subscriptionData) return null;
-    
-    const product = stripeProducts.find(p => p.priceId === subscriptionData.price_id);
-    if (!product) return null;
-
-    return {
-      name: product.name,
-      status: subscriptionData.subscription_status,
-      cancelAtPeriodEnd: subscriptionData.cancel_at_period_end,
-      currentPeriodEnd: subscriptionData.current_period_end
-    };
-  };
-
-  const subscriptionStatus = getCurrentSubscriptionStatus();
 
   const PlanCard = ({ 
     title, 
@@ -148,7 +148,7 @@ function SubscriptionPage() {
       whileHover={{ scale: popular ? 1.05 : 1.02 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.3 }}
     >
       {popular && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -243,13 +243,6 @@ function SubscriptionPage() {
           )}
         </button>
       )}
-    </motion.div>
-  );
-
-  // Get product data
-  const standardProduct = stripeProducts.find(p => p.priceId === 'price_1RdvYo03xOQRAfiHLrCApNpF');
-  const premiumProduct = stripeProducts.find(p => p.priceId === 'price_1RcdLK03xOQRAfiHl0sTMwqP');
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -316,7 +309,7 @@ function SubscriptionPage() {
             title="Standard"
             price={`$${standardProduct?.price || '4.99'}`}
             period="/month"
-            annualPriceInfo="$49.99/year (saving $9.89)"
+            annualPriceInfo="Save 17% with annual billing"
             features={standardFeatures}
             priceId={standardProduct?.priceId}
             tier="standard"
@@ -327,7 +320,7 @@ function SubscriptionPage() {
             title="Premium"
             price={`$${premiumProduct?.price || '99.99'}`}
             period="/month"
-            annualPriceInfo="$999.99/year (saving $199.89)"
+            annualPriceInfo="Save 17% with annual billing"
             features={premiumFeatures}
             priceId={premiumProduct?.priceId}
             tier="premium"

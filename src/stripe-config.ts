@@ -24,9 +24,9 @@ export const stripeProducts: StripeProduct[] = [
     id: 'prod_SXimRxxHi8UZxj',
     priceId: 'price_1RcdLK03xOQRAfiHl0sTMwqP',
     name: 'Weekly Diet Planner App Premium Membership',
-    description: 'Premium Membership gives you access to all the features of ThymeTable',
+    description: 'Premium Membership gives you access to all the features of Weekly Diet Planner App',
     mode: 'subscription',
-    price: 99.99,
+    price: 9.99,
     currency: 'usd',
     interval: 'month'
   }
