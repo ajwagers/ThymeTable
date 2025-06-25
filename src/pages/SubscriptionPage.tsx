@@ -35,6 +35,7 @@ function SubscriptionPage() {
   const { user } = useAuth();
   const { currentTier, subscriptionData, refreshSubscription } = useSubscription();
   const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Refresh subscription data when component mounts
   useEffect(() => {
@@ -115,6 +116,9 @@ function SubscriptionPage() {
     { icon: <Check className="w-4 h-4" />, text: 'Advanced analytics' },
     { icon: <Check className="w-4 h-4" />, text: 'Premium recipe collection' },
   ];
+
+  const standardProduct = stripeProducts.find(p => p.tier === 'standard');
+  const premiumProduct = stripeProducts.find(p => p.tier === 'premium');
 
   const PlanCard = ({ 
     title, 
@@ -243,6 +247,9 @@ function SubscriptionPage() {
           )}
         </button>
       )}
+    </motion.div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
