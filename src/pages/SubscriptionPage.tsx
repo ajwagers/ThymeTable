@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -16,10 +16,13 @@ import {
   Filter,
   TrendingUp,
   Users,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
+import { createCheckoutSession } from '../services/stripe';
+import { stripeProducts } from '../stripe-config';
 
 interface PlanFeature {
   icon: React.ReactNode;
@@ -30,19 +33,38 @@ interface PlanFeature {
 function SubscriptionPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentTier, upgradeToTier } = useSubscription();
+  const { currentTier, subscriptionData, refreshSubscription } = useSubscription();
   const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleUpgrade = async (tier: 'standard' | 'premium') => {
-    setIsUpgrading(tier);
+  // Refresh subscription data when component mounts
+  useEffect(() => {
+    refreshSubscription();
+  }, [refreshSubscription]);
+
+  const handleUpgrade = async (priceId: string) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setIsUpgrading(priceId);
+    setError(null);
+
     try {
-      await upgradeToTier(tier as 'free' | 'standard' | 'premium');
-      // Show success message or redirect
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      const { url } = await createCheckoutSession({
+        priceId,
+        successUrl: `${window.location.origin}/subscription?success=true`,
+        cancelUrl: `${window.location.origin}/subscription?canceled=true`,
+        mode: 'subscription'
+      });
+
+      if (url) {
+        window.location.href = url;
+      }
     } catch (error) {
       console.error('Upgrade failed:', error);
+      setError(error instanceof Error ? error.message : 'Failed to start checkout process');
     } finally {
       setIsUpgrading(null);
     }
@@ -78,12 +100,29 @@ function SubscriptionPage() {
     { icon: <Check className="w-4 h-4" />, text: 'Premium recipe collection' },
   ];
 
+  const getCurrentSubscriptionStatus = () => {
+    if (!subscriptionData) return null;
+    
+    const product = stripeProducts.find(p => p.priceId === subscriptionData.price_id);
+    if (!product) return null;
+
+    return {
+      name: product.name,
+      status: subscriptionData.subscription_status,
+      cancelAtPeriodEnd: subscriptionData.cancel_at_period_end,
+      currentPeriodEnd: subscriptionData.current_period_end
+    };
+  };
+
+  const subscriptionStatus = getCurrentSubscriptionStatus();
+
   const PlanCard = ({ 
     title, 
     price, 
     period, 
     features, 
     annualPriceInfo,
+    priceId,
     tier, 
     popular = false,
     current = false 
@@ -93,6 +132,7 @@ function SubscriptionPage() {
     period: string;
     features: PlanFeature[];
     annualPriceInfo?: string;
+    priceId?: string;
     tier: 'free' | 'standard' | 'premium';
     popular?: boolean;
     current?: boolean;
@@ -165,13 +205,15 @@ function SubscriptionPage() {
           >
             Current Plan
           </button>
-          {tier !== 'free' && (
-            <button
-              onClick={() => handleUpgrade('free')}
-              className="w-full py-2 px-4 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
-            >
-              Downgrade Plan
-            </button>
+          {subscriptionStatus && (
+            <div className="text-xs text-gray-600 text-center">
+              Status: {subscriptionStatus.status}
+              {subscriptionStatus.cancelAtPeriodEnd && (
+                <div className="text-amber-600 font-medium">
+                  Cancels at period end
+                </div>
+              )}
+            </div>
           )}
         </div>
       ) : tier === 'free' ? (
@@ -179,63 +221,34 @@ function SubscriptionPage() {
           onClick={() => navigate('/login')}
           className="w-full py-3 px-4 bg-lemon text-gray-700 rounded-lg font-medium hover:bg-lemon transition-colors"
         >
-          {user ? 'Switch to Free' : 'Get Started Free'}
+          {user ? 'Current Plan' : 'Get Started Free'}
         </button>
       ) : (
         <button
-          onClick={() => handleUpgrade(tier as 'standard' | 'premium')}
-          disabled={isUpgrading === tier}
+          onClick={() => priceId && handleUpgrade(priceId)}
+          disabled={isUpgrading === priceId || !priceId}
           className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
             tier === 'premium'
               ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
               : 'bg-lemon hover:bg-lemon text-white'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          {isUpgrading === tier ? (
+          {isUpgrading === priceId ? (
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-              Upgrading...
+              <Loader2 className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+              Starting checkout...
             </div>
           ) : (
             `Upgrade to ${title}`
           )}
         </button>
       )}
-      
-      {/* Show upgrade/downgrade options for current plan */}
-      {current && (
-        <div className="mt-4 space-y-2">
-          {tier === 'free' && (
-            <>
-              <button
-                onClick={() => handleUpgrade('standard')}
-                disabled={isUpgrading === 'standard'}
-                className="w-full py-2 px-4 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors text-sm disabled:opacity-50"
-              >
-                {isUpgrading === 'standard' ? 'Upgrading...' : 'Upgrade to Standard'}
-              </button>
-              <button
-                onClick={() => handleUpgrade('premium')}
-                disabled={isUpgrading === 'premium'}
-                className="w-full py-2 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg font-medium hover:from-yellow-600 hover:to-orange-600 transition-colors text-sm disabled:opacity-50"
-              >
-                {isUpgrading === 'premium' ? 'Upgrading...' : 'Upgrade to Premium'}
-              </button>
-            </>
-          )}
-          {tier === 'standard' && (
-            <button
-              onClick={() => handleUpgrade('premium')}
-              disabled={isUpgrading === 'premium'}
-              className="w-full py-2 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg font-medium hover:from-yellow-600 hover:to-orange-600 transition-colors text-sm disabled:opacity-50"
-            >
-              {isUpgrading === 'premium' ? 'Upgrading...' : 'Upgrade to Premium'}
-            </button>
-          )}
-        </div>
-      )}
     </motion.div>
   );
+
+  // Get product data
+  const standardProduct = stripeProducts.find(p => p.priceId === 'price_1RdvYo03xOQRAfiHLrCApNpF');
+  const premiumProduct = stripeProducts.find(p => p.priceId === 'price_1RcdLK03xOQRAfiHl0sTMwqP');
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
@@ -264,6 +277,28 @@ function SubscriptionPage() {
               Unlock the full potential of Weekly Diet Planner App with advanced features designed to make meal planning effortless and enjoyable.
             </p>
           </motion.div>
+
+          {/* Current Subscription Status */}
+          {subscriptionStatus && (
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-md mx-auto">
+              <h3 className="font-medium text-blue-900 mb-2">Current Subscription</h3>
+              <p className="text-sm text-blue-700">{subscriptionStatus.name}</p>
+              <p className="text-xs text-blue-600 mt-1">Status: {subscriptionStatus.status}</p>
+              {subscriptionStatus.currentPeriodEnd && (
+                <p className="text-xs text-blue-600">
+                  {subscriptionStatus.cancelAtPeriodEnd ? 'Ends' : 'Renews'}: {' '}
+                  {new Date(subscriptionStatus.currentPeriodEnd * 1000).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg max-w-md mx-auto">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
         </div>
 
         {/* Pricing Cards */}
@@ -279,20 +314,22 @@ function SubscriptionPage() {
           
           <PlanCard
             title="Standard"
-            price="$4.99"
+            price={`$${standardProduct?.price || '4.99'}`}
             period="/month"
             annualPriceInfo="$49.99/year (saving $9.89)"
             features={standardFeatures}
+            priceId={standardProduct?.priceId}
             tier="standard"
             current={currentTier === 'standard'}
           />
           
           <PlanCard
             title="Premium"
-            price="$9.99"
+            price={`$${premiumProduct?.price || '99.99'}`}
             period="/month"
-            annualPriceInfo="$99.99/year (saving $19.89)"
+            annualPriceInfo="$999.99/year (saving $199.89)"
             features={premiumFeatures}
+            priceId={premiumProduct?.priceId}
             tier="premium"
             popular={true}
             current={currentTier === 'premium'}

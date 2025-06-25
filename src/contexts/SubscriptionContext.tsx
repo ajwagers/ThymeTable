@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { getUserSubscription, SubscriptionData } from '../services/stripe';
+import { getProductByPriceId } from '../stripe-config';
 
 export type SubscriptionTier = 'free' | 'standard' | 'premium';
 
@@ -9,6 +11,7 @@ interface SubscriptionContextType {
   isStandard: boolean;
   isPremium: boolean;
   loading: boolean;
+  subscriptionData: SubscriptionData | null;
   
   // Feature limits based on tier
   limits: {
@@ -26,6 +29,7 @@ interface SubscriptionContextType {
   upgradeToTier: (tier: SubscriptionTier) => Promise<void>;
   checkFeatureAccess: (feature: keyof SubscriptionContextType['limits']) => boolean;
   getRemainingUsage: (feature: 'savedMealPlans' | 'favoriteRecipes') => Promise<number>;
+  refreshSubscription: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -64,38 +68,56 @@ const TIER_LIMITS = {
   },
 };
 
+// Map price IDs to tiers
+const PRICE_ID_TO_TIER: Record<string, SubscriptionTier> = {
+  'price_1RdvYo03xOQRAfiHLrCApNpF': 'standard', // Standard Membership
+  'price_1RcdLK03xOQRAfiHl0sTMwqP': 'premium',  // Premium Membership
+};
+
+function getTierFromSubscription(subscriptionData: SubscriptionData | null): SubscriptionTier {
+  if (!subscriptionData || !subscriptionData.price_id) {
+    return 'free';
+  }
+
+  // Check if subscription is active
+  const activeStatuses = ['active', 'trialing'];
+  if (!activeStatuses.includes(subscriptionData.subscription_status)) {
+    return 'free';
+  }
+
+  return PRICE_ID_TO_TIER[subscriptionData.price_id] || 'free';
+}
+
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   const [currentTier, setCurrentTier] = useState<SubscriptionTier>('free');
   const [loading, setLoading] = useState(true);
 
   // Initialize subscription status
+  const refreshSubscription = async () => {
+    if (!user) {
+      setSubscriptionData(null);
+      setCurrentTier('free');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await getUserSubscription();
+      setSubscriptionData(data);
+      setCurrentTier(getTierFromSubscription(data));
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      setSubscriptionData(null);
+      setCurrentTier('free');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const initializeSubscription = async () => {
-      if (!user) {
-        setCurrentTier('free');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // TODO: Replace with actual RevenueCat integration
-        // For now, check localStorage for demo purposes
-        const savedTier = localStorage.getItem(`subscription_tier_${user.id}`) as SubscriptionTier;
-        if (savedTier && ['free', 'standard', 'premium'].includes(savedTier)) {
-          setCurrentTier(savedTier);
-        } else {
-          setCurrentTier('free');
-        }
-      } catch (error) {
-        console.error('Error initializing subscription:', error);
-        setCurrentTier('free');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeSubscription();
+    refreshSubscription();
   }, [user]);
 
   // Helper booleans
@@ -113,22 +135,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
 
     try {
-      // TODO: Replace with actual RevenueCat integration
-      // For now, just update localStorage for demo purposes
-      localStorage.setItem(`subscription_tier_${user.id}`, tier);
-      setCurrentTier(tier);
-      
-      if (tier === 'free') {
-        console.log(`Downgraded to ${tier} tier`);
-      } else {
-        console.log(`Upgraded to ${tier} tier`);
-      }
-      
-      // In a real implementation, this would:
-      // 1. Call RevenueCat to initiate purchase
-      // 2. Handle payment flow
-      // 3. Update user's subscription status in database
-      // 4. Sync with backend
+      // For demo purposes, we'll just navigate to the subscription page
+      // In a real implementation, this would trigger the Stripe checkout flow
+      window.location.href = '/subscription';
       
     } catch (error) {
       console.error('Error upgrading subscription:', error);
@@ -168,10 +177,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     isStandard,
     isPremium,
     loading,
+    subscriptionData,
     limits,
     upgradeToTier,
     checkFeatureAccess,
     getRemainingUsage,
+    refreshSubscription,
   };
 
   return (

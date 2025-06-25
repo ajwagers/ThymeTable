@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Clock, Users, Utensils, Trash2, Crown, AlertTriangle } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
@@ -67,15 +67,6 @@ function FavoritesPage() {
           )}
         </div>
         <div></div>
-      
-      {/* Upgrade Modal */}
-      <UpgradePrompt
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        feature="More Favorite Recipes"
-        description="Save more of your favorite recipes and never lose track of the dishes you love."
-        requiredTier="standard"
-      />
       </div>
 
       {/* Upgrade prompt when near or at limit */}
@@ -110,6 +101,7 @@ function FavoritesPage() {
           </div>
         </div>
       )}
+
       {favorites.length === 0 ? (
         <div className="text-center py-12">
           <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -207,6 +199,15 @@ function FavoritesPage() {
           ))}
         </div>
       )}
+      
+      {/* Upgrade Modal */}
+      <UpgradePrompt
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="More Favorite Recipes"
+        description="Save more of your favorite recipes and never lose track of the dishes you love."
+        requiredTier="standard"
+      />
     </div>
   );
 }

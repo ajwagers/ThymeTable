@@ -11,7 +11,7 @@ import DietaryFiltersModal from './DietaryFiltersModal';
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
   const { activeDiets } = useDietary();
-  const { currentTier, upgradeToTier } = useSubscription();
+  const { currentTier, subscriptionData } = useSubscription();
   const { canUseAdvancedFilters } = useFeatureAccess();
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,20 +27,23 @@ const Header: React.FC = () => {
     }
   };
 
-  const handleUpgrade = async (tier: 'standard' | 'premium') => {
-    try {
-      await upgradeToTier(tier);
-      setShowUpgradeModal(false);
-    } catch (error) {
-      console.error('Upgrade failed:', error);
-    }
-  };
-
   const handleRestrictedFeature = (featureName: string) => {
     setShowUpgradeModal(true);
   };
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Get subscription display name
+  const getSubscriptionDisplayName = () => {
+    if (subscriptionData?.subscription_status === 'active') {
+      switch (currentTier) {
+        case 'standard': return 'Standard';
+        case 'premium': return 'Premium';
+        default: return 'Free';
+      }
+    }
+    return 'Free';
+  };
 
   return (
     <>
@@ -54,6 +57,16 @@ const Header: React.FC = () => {
               <h1 className="text-2xl font-semibold tracking-tight">
                 Weekly Diet <span className="text-lemon">Planner</span>
               </h1>
+              
+              {/* Subscription Status Badge */}
+              {user && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-lg">
+                  {currentTier === 'premium' && <Crown className="w-4 h-4 text-yellow-400" />}
+                  <span className="text-xs font-medium text-white/90">
+                    {getSubscriptionDisplayName()} Plan
+                  </span>
+                </div>
+              )}
               
               {/* Bolt Logo */}
               <a
@@ -205,14 +218,14 @@ const Header: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Upgrade Your Plan</h3>
               <p className="text-gray-600">
-                Unlock premium features and get the most out of ThymeTable
+                Unlock premium features and get the most out of Weekly Diet Planner App
               </p>
             </div>
 
             <div className="space-y-3 mb-6">
               {currentTier === 'free' && (
                 <button
-                  onClick={() => handleUpgrade('standard')}
+                  onClick={() => navigate('/subscription')}
                   className="w-full p-4 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 hover:border-blue-300 rounded-lg transition-all text-left"
                 >
                   <div className="flex items-center justify-between">
@@ -229,7 +242,7 @@ const Header: React.FC = () => {
               )}
               
               <button
-                onClick={() => handleUpgrade('premium')}
+                onClick={() => navigate('/subscription')}
                 className="w-full p-4 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 border-2 border-gradient-to-r from-yellow-200 to-orange-200 rounded-lg transition-all text-left"
               >
                 <div className="flex items-center justify-between">
@@ -241,7 +254,7 @@ const Header: React.FC = () => {
                     <p className="text-sm text-gray-600">Unlimited everything + AI recommendations</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-orange-600">$9.99</div>
+                    <div className="text-lg font-bold text-orange-600">$99.99</div>
                     <div className="text-xs text-gray-500">/month</div>
                   </div>
                 </div>
