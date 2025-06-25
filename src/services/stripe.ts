@@ -2,8 +2,8 @@ import { supabase } from '../lib/supabase';
 
 export interface CheckoutSessionRequest {
   price_id: string;
-  successUrl: string;
-  cancelUrl: string;
+  success_url: string;
+  cancel_url: string;
   mode: 'subscription' | 'payment';
 }
 
