@@ -38,7 +38,7 @@ export const stripeProducts: StripeProduct[] = [
     mode: 'subscription',
     price: 49.99,
     currency: 'usd',
-    interval: 'month'
+    interval: 'year'
   },
   {
     id: 'prod_SZE6ADEdr15g6s',
@@ -48,7 +48,7 @@ export const stripeProducts: StripeProduct[] = [
     mode: 'subscription',
     price: 99.99,
     currency: 'usd',
-    interval: 'month'
+    interval: 'year'
   }
 ];
 
