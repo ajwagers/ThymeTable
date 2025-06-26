@@ -14,7 +14,7 @@ function CheckoutSuccessPage() {
     // Get price_id from URL params if available (from Stripe pricing table)
     const priceId = searchParams.get('price_id');
     
-    if (priceId) {
+    if (priceId & sucess=true) {
       // Update tier immediately based on price ID
       updateTierFromStripe(priceId);
     } else {
