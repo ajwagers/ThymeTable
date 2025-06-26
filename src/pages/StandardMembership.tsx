@@ -73,6 +73,8 @@ export default function StandardMembership() {
             <stripe-pricing-table
               pricing-table-id="prctbl_1RdylU03xOQRAfiHmqDCxpAP"
               publishable-key="pk_test_51RcdD303xOQRAfiHtkGiWw6o18yC0SBiG7dXgauWfVaTNMbFMF7u6kYOTNfWY5nanx42wjXovYoXIrVjDEkVDCGK006D8bAKBF"
+              success-url="${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&price_id={PRICE_ID}"
+              cancel-url="${window.location.origin}/subscription"
             />
           </div>
         </div>
