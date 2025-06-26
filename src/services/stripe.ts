@@ -32,16 +32,17 @@ export async function getUserSubscription(): Promise<SubscriptionData | null> {
     const { data, error } = await supabase
       .from('stripe_user_subscriptions')
       .select('*')
-      .single();
+      .maybeSingle();
 
     if (error) {
-      // If no subscription found, return null instead of throwing error
-      if (error.code === 'PGRST116') {
-        console.log('No subscription found for user');
-        return null;
-      }
       console.error('Supabase error:', error);
       throw new Error(`Failed to fetch subscription: ${error.message}`);
+    }
+
+    // maybeSingle() returns null when no rows found, which is expected
+    if (!data) {
+      console.log('No subscription found for user');
+      return null;
     }
 
     return data;
