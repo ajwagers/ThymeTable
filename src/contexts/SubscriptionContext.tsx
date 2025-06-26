@@ -147,22 +147,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  // Update tier based on Stripe price ID (called after successful payment)
-  const updateTierFromStripe = (priceId: string) => {
-    const newTier = PRICE_ID_TO_TIER[priceId] || 'free';
-    setCurrentTier(newTier);
-    
-    // Also refresh subscription data from the server
-    refreshSubscription();
-  };
-
-  // Update tier immediately based on Stripe price ID (for immediate UI feedback)
-  const updateTierFromPriceId = (priceId: string) => {
-    const newTier = PRICE_ID_TO_TIER[priceId] || 'free';
-    console.log(`Updating tier from price ID ${priceId} to ${newTier}`);
-    setCurrentTier(newTier);
-  };
-
   // Check if user has access to a specific feature
   const checkFeatureAccess = (feature: keyof typeof limits): boolean => {
     return limits[feature] as boolean;
