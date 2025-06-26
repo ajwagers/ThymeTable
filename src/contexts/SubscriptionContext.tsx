@@ -30,8 +30,6 @@ interface SubscriptionContextType {
   checkFeatureAccess: (feature: keyof SubscriptionContextType['limits']) => boolean;
   getRemainingUsage: (feature: 'savedMealPlans' | 'favoriteRecipes') => Promise<number>;
   refreshSubscription: () => Promise<void>;
-  updateTierFromPriceId: (priceId: string) => void;
-  updateTierFromStripe: (priceId: string) => void;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
