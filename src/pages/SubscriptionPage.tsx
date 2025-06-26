@@ -91,7 +91,7 @@ function SubscriptionPage() {
 
   const premiumFeatures: PlanFeature[] = [
     { icon: <Sparkles className="w-4 h-4" />, text: 'AI-powered autofill calendar', highlight: true },
-    { icon: <Zap className="w-4 h-4" />, text: 'AI recipe recommendations', highlight: true },
+    { icon: <Zap className="w-4 h-4" />, text: 'Recipe recommendations', highlight: true },
     { icon: <Star className="w-4 h-4" />, text: 'Unlimited everything', highlight: true },
     { icon: <Shield className="w-4 h-4" />, text: 'Priority customer support' },
     { icon: <Filter className="w-4 h-4" />, text: 'Unlimited custom filters' },
@@ -325,9 +325,9 @@ function SubscriptionPage() {
           
           <PlanCard
             title="Premium"
-            price={`$${premiumProduct?.price || '99.99'}`}
+            price={`$${premiumProduct?.price || '9.99'}`}
             period="/month"
-            annualPriceInfo="$999.99/year (saving $199.89)"
+            annualPriceInfo="$99.99/year (saving $19.89)"
             features={premiumFeatures}
             priceId={premiumProduct?.priceId}
             tier="premium"
