@@ -36,7 +36,7 @@ export const stripeProducts: StripeProduct[] = [
     name: 'Annual Standard Membership',
     description: 'Standard Membership unlocks the standard tier features of the Weekly Diet Planner App.',
     mode: 'subscription',
-    price: 4.99,
+    price: 49.99,
     currency: 'usd',
     interval: 'month'
   },
@@ -46,7 +46,7 @@ export const stripeProducts: StripeProduct[] = [
     name: 'Annual Premium Membership',
     description: 'Premium Membership gives you access to all the features of ThymeTable',
     mode: 'subscription',
-    price: 9.99,
+    price: 99.99,
     currency: 'usd',
     interval: 'month'
   }
