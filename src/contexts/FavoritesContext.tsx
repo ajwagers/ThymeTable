@@ -8,8 +8,6 @@ interface FavoritesContextType {
   favorites: FavoriteRecipe[];
   savedMealPlans: SavedMealPlan[];
   loading: boolean;
-  favoritesRemaining: number;
-  mealPlansRemaining: number;
   
   // Usage tracking
   canAddFavorite: boolean;
