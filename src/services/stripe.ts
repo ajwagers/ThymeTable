@@ -63,13 +63,13 @@ export async function createCheckoutSession({
   mode: string;
 }) {
   try {
-    const { data: { user, session }, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
     
     if (authError) {
       throw new Error(`Authentication failed: ${authError.message}`);
     }
     
-    if (!user || !session) {
+    if (!session || !session.user) {
       throw new Error('User not authenticated or session not found');
     }
 
@@ -86,7 +86,7 @@ export async function createCheckoutSession({
         successUrl,
         cancelUrl,
         mode,
-        userId: user.id,
+        userId: session.user.id,
       }),
     });
 
