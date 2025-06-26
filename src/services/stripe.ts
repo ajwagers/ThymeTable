@@ -1,17 +1,5 @@
 import { supabase } from '../lib/supabase';
 
-export interface CheckoutSessionRequest {
-  priceId: string;
-  successUrl: string;
-  cancelUrl: string;
-  mode: 'subscription' | 'payment';
-}
-
-export interface CheckoutSessionResponse {
-  sessionId: string;
-  url: string;
-}
-
 export interface SubscriptionData {
   customer_id: string;
   subscription_id: string | null;
@@ -19,64 +7,85 @@ export interface SubscriptionData {
   price_id: string | null;
   current_period_start: number | null;
   current_period_end: number | null;
-  cancel_at_period_end: boolean;
+  cancel_at_period_end: boolean | null;
   payment_method_brand: string | null;
   payment_method_last4: string | null;
-}
-
-export async function createCheckoutSession(request: CheckoutSessionRequest): Promise<CheckoutSessionResponse> {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  
-  if (sessionError || !session?.access_token) {
-    throw new Error('User not authenticated');
-  }
-
-  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({
-      priceId: request.priceId,
-      successUrl: request.successUrl,
-      cancelUrl: request.cancelUrl,
-      mode: request.mode
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to create checkout session');
-  }
-
-  return response.json();
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export async function getUserSubscription(): Promise<SubscriptionData | null> {
-  const { data, error } = await supabase
-    .from('stripe_user_subscriptions')
-    .select('*')
-    .maybeSingle();
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('Auth error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      return null;
+    }
 
-  if (error) {
-    console.error('Error fetching subscription:', error);
-    return null;
+    // Query the stripe_user_subscriptions view
+    const { data, error } = await supabase
+      .from('stripe_user_subscriptions')
+      .select('*')
+      .single();
+
+    if (error) {
+      // If no subscription found, return null instead of throwing error
+      if (error.code === 'PGRST116') {
+        console.log('No subscription found for user');
+        return null;
+      }
+      console.error('Supabase error:', error);
+      throw new Error(`Failed to fetch subscription: ${error.message}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getUserSubscription:', error);
+    throw error;
   }
-
-  return data;
 }
 
-export async function getUserOrders() {
-  const { data, error } = await supabase
-    .from('stripe_user_orders')
-    .select('*')
-    .order('order_date', { ascending: false });
+export async function createCheckoutSession(priceId: string) {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
-  if (error) {
-    console.error('Error fetching orders:', error);
-    return [];
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        priceId,
+        userId: user.id,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    throw error;
   }
-
-  return data || [];
 }
