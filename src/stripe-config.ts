@@ -26,7 +26,7 @@ export const stripeProducts: StripeProduct[] = [
     name: 'Weekly Diet Planner App Premium Membership',
     description: 'Premium Membership gives you access to all the features of ThymeTable',
     mode: 'subscription',
-    price: 99.99,
+    price: 9.99,
     currency: 'usd',
     interval: 'month'
   }
