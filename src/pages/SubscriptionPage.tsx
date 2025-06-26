@@ -186,7 +186,7 @@ function SubscriptionPage() {
 
   const handleUpgrade = async (priceId: string) => {
     if (!user) {
-      navigate('/login');
+      createCheckoutSession();
       return;
     }
 
