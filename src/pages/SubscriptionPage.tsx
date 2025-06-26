@@ -22,7 +22,7 @@ import {
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
 import { createCheckoutSession } from '../services/stripe';
-import { stripeProducts } from '../stripe-config';
+import { stripeProducts, getProductByTierAndInterval } from '../stripe-config';
 
 interface PlanFeature {
   icon: React.ReactNode;
@@ -36,6 +36,7 @@ function SubscriptionPage() {
   const { currentTier, subscriptionData, refreshSubscription } = useSubscription();
   const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
 
   // Refresh subscription data when component mounts
   useEffect(() => {
@@ -53,7 +54,7 @@ function SubscriptionPage() {
 
     try {
       const { url } = await createCheckoutSession({
-        priceId: priceId,
+        priceId,
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/subscription?canceled=true`,
         mode: 'subscription'
@@ -91,7 +92,7 @@ function SubscriptionPage() {
 
   const premiumFeatures: PlanFeature[] = [
     { icon: <Sparkles className="w-4 h-4" />, text: 'AI-powered autofill calendar', highlight: true },
-    { icon: <Zap className="w-4 h-4" />, text: 'Recipe recommendations', highlight: true },
+    { icon: <Zap className="w-4 h-4" />, text: 'AI recipe recommendations', highlight: true },
     { icon: <Star className="w-4 h-4" />, text: 'Unlimited everything', highlight: true },
     { icon: <Shield className="w-4 h-4" />, text: 'Priority customer support' },
     { icon: <Filter className="w-4 h-4" />, text: 'Unlimited custom filters' },
@@ -116,139 +117,153 @@ function SubscriptionPage() {
 
   const subscriptionStatus = getCurrentSubscriptionStatus();
 
+  // Calculate savings for annual plans
+  const calculateSavings = (tier: 'standard' | 'premium') => {
+    const monthlyProduct = getProductByTierAndInterval(tier, 'month');
+    const annualProduct = getProductByTierAndInterval(tier, 'year');
+    
+    if (!monthlyProduct || !annualProduct) return null;
+    
+    const monthlyYearlyCost = monthlyProduct.price * 12;
+    const savings = monthlyYearlyCost - annualProduct.price;
+    
+    return {
+      savings: savings.toFixed(2),
+      monthlyYearlyCost: monthlyYearlyCost.toFixed(2)
+    };
+  };
+
   const PlanCard = ({ 
     title, 
-    price, 
-    period, 
+    tier,
     features, 
-    annualPriceInfo,
-    priceId,
-    tier, 
     popular = false,
     current = false 
   }: {
     title: string;
-    price: string;
-    period: string;
-    features: PlanFeature[];
-    annualPriceInfo?: string;
-    priceId?: string;
     tier: 'free' | 'standard' | 'premium';
+    features: PlanFeature[];
     popular?: boolean;
     current?: boolean;
-  }) => (
-    <motion.div
-      className={`relative p-6 rounded-xl border-2 transition-all ${
-        popular 
-          ? 'border-terra-500 bg-gradient-to-br from-lemon to-terra-100 shadow-lg scale-105' 
-          : current
-            ? 'border-green-500 bg-green-50'
-            : 'border-lemon bg-yellow-100 hover:border-yellow-300'
-      }`}
-      whileHover={{ scale: popular ? 1.05 : 1.02 }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      {popular && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <div className="bg-gradient-to-r from-lemon to-terra-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-            Most Popular
-          </div>
-        </div>
-      )}
-
-      {current && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <div className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-            Current Plan
-          </div>
-        </div>
-      )}
-
-      <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-          {tier === 'premium' && <Crown className="w-5 h-5 text-yellow-500" />}
-        </div>
-        <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
-        <div className="text-sm text-gray-500">{period}</div>
-        {annualPriceInfo && (
-          <div className="text-sm text-green-600 font-medium mt-1">
-            {annualPriceInfo}
+  }) => {
+    // Get the appropriate product based on tier and billing interval
+    const product = tier === 'free' ? null : getProductByTierAndInterval(tier, billingInterval);
+    const price = product ? `$${product.price}` : '$0';
+    const period = billingInterval === 'month' ? '/month' : '/year';
+    
+    // Calculate savings info for annual billing
+    const savingsInfo = billingInterval === 'year' && tier !== 'free' ? calculateSavings(tier) : null;
+    
+    return (
+      <motion.div
+        className={`relative p-6 rounded-xl border-2 transition-all ${
+          popular 
+            ? 'border-terra-500 bg-gradient-to-br from-lemon to-terra-100 shadow-lg scale-105' 
+            : current
+              ? 'border-green-500 bg-green-50'
+              : 'border-lemon bg-yellow-100 hover:border-yellow-300'
+        }`}
+        whileHover={{ scale: popular ? 1.05 : 1.02 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {popular && (
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <div className="bg-gradient-to-r from-lemon to-terra-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+              Most Popular
+            </div>
           </div>
         )}
-      </div>
 
-      <ul className="space-y-3 mb-8">
-        {features.map((feature, index) => (
-          <li key={index} className={`flex items-center text-sm ${
-            feature.highlight ? 'text-gray-900 font-medium' : 'text-gray-700'
-          }`}>
-            <div className={`mr-3 ${
-              tier === 'premium' ? 'text-terra-500' : 
-              tier === 'standard' ? 'text-lemon' : 
-              'text-green-500'
-            }`}>
-              {feature.icon}
+        {current && (
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <div className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+              Current Plan
             </div>
-            {feature.text}
-          </li>
-        ))}
-      </ul>
+          </div>
+        )}
 
-      {current ? (
-        <div className="space-y-2">
-          <button
-            disabled
-            className="w-full py-3 px-4 bg-green-100 text-green-700 rounded-lg font-medium cursor-not-allowed"
-          >
-            Current Plan
-          </button>
-          {subscriptionStatus && (
-            <div className="text-xs text-gray-600 text-center">
-              Status: {subscriptionStatus.status}
-              {subscriptionStatus.cancelAtPeriodEnd && (
-                <div className="text-amber-600 font-medium">
-                  Cancels at period end
-                </div>
-              )}
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+            {tier === 'premium' && <Crown className="w-5 h-5 text-yellow-500" />}
+          </div>
+          <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
+          <div className="text-sm text-gray-500">{period}</div>
+          {savingsInfo && (
+            <div className="text-sm text-green-600 font-medium mt-1">
+              Save ${savingsInfo.savings} vs monthly (${savingsInfo.monthlyYearlyCost}/year)
             </div>
           )}
         </div>
-      ) : tier === 'free' ? (
-        <button
-          onClick={() => navigate('/login')}
-          className="w-full py-3 px-4 bg-lemon text-gray-700 rounded-lg font-medium hover:bg-lemon transition-colors"
-        >
-          {user ? 'Current Plan' : 'Get Started Free'}
-        </button>
-      ) : (
-        <button
-          onClick={() => priceId && handleUpgrade(priceId)}
-          disabled={isUpgrading === priceId || !priceId}
-          className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-            tier === 'premium'
-              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
-              : 'bg-lemon hover:bg-lemon text-white'
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {isUpgrading === priceId ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-              Starting checkout...
-            </div>
-          ) : (
-            `Upgrade to ${title}`
-          )}
-        </button>
-      )}
-    </motion.div>
-  );
 
-  // Get product data
-  const standardProduct = stripeProducts.find(p => p.priceId === 'price_1RdvYo03xOQRAfiHLrCApNpF');
-  const premiumProduct = stripeProducts.find(p => p.priceId === 'price_1RcdLK03xOQRAfiHl0sTMwqP');
+        <ul className="space-y-3 mb-8">
+          {features.map((feature, index) => (
+            <li key={index} className={`flex items-center text-sm ${
+              feature.highlight ? 'text-gray-900 font-medium' : 'text-gray-700'
+            }`}>
+              <div className={`mr-3 ${
+                tier === 'premium' ? 'text-terra-500' : 
+                tier === 'standard' ? 'text-lemon' : 
+                'text-green-500'
+              }`}>
+                {feature.icon}
+              </div>
+              {feature.text}
+            </li>
+          ))}
+        </ul>
+
+        {current ? (
+          <div className="space-y-2">
+            <button
+              disabled
+              className="w-full py-3 px-4 bg-green-100 text-green-700 rounded-lg font-medium cursor-not-allowed"
+            >
+              Current Plan
+            </button>
+            {subscriptionStatus && (
+              <div className="text-xs text-gray-600 text-center">
+                Status: {subscriptionStatus.status}
+                {subscriptionStatus.cancelAtPeriodEnd && (
+                  <div className="text-amber-600 font-medium">
+                    Cancels at period end
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : tier === 'free' ? (
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full py-3 px-4 bg-lemon text-gray-700 rounded-lg font-medium hover:bg-lemon transition-colors"
+          >
+            {user ? 'Current Plan' : 'Get Started Free'}
+          </button>
+        ) : (
+          <button
+            onClick={() => product && handleUpgrade(product.priceId)}
+            disabled={isUpgrading === product?.priceId || !product}
+            className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+              tier === 'premium'
+                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
+                : 'bg-lemon hover:bg-lemon text-white'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isUpgrading === product?.priceId ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                Starting checkout...
+              </div>
+            ) : (
+              `Upgrade to ${title}`
+            )}
+          </button>
+        )}
+      </motion.div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
@@ -278,6 +293,40 @@ function SubscriptionPage() {
             </p>
           </motion.div>
 
+          {/* Billing Interval Toggle */}
+          <motion.div
+            className="mt-8 mb-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div className="inline-flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setBillingInterval('month')}
+                className={`px-6 py-2 rounded-md font-medium transition-all ${
+                  billingInterval === 'month'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingInterval('year')}
+                className={`px-6 py-2 rounded-md font-medium transition-all relative ${
+                  billingInterval === 'year'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Annual
+                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                  Save up to 17%
+                </span>
+              </button>
+            </div>
+          </motion.div>
+
           {/* Current Subscription Status */}
           {subscriptionStatus && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-md mx-auto">
@@ -305,32 +354,22 @@ function SubscriptionPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <PlanCard
             title="Free"
-            price="$0"
-            period="/month"
-            features={freeFeatures}
             tier="free"
+            features={freeFeatures}
             current={currentTier === 'free'}
           />
           
           <PlanCard
             title="Standard"
-            price={`$${standardProduct?.price || '4.99'}`}
-            period="/month"
-            annualPriceInfo="$49.99/year (saving $9.89)"
-            features={standardFeatures}
-            priceId={standardProduct?.priceId}
             tier="standard"
+            features={standardFeatures}
             current={currentTier === 'standard'}
           />
           
           <PlanCard
             title="Premium"
-            price={`$${premiumProduct?.price || '9.99'}`}
-            period="/month"
-            annualPriceInfo="$99.99/year (saving $19.89)"
-            features={premiumFeatures}
-            priceId={premiumProduct?.priceId}
             tier="premium"
+            features={premiumFeatures}
             popular={true}
             current={currentTier === 'premium'}
           />
@@ -401,7 +440,7 @@ function SubscriptionPage() {
                   <td className="py-4 px-4 text-center"><Check className="w-4 h-4 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 text-gray-700">Recommendations</td>
+                  <td className="py-4 px-4 text-gray-700">AI Recommendations</td>
                   <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-4 text-center"><Check className="w-4 h-4 text-green-500 mx-auto" /></td>
@@ -445,9 +484,9 @@ function SubscriptionPage() {
             </div>
             
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Do you offer student discounts?</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Can I switch between monthly and annual billing?</h3>
               <p className="text-gray-600 text-sm">
-                Yes! Students get 50% off all paid plans. Contact support with your student ID for verification.
+                Yes! You can switch billing intervals at any time. Annual plans offer significant savings compared to monthly billing.
               </p>
             </div>
           </div>

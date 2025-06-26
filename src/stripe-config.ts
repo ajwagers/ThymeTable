@@ -7,6 +7,7 @@ export interface StripeProduct {
   price: number;
   currency: string;
   interval?: 'month' | 'year';
+  tier: 'standard' | 'premium';
 }
 
 export const stripeProducts: StripeProduct[] = [
@@ -18,18 +19,9 @@ export const stripeProducts: StripeProduct[] = [
     mode: 'subscription',
     price: 4.99,
     currency: 'usd',
-    interval: 'month'
+    interval: 'month',
+    tier: 'standard'
   },
-  {
-    id: 'prod_SXimRxxHi8UZxj',
-    priceId: 'price_1RcdLK03xOQRAfiHl0sTMwqP',
-    name: 'Monthly Premium Membership',
-    description: 'Premium Membership gives you access to all the features of ThymeTable',
-    mode: 'subscription',
-    price: 9.99,
-    currency: 'usd',
-    interval: 'month'
-  }
   {
     id: 'prod_SZE42TklCwEf8i',
     priceId: 'price_1Re5cG03xOQRAfiHebSj9CCu',
@@ -38,17 +30,30 @@ export const stripeProducts: StripeProduct[] = [
     mode: 'subscription',
     price: 49.99,
     currency: 'usd',
-    interval: 'year'
+    interval: 'year',
+    tier: 'standard'
+  },
+  {
+    id: 'prod_SXimRxxHi8UZxj',
+    priceId: 'price_1RcdLK03xOQRAfiHrJEHhP7a',
+    name: 'Monthly Premium Membership',
+    description: 'Premium Membership gives you access to all the features of Weekly Diet Planner App',
+    mode: 'subscription',
+    price: 9.99,
+    currency: 'usd',
+    interval: 'month',
+    tier: 'premium'
   },
   {
     id: 'prod_SZE6ADEdr15g6s',
     priceId: 'price_1Re5e303xOQRAfiHSMoawEJW',
     name: 'Annual Premium Membership',
-    description: 'Premium Membership gives you access to all the features of ThymeTable',
+    description: 'Premium Membership gives you access to all the features of Weekly Diet Planner App',
     mode: 'subscription',
     price: 99.99,
     currency: 'usd',
-    interval: 'year'
+    interval: 'year',
+    tier: 'premium'
   }
 ];
 
@@ -58,4 +63,8 @@ export function getProductByPriceId(priceId: string): StripeProduct | undefined 
 
 export function getProductById(id: string): StripeProduct | undefined {
   return stripeProducts.find(product => product.id === id);
+}
+
+export function getProductByTierAndInterval(tier: 'standard' | 'premium', interval: 'month' | 'year'): StripeProduct | undefined {
+  return stripeProducts.find(product => product.tier === tier && product.interval === interval);
 }

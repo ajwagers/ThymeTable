@@ -37,7 +37,12 @@ export async function createCheckoutSession(request: CheckoutSessionRequest): Pr
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify({
+      priceId: request.priceId,
+      successUrl: request.successUrl,
+      cancelUrl: request.cancelUrl,
+      mode: request.mode
+    }),
   });
 
   if (!response.ok) {
