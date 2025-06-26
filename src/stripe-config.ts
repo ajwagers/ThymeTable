@@ -7,6 +7,7 @@ export interface StripeProduct {
   price: number;
   currency: string;
   interval?: 'month' | 'year';
+  tier: 'standard' | 'premium';
 }
 
 export const stripeProducts: StripeProduct[] = [
@@ -18,7 +19,8 @@ export const stripeProducts: StripeProduct[] = [
     mode: 'subscription',
     price: 4.99,
     currency: 'usd',
-    interval: 'month'
+    interval: 'month',
+    tier: 'standard'
   },
   {
     id: 'prod_SXimRxxHi8UZxj',
@@ -28,7 +30,8 @@ export const stripeProducts: StripeProduct[] = [
     mode: 'subscription',
     price: 9.99,
     currency: 'usd',
-    interval: 'month'
+    interval: 'month',
+    tier: 'premium'
   }
 ];
 
