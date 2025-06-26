@@ -15,12 +15,6 @@ function CheckoutSuccessPage() {
   useEffect(() => {
     const priceId = searchParams.get('price_id');
     
-    // If we have a price ID, immediately update the tier for responsive UI
-    if (priceId) {
-      console.log('Updating tier immediately for price ID:', priceId);
-      updateTierFromPriceId(priceId);
-    }
-    
     // Also refresh subscription data from the server (this may take longer due to webhook processing)
     refreshSubscription();
 
