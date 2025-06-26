@@ -54,7 +54,7 @@ function SubscriptionPage() {
     try {
       const { url } = await createCheckoutSession({
         priceId: priceId,
-        successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&priceId=${priceId}`,
+        successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/subscription?canceled=true`,
         mode: 'subscription'
       });
