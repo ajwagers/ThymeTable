@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { getUserSubscription, SubscriptionData } from '../services/stripe';
-import { getProductByPriceId } from '../stripe-config';
+import { stripeProducts } from '../stripe-config';
 
 export type SubscriptionTier = 'free' | 'standard' | 'premium';
 
@@ -69,12 +69,6 @@ const TIER_LIMITS = {
   },
 };
 
-// Map price IDs to tiers
-const PRICE_ID_TO_TIER: Record<string, SubscriptionTier> = {
-  'price_1RdvYo03xOQRAfiHLrCApNpF': 'standard', // Standard Membership
-  'price_1RcdLK03xOQRAfiHl0sTMwqP': 'premium',  // Premium Membership
-};
-
 function getTierFromSubscription(subscriptionData: SubscriptionData | null): SubscriptionTier {
   if (!subscriptionData || !subscriptionData.price_id) {
     return 'free';
@@ -86,7 +80,9 @@ function getTierFromSubscription(subscriptionData: SubscriptionData | null): Sub
     return 'free';
   }
 
-  return PRICE_ID_TO_TIER[subscriptionData.price_id] || 'free';
+  // Find the product by price ID and return its tier
+  const product = stripeProducts.find(p => p.priceId === subscriptionData.price_id);
+  return product?.tier || 'free';
 }
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
