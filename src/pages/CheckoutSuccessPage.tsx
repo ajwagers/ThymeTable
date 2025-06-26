@@ -8,12 +8,20 @@ import { getProductByPriceId } from '../stripe-config';
 function CheckoutSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshSubscription, currentTier } = useSubscription();
+  const { refreshSubscription, currentTier, updateTierFromPriceId } = useSubscription();
   const [countdown, setCountdown] = useState(5);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Refresh subscription data when the page loads
+    const priceId = searchParams.get('price_id');
+    
+    // If we have a price ID, immediately update the tier for responsive UI
+    if (priceId) {
+      console.log('Updating tier immediately for price ID:', priceId);
+      updateTierFromPriceId(priceId);
+    }
+    
+    // Also refresh subscription data from the server (this may take longer due to webhook processing)
     refreshSubscription();
 
     // Start countdown timer for automatic redirect
@@ -32,7 +40,7 @@ function CheckoutSuccessPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [refreshSubscription, navigate]);
+  }, [refreshSubscription, navigate, updateTierFromPriceId, searchParams]);
 
   const sessionId = searchParams.get('session_id');
   const priceId = searchParams.get('price_id');
