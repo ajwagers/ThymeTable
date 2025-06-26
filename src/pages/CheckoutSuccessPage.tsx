@@ -1,27 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, ArrowRight, Crown, Sparkles } from 'lucide-react';
+import { CheckCircle, ArrowRight, Crown, Sparkles, Loader2 } from 'lucide-react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { getProductByPriceId } from '../stripe-config';
 
 function CheckoutSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshSubscription, currentTier, updateTierFromStripe } = useSubscription();
+  const { refreshSubscription, currentTier } = useSubscription();
+  const [countdown, setCountdown] = useState(5);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Get price_id from URL params if available (from Stripe pricing table)
-    const priceId = searchParams.get('price_id');
-    
-    if (priceId & sucess=true) {
-      // Update tier immediately based on price ID
-      updateTierFromStripe(priceId);
-    } else {
-      // Fallback: refresh subscription data from server
-      refreshSubscription();
-    }
-  }, [refreshSubscription]);
+    // Refresh subscription data when the page loads
+    refreshSubscription();
+
+    // Start countdown timer for automatic redirect
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          setIsRedirecting(true);
+          // Redirect to main app after countdown
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 500);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [refreshSubscription, navigate]);
 
   const sessionId = searchParams.get('session_id');
   const priceId = searchParams.get('price_id');
@@ -30,6 +41,31 @@ function CheckoutSuccessPage() {
   const purchasedProduct = priceId ? getProductByPriceId(priceId) : null;
 
   const getTierInfo = () => {
+    // Use purchased product info if available, otherwise fall back to current tier
+    if (purchasedProduct) {
+      return {
+        name: purchasedProduct.tier === 'standard' ? 'Standard' : 'Premium',
+        icon: purchasedProduct.tier === 'standard' 
+          ? <Crown className="w-8 h-8 text-blue-500" />
+          : <Sparkles className="w-8 h-8 text-yellow-500" />,
+        color: purchasedProduct.tier === 'standard' ? 'blue' : 'yellow',
+        features: purchasedProduct.tier === 'standard' ? [
+          'Advanced dietary filters',
+          'Enhanced recipe import',
+          'Unlimited recipe searches',
+          '50 favorite recipes',
+          '15 saved meal plans'
+        ] : [
+          'AI-powered autofill calendar',
+          'AI recipe recommendations',
+          'Unlimited everything',
+          'Priority customer support',
+          'Early access to new features'
+        ]
+      };
+    }
+
+    // Fallback to current tier
     switch (currentTier) {
       case 'standard':
         return {
@@ -68,6 +104,29 @@ function CheckoutSuccessPage() {
   };
 
   const tierInfo = getTierInfo();
+
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center p-4">
+        <motion.div
+          className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-6">
+            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Redirecting to App...
+          </h2>
+          <p className="text-gray-600">
+            Taking you to your meal planner now.
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center p-4">
@@ -138,18 +197,38 @@ function CheckoutSuccessPage() {
           </motion.div>
         )}
 
-        {/* Action Buttons */}
+        {/* Countdown and Auto-redirect Notice */}
         <motion.div
-          className="space-y-3"
+          className="mb-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 font-medium mb-2">
+              Automatically redirecting to your meal planner...
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-bold text-sm">{countdown}</span>
+              </div>
+              <span className="text-blue-600 text-sm">seconds remaining</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Manual Action Buttons */}
+        <motion.div
+          className="space-y-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+        >
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/', { replace: true })}
             className="w-full btn-primary flex items-center justify-center"
           >
-            Start Planning Meals
+            Start Planning Meals Now
             <ArrowRight className="w-4 h-4 ml-2" />
           </button>
           
@@ -166,7 +245,7 @@ function CheckoutSuccessPage() {
           className="mt-6 pt-6 border-t border-gray-200"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.8 }}
         >
           <p className="text-xs text-gray-500">
             You'll receive a confirmation email shortly. If you have any questions, 
