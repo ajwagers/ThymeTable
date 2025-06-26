@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { getUserSubscription, SubscriptionData } from '../services/stripe';
 import { getProductByPriceId } from '../stripe-config';
@@ -95,7 +96,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true);
 
   // Initialize subscription status
-  const refreshSubscription = async () => {
+  const refreshSubscription = useCallback(async () => {
     if (!user) {
       setSubscriptionData(null);
       setCurrentTier('free');
@@ -114,11 +115,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     refreshSubscription();
-  }, [user]);
+  }, [refreshSubscription]);
 
   // Helper booleans
   const isFree = currentTier === 'free';
