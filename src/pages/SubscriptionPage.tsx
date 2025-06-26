@@ -435,13 +435,7 @@ function SubscriptionPage() {
                   <td className="py-4 px-4 text-center"><Check className="w-4 h-4 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 text-gray-700">AI Autofill Calendar</td>
-                  <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
-                  <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
-                  <td className="py-4 px-4 text-center"><Check className="w-4 h-4 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 text-gray-700">AI Recommendations</td>
+                  <td className="py-4 px-4 text-gray-700">Autofill Calendar</td>
                   <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-4 text-center"><Check className="w-4 h-4 text-green-500 mx-auto" /></td>
