@@ -37,7 +37,6 @@ function SubscriptionPage() {
   const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
-  const [couponCode, setCouponCode] = useState('');
 
   // Refresh subscription data when component mounts
   useEffect(() => {
@@ -58,8 +57,7 @@ function SubscriptionPage() {
         priceId,
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/subscription?canceled=true`,
-        mode: 'subscription',
-        couponCode: couponCode.trim() || undefined
+        mode: 'subscription'
       });
 
       if (url) {
@@ -350,31 +348,6 @@ function SubscriptionPage() {
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
-
-          {/* Coupon Code Input */}
-          <motion.div
-            className="mt-8 max-w-md mx-auto"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <label htmlFor="coupon-code" className="block text-sm font-medium text-gray-700 mb-2">
-                Have a coupon code?
-              </label>
-              <input
-                id="coupon-code"
-                type="text"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="Enter coupon code"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Enter your coupon code and it will be applied at checkout
-              </p>
-            </div>
-          </motion.div>
         </div>
 
         {/* Pricing Cards */}

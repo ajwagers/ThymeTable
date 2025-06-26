@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Method not allowed' }, 405);
     }
 
-    const { priceId, successUrl, cancelUrl, mode, couponCode } = await req.json();
+    const { priceId, successUrl, cancelUrl, mode } = await req.json();
 
     const error = validateParameters(
       { priceId, successUrl, cancelUrl, mode },
@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
     }
 
     // create Checkout Session
-    const sessionConfig: any = {
+    const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -190,21 +190,7 @@ Deno.serve(async (req) => {
       mode,
       success_url: successUrl,
       cancel_url: cancelUrl,
-    };
-
-    // Add coupon if provided
-    if (couponCode && couponCode.trim()) {
-      sessionConfig.discounts = [
-        {
-          coupon: couponCode.trim(),
-        },
-      ];
-    } else {
-      // Only allow promotion codes if no specific coupon is provided
-      sessionConfig.allow_promotion_codes = true;
-    }
-
-    const session = await stripe.checkout.sessions.create(sessionConfig);
+    });
 
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);
 

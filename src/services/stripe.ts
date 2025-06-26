@@ -56,14 +56,12 @@ export async function createCheckoutSession({
   priceId,
   successUrl,
   cancelUrl,
-  mode,
-  couponCode
+  mode
 }: {
   priceId: string;
   successUrl: string;
   cancelUrl: string;
   mode: string;
-  couponCode?: string;
 }) {
   try {
     const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -90,7 +88,6 @@ export async function createCheckoutSession({
         cancelUrl,
         mode,
         userId: session.user.id,
-        couponCode,
       }),
     });
 
