@@ -8,7 +8,7 @@ import { getProductByPriceId } from '../stripe-config';
 function CheckoutSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshSubscription, currentTier, updateTierFromPriceId } = useSubscription();
+  const { refreshSubscription, currentTier } = useSubscription();
   const [countdown, setCountdown] = useState(5);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -34,7 +34,7 @@ function CheckoutSuccessPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [refreshSubscription, navigate, updateTierFromPriceId, searchParams]);
+  }, [refreshSubscription, navigate, searchParams]);
 
   const sessionId = searchParams.get('session_id');
   const priceId = searchParams.get('price_id');

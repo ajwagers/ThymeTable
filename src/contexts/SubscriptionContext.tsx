@@ -183,8 +183,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     checkFeatureAccess,
     getRemainingUsage,
     refreshSubscription,
-    updateTierFromPriceId,
-    updateTierFromStripe,
   };
 
   return (
