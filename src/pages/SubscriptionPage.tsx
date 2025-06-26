@@ -30,6 +30,148 @@ interface PlanFeature {
   highlight?: boolean;
 }
 
+interface PlanCardProps {
+  title: string;
+  price: string;
+  period: string;
+  features: PlanFeature[];
+  annualPriceInfo?: string;
+  priceId?: string;
+  tier: 'free' | 'standard' | 'premium';
+  popular?: boolean;
+  current?: boolean;
+  navigate: ReturnType<typeof useNavigate>;
+  user: any;
+  isUpgrading: string | null;
+  handleUpgrade: (priceId: string) => Promise<void>;
+  subscriptionStatus: any;
+}
+
+const PlanCard: React.FC<PlanCardProps> = ({ 
+  title, 
+  price, 
+  period, 
+  features, 
+  annualPriceInfo,
+  priceId,
+  tier, 
+  popular = false,
+  current = false,
+  navigate,
+  user,
+  isUpgrading,
+  handleUpgrade,
+  subscriptionStatus
+}) => (
+  <motion.div
+    className={`relative p-6 rounded-xl border-2 transition-all ${
+      popular 
+        ? 'border-terra-500 bg-gradient-to-br from-lemon to-terra-100 shadow-lg scale-105' 
+        : current
+          ? 'border-green-500 bg-green-50'
+          : 'border-lemon bg-yellow-100 hover:border-yellow-300'
+    }`}
+    whileHover={{ scale: popular ? 1.05 : 1.02 }}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    {popular && (
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+        <div className="bg-gradient-to-r from-lemon to-terra-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+          Most Popular
+        </div>
+      </div>
+    )}
+
+    {current && (
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+        <div className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+          Current Plan
+        </div>
+      </div>
+    )}
+
+    <div className="text-center mb-6">
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+        {tier === 'premium' && <Crown className="w-5 h-5 text-yellow-500" />}
+      </div>
+      <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
+      <div className="text-sm text-gray-500">{period}</div>
+      {annualPriceInfo && (
+        <div className="text-sm text-green-600 font-medium mt-1">
+          {annualPriceInfo}
+        </div>
+      )}
+    </div>
+
+    <ul className="space-y-3 mb-8">
+      {features.map((feature, index) => (
+        <li key={index} className={`flex items-center text-sm ${
+          feature.highlight ? 'text-gray-900 font-medium' : 'text-gray-700'
+        }`}>
+          <div className={`mr-3 ${
+            tier === 'premium' ? 'text-terra-500' : 
+            tier === 'standard' ? 'text-lemon' : 
+            'text-green-500'
+          }`}>
+            {feature.icon}
+          </div>
+          {feature.text}
+        </li>
+      ))}
+    </ul>
+
+    {current ? (
+      <div className="space-y-2">
+        <button
+          disabled
+          className="w-full py-3 px-4 bg-green-100 text-green-700 rounded-lg font-medium cursor-not-allowed"
+        >
+          Current Plan
+        </button>
+        {subscriptionStatus && (
+          <div className="text-xs text-gray-600 text-center">
+            Status: {subscriptionStatus.status}
+            {subscriptionStatus.cancelAtPeriodEnd && (
+              <div className="text-amber-600 font-medium">
+                Cancels at period end
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    ) : tier === 'free' ? (
+      <button
+        onClick={() => navigate('/login')}
+        className="w-full py-3 px-4 bg-lemon text-gray-700 rounded-lg font-medium hover:bg-lemon transition-colors"
+      >
+        {user ? 'Current Plan' : 'Get Started Free'}
+      </button>
+    ) : (
+      <button
+        onClick={() => priceId && handleUpgrade(priceId)}
+        disabled={isUpgrading === priceId || !priceId}
+        className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+          tier === 'premium'
+            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
+            : 'bg-lemon hover:bg-lemon text-white'
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
+      >
+        {isUpgrading === priceId ? (
+          <div className="flex items-center justify-center">
+            <Loader2 className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+            Starting checkout...
+          </div>
+        ) : (
+          `Upgrade to ${title}`
+        )}
+      </button>
+    )}
+  </motion.div>
+);
+
 function SubscriptionPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -120,136 +262,6 @@ function SubscriptionPage() {
   const standardProduct = stripeProducts.find(p => p.tier === 'standard');
   const premiumProduct = stripeProducts.find(p => p.tier === 'premium');
 
-  const PlanCard = ({ 
-    title, 
-    price, 
-    period, 
-    features, 
-    annualPriceInfo,
-    priceId,
-    tier, 
-    popular = false,
-    current = false 
-  }: {
-    title: string;
-    price: string;
-    period: string;
-    features: PlanFeature[];
-    annualPriceInfo?: string;
-    priceId?: string;
-    tier: 'free' | 'standard' | 'premium';
-    popular?: boolean;
-    current?: boolean;
-  }) => (
-    <motion.div
-      className={`relative p-6 rounded-xl border-2 transition-all ${
-        popular 
-          ? 'border-terra-500 bg-gradient-to-br from-lemon to-terra-100 shadow-lg scale-105' 
-          : current
-            ? 'border-green-500 bg-green-50'
-            : 'border-lemon bg-yellow-100 hover:border-yellow-300'
-      }`}
-      whileHover={{ scale: popular ? 1.05 : 1.02 }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      {popular && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <div className="bg-gradient-to-r from-lemon to-terra-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-            Most Popular
-          </div>
-        </div>
-      )}
-
-      {current && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <div className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-            Current Plan
-          </div>
-        </div>
-      )}
-
-      <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-          {tier === 'premium' && <Crown className="w-5 h-5 text-yellow-500" />}
-        </div>
-        <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
-        <div className="text-sm text-gray-500">{period}</div>
-        {annualPriceInfo && (
-          <div className="text-sm text-green-600 font-medium mt-1">
-            {annualPriceInfo}
-          </div>
-        )}
-      </div>
-
-      <ul className="space-y-3 mb-8">
-        {features.map((feature, index) => (
-          <li key={index} className={`flex items-center text-sm ${
-            feature.highlight ? 'text-gray-900 font-medium' : 'text-gray-700'
-          }`}>
-            <div className={`mr-3 ${
-              tier === 'premium' ? 'text-terra-500' : 
-              tier === 'standard' ? 'text-lemon' : 
-              'text-green-500'
-            }`}>
-              {feature.icon}
-            </div>
-            {feature.text}
-          </li>
-        ))}
-      </ul>
-
-      {current ? (
-        <div className="space-y-2">
-          <button
-            disabled
-            className="w-full py-3 px-4 bg-green-100 text-green-700 rounded-lg font-medium cursor-not-allowed"
-          >
-            Current Plan
-          </button>
-          {subscriptionStatus && (
-            <div className="text-xs text-gray-600 text-center">
-              Status: {subscriptionStatus.status}
-              {subscriptionStatus.cancelAtPeriodEnd && (
-                <div className="text-amber-600 font-medium">
-                  Cancels at period end
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : tier === 'free' ? (
-        <button
-          onClick={() => navigate('/login')}
-          className="w-full py-3 px-4 bg-lemon text-gray-700 rounded-lg font-medium hover:bg-lemon transition-colors"
-        >
-          {user ? 'Current Plan' : 'Get Started Free'}
-        </button>
-      ) : (
-        <button
-          onClick={() => priceId && handleUpgrade(priceId)}
-          disabled={isUpgrading === priceId || !priceId}
-          className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-            tier === 'premium'
-              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
-              : 'bg-lemon hover:bg-lemon text-white'
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {isUpgrading === priceId ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-              Starting checkout...
-            </div>
-          ) : (
-            `Upgrade to ${title}`
-          )}
-        </button>
-      )}
-    </motion.div>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -310,6 +322,11 @@ function SubscriptionPage() {
             features={freeFeatures}
             tier="free"
             current={currentTier === 'free'}
+            navigate={navigate}
+            user={user}
+            isUpgrading={isUpgrading}
+            handleUpgrade={handleUpgrade}
+            subscriptionStatus={subscriptionStatus}
           />
           
           <PlanCard
@@ -321,6 +338,11 @@ function SubscriptionPage() {
             priceId={standardProduct?.priceId}
             tier="standard"
             current={currentTier === 'standard'}
+            navigate={navigate}
+            user={user}
+            isUpgrading={isUpgrading}
+            handleUpgrade={handleUpgrade}
+            subscriptionStatus={subscriptionStatus}
           />
           
           <PlanCard
@@ -333,6 +355,11 @@ function SubscriptionPage() {
             tier="premium"
             popular={true}
             current={currentTier === 'premium'}
+            navigate={navigate}
+            user={user}
+            isUpgrading={isUpgrading}
+            handleUpgrade={handleUpgrade}
+            subscriptionStatus={subscriptionStatus}
           />
         </div>
 
