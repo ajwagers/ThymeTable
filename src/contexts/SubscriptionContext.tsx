@@ -30,6 +30,7 @@ interface SubscriptionContextType {
   checkFeatureAccess: (feature: keyof SubscriptionContextType['limits']) => boolean;
   getRemainingUsage: (feature: 'savedMealPlans' | 'favoriteRecipes') => Promise<number>;
   refreshSubscription: () => Promise<void>;
+  updateTierFromStripe: (priceId: string) => void;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -145,6 +146,15 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  // Update tier based on Stripe price ID (called after successful payment)
+  const updateTierFromStripe = (priceId: string) => {
+    const newTier = PRICE_ID_TO_TIER[priceId] || 'free';
+    setCurrentTier(newTier);
+    
+    // Also refresh subscription data from the server
+    refreshSubscription();
+  };
+
   // Check if user has access to a specific feature
   const checkFeatureAccess = (feature: keyof typeof limits): boolean => {
     return limits[feature] as boolean;
@@ -183,6 +193,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     checkFeatureAccess,
     getRemainingUsage,
     refreshSubscription,
+    updateTierFromStripe,
   };
 
   return (

@@ -3,18 +3,31 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight, Crown, Sparkles } from 'lucide-react';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { getProductByPriceId } from '../stripe-config';
 
 function CheckoutSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshSubscription, currentTier } = useSubscription();
+  const { refreshSubscription, currentTier, updateTierFromStripe } = useSubscription();
 
   useEffect(() => {
-    // Refresh subscription data when the page loads
-    refreshSubscription();
+    // Get price_id from URL params if available (from Stripe pricing table)
+    const priceId = searchParams.get('price_id');
+    
+    if (priceId) {
+      // Update tier immediately based on price ID
+      updateTierFromStripe(priceId);
+    } else {
+      // Fallback: refresh subscription data from server
+      refreshSubscription();
+    }
   }, [refreshSubscription]);
 
   const sessionId = searchParams.get('session_id');
+  const priceId = searchParams.get('price_id');
+  
+  // Get product info if we have a price ID
+  const purchasedProduct = priceId ? getProductByPriceId(priceId) : null;
 
   const getTierInfo = () => {
     switch (currentTier) {

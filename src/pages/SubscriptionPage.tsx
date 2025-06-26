@@ -190,6 +190,19 @@ function SubscriptionPage() {
       return;
     }
 
+    // Find the product to determine which membership page to navigate to
+    const product = stripeProducts.find(p => p.priceId === priceId);
+    if (product) {
+      // Navigate to the appropriate membership page instead of direct checkout
+      if (product.tier === 'standard') {
+        navigate('/subscription/standard');
+        return;
+      } else if (product.tier === 'premium') {
+        navigate('/subscription/premium');
+        return;
+      }
+    }
+
     setIsUpgrading(priceId);
     setError(null);
 

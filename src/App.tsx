@@ -15,6 +15,8 @@ import FavoritesPage from './pages/FavoritesPage';
 import SavedMealPlansPage from './pages/SavedMealPlansPage';
 import LoginPage from './pages/LoginPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import StandardMembership from './pages/StandardMembership';
+import PremiumMembership from './pages/PremiumMembership';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 
 function App() {
@@ -31,6 +33,8 @@ function App() {
                     <Routes>
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/subscription" element={<SubscriptionPage />} />
+                      <Route path="/subscription/standard" element={<StandardMembership />} />
+                      <Route path="/subscription/premium" element={<PremiumMembership />} />
                       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
                       <Route
                         path="/"
