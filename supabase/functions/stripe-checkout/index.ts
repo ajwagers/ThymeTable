@@ -43,14 +43,14 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Method not allowed' }, 405);
     }
 
-    const { price_id, success_url, cancel_url, mode } = await req.json();
+    const { priceId, successUrl, cancelUrl, mode } = await req.json();
 
     const error = validateParameters(
-      { price_id, success_url, cancel_url, mode },
+      { priceId, successUrl, cancelUrl, mode },
       {
-        cancel_url: 'string',
-        price_id: 'string',
-        success_url: 'string',
+        cancelUrl: 'string',
+        priceId: 'string',
+        successUrl: 'string',
         mode: { values: ['payment', 'subscription'] },
       },
     );
@@ -183,13 +183,13 @@ Deno.serve(async (req) => {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: price_id,
+          price: priceId,
           quantity: 1,
         },
       ],
       mode,
-      success_url,
-      cancel_url,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);

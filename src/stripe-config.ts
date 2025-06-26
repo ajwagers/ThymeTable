@@ -7,7 +7,6 @@ export interface StripeProduct {
   price: number;
   currency: string;
   interval?: 'month' | 'year';
-  tier: 'standard' | 'premium';
 }
 
 export const stripeProducts: StripeProduct[] = [
@@ -19,19 +18,17 @@ export const stripeProducts: StripeProduct[] = [
     mode: 'subscription',
     price: 4.99,
     currency: 'usd',
-    interval: 'month',
-    tier: 'standard'
+    interval: 'month'
   },
   {
     id: 'prod_SXimRxxHi8UZxj',
     priceId: 'price_1RcdLK03xOQRAfiHl0sTMwqP',
     name: 'Weekly Diet Planner App Premium Membership',
-    description: 'Premium Membership gives you access to all the features of Weekly Diet Planner App',
+    description: 'Premium Membership gives you access to all the features of ThymeTable',
     mode: 'subscription',
-    price: 9.99,
+    price: 99.99,
     currency: 'usd',
-    interval: 'month',
-    tier: 'premium'
+    interval: 'month'
   }
 ];
 
