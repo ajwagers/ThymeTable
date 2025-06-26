@@ -190,7 +190,6 @@ Deno.serve(async (req) => {
       mode,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      allow_promotion_codes: true, // Enable promotion codes on checkout page
     };
 
     // Add coupon if provided
@@ -200,6 +199,9 @@ Deno.serve(async (req) => {
           coupon: couponCode.trim(),
         },
       ];
+    } else {
+      // Only allow promotion codes if no specific coupon is provided
+      sessionConfig.allow_promotion_codes = true;
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
