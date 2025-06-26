@@ -51,16 +51,26 @@ export async function getUserSubscription(): Promise<SubscriptionData | null> {
   }
 }
 
-export async function createCheckoutSession(priceId: string) {
+export async function createCheckoutSession({
+  priceId,
+  successUrl,
+  cancelUrl,
+  mode
+}: {
+  priceId: string;
+  successUrl: string;
+  cancelUrl: string;
+  mode: string;
+}) {
   try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user, session }, error: authError } = await supabase.auth.getUser();
     
     if (authError) {
       throw new Error(`Authentication failed: ${authError.message}`);
     }
     
-    if (!user) {
-      throw new Error('User not authenticated');
+    if (!user || !session) {
+      throw new Error('User not authenticated or session not found');
     }
 
     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
@@ -68,11 +78,14 @@ export async function createCheckoutSession(priceId: string) {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         priceId,
+        successUrl,
+        cancelUrl,
+        mode,
         userId: user.id,
       }),
     });
