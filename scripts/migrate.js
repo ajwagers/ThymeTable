@@ -48,7 +48,8 @@ async function checkConnection() {
     }
     return true;
   } catch (error) {
-    console.error('❌ Connection test failed:', error.message);
+    console.warn('⚠️ Connection test failed:', error.message);
+    console.warn('This might be due to network issues or incorrect credentials.');
     return false;
   }
 }
@@ -76,7 +77,23 @@ async function runMigration() {
     console.log('🔗 Testing Supabase connection...');
     const connected = await checkConnection();
     if (!connected) {
-      throw new Error('Failed to connect to Supabase');
+      console.warn('⚠️ Could not connect to Supabase automatically.');
+      console.log('');
+      console.log('🔧 Manual Setup Required:');
+      console.log('Please run the migration manually using one of these methods:');
+      console.log('');
+      console.log('🔧 Method 1 - Supabase Dashboard (Recommended):');
+      console.log('1. Go to https://supabase.com/dashboard');
+      console.log('2. Select your project');
+      console.log('3. Go to SQL Editor');
+      console.log('4. Create a new query');
+      console.log('5. Copy and paste the contents of: supabase/migrations/20250620184438_lively_unit.sql');
+      console.log('6. Click "Run" to execute the migration');
+      console.log('');
+      console.log('📄 Migration file location:');
+      const migrationPath = join(__dirname, '..', 'supabase', 'migrations', '20250620184438_lively_unit.sql');
+      console.log(`   ${migrationPath}`);
+      return;
     }
     console.log('✅ Connected to Supabase successfully');
     
