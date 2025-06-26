@@ -65,7 +65,7 @@ function CheckoutSuccessPage() {
           '15 saved meal plans'
         ] : [
           'AI-powered autofill calendar',
-          'AI recipe recommendations',
+          'Recipe recommendations',
           'Unlimited everything',
           'Priority customer support',
           'Early access to new features'
@@ -95,7 +95,7 @@ function CheckoutSuccessPage() {
           color: 'yellow',
           features: [
             'AI-powered autofill calendar',
-            'AI recipe recommendations',
+            'Recipe recommendations',
             'Unlimited everything',
             'Priority customer support',
             'Early access to new features'
@@ -190,40 +190,6 @@ function CheckoutSuccessPage() {
             </ul>
           </motion.div>
         )}
-
-        {/* Session Info */}
-        {sessionId && (
-          <motion.div
-            className="p-3 bg-gray-50 rounded-lg mb-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <p className="text-xs text-gray-500">
-              Session ID: {sessionId}
-            </p>
-          </motion.div>
-        )}
-
-        {/* Countdown and Auto-redirect Notice */}
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium mb-2">
-              Automatically redirecting to your meal planner...
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-bold text-sm">{countdown}</span>
-              </div>
-              <span className="text-blue-600 text-sm">seconds remaining</span>
-            </div>
-          </div>
-        </motion.div>
 
         {/* Manual Action Buttons */}
         <motion.div
