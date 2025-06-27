@@ -499,6 +499,14 @@ function WeeklyPlannerPage() {
         category="main"
       />
 
+
+
+
+
+
+
+
+
       {/* Save Meal Plan Modal */}
       <AnimatePresence>
         {showSaveModal && (
