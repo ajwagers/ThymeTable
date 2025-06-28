@@ -41,6 +41,56 @@ function RecipeDetailsPage() {
           throw new Error('Invalid recipe ID format');
         }
 
+        // Check if this is a user-created recipe (negative ID)
+        if (numericId < 0) {
+          // Try to find the recipe in localStorage meal plan data
+          const savedMealPlan = localStorage.getItem('mealPlan');
+          if (savedMealPlan) {
+            const days = JSON.parse(savedMealPlan);
+            let foundRecipe = null;
+            
+            // Search through all days and meals to find the recipe
+            for (const day of days) {
+              for (const meal of day.meals) {
+                if (meal.recipeId === numericId) {
+                  foundRecipe = {
+                    id: numericId,
+                    title: meal.name,
+                    readyInMinutes: meal.readyInMinutes || 30,
+                    servings: meal.servings || 4,
+                    calories: meal.calories || 300,
+                    image: meal.image || '',
+                    cuisines: meal.cuisines || [],
+                    instructions: meal.instructions || [],
+                    ingredients: meal.ingredients || [],
+                    dishTypes: meal.dishTypes || [],
+                    isUserCreated: true
+                  };
+                  break;
+                }
+              }
+              if (foundRecipe) break;
+            }
+            
+            if (foundRecipe) {
+              // Process ingredients for display
+              const processedIngredients = foundRecipe.ingredients.map(ingredient => ({
+                ...ingredient,
+                originalAmount: ingredient.amount,
+                originalUnit: ingredient.unit,
+              }));
+
+              setRecipe({
+                ...foundRecipe,
+                ingredients: processedIngredients
+              });
+              setLoading(false);
+              return;
+            }
+          }
+          
+          throw new Error('User-created recipe not found');
+        }
         const data = await getRecipeDetails(numericId);
         
         if (!data) {

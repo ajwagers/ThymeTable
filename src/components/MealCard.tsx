@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import { Eye, Shuffle, MoreVertical, Clock, Users, Utensils, Trash2 } from 'lucide-react';
+import { Clock, Users, Utensils, MoreVertical, Shuffle, Eye, Trash2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Meal } from '../types';
 
@@ -27,7 +27,7 @@ const MealCard: React.FC<MealCardProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
 
   const handleViewRecipe = () => {
-    if (meal.recipeId) {
+    if (meal.recipeId && meal.recipeId !== 0) {
       navigate(`/recipe/${meal.recipeId}`);
     }
   };
@@ -92,15 +92,15 @@ const MealCard: React.FC<MealCardProps> = ({
               {showDropdown && (
                 <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
                   <button
-                    onClick={(e) => {
+                {meal.recipeId && meal.recipeId !== 0 && (
                       e.stopPropagation();
                       handleViewRecipe();
                       setShowDropdown(false);
                     }}
                     className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <Eye className="w-4 h-4" />
-                    View Recipe
+                    <ExternalLink className="w-4 h-4" />
+                    {meal.recipeId && meal.recipeId < 0 ? 'View Recipe' : 'View Recipe'}
                   </button>
                   <button
                     onClick={(e) => {

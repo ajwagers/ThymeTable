@@ -140,7 +140,7 @@ export const useMealPlanState = () => {
   const createMealFromUserRecipe = async (recipe: any, dayId: string, mealType: string, category: 'main' | 'side' = 'main'): Promise<Meal> => {
     const meal: Meal = {
       id: `${dayId}-${mealType}-${category === 'side' ? 'side-' : ''}${Date.now()}`,
-      recipeId: recipe.id, // This will be a negative number for user-created recipes
+      recipeId: recipe.id, // This will be negative for user-created recipes
       name: recipe.title,
       type: mealType as 'breakfast' | 'lunch' | 'dinner',
       category,
