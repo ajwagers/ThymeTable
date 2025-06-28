@@ -13,6 +13,7 @@ interface DayColumnProps {
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   isRecipeLoading?: (recipeKey: string) => boolean;
   onRestrictedFeature?: (feature: string) => void;
+  onRemoveRecipe?: (dayId: string, mealId: string) => void;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({ 
@@ -24,11 +25,18 @@ const DayColumn: React.FC<DayColumnProps> = ({
   onImportRecipe,
   onChangeRecipe,
   isRecipeLoading,
-  onRestrictedFeature
+  onRestrictedFeature,
+  onRemoveRecipe
 }) => {
   const handleChangeRecipe = (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => {
     if (onChangeRecipe) {
       onChangeRecipe(day.id, mealId, mealType, category, useRandom, favoriteRecipeId);
+    }
+  };
+
+  const handleRemoveRecipe = (mealId: string) => {
+    if (onRemoveRecipe) {
+      onRemoveRecipe(day.id, mealId);
     }
   };
 
@@ -62,7 +70,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
         const isLoading = isRecipeLoading ? isRecipeLoading(loadingKey) : false;
         
         return (
-          <div key={mealType} className="mb-2">
+          <div key={mealType} className="mb-6"> {/* Increased margin bottom for better spacing */}
             <h4 className="text-sm font-medium text-primary-700 mb-1 px-1 capitalize">
               {mealType}
             </h4>
@@ -88,6 +96,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
                     dayId={day.id}
                     isLoading={isLoading}
                     onRestrictedFeature={onRestrictedFeature}
+                    onRemoveRecipe={handleRemoveRecipe}
                   />
                   {provided.placeholder}
                 </div>

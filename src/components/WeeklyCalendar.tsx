@@ -12,6 +12,7 @@ interface WeeklyCalendarProps {
   onChangeRecipe?: (dayId: string, mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   isRecipeLoading?: (recipeKey: string) => boolean;
   onRestrictedFeature?: (feature: string) => void;
+  onRemoveRecipe?: (dayId: string, mealId: string) => void;
 }
 
 const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ 
@@ -23,7 +24,8 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   onImportRecipe,
   onChangeRecipe,
   isRecipeLoading,
-  onRestrictedFeature
+  onRestrictedFeature,
+  onRemoveRecipe
 }) => {
   // Sort days to ensure Sunday is first
   const orderedDays = [...days].sort((a, b) => {
@@ -53,6 +55,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           onChangeRecipe={onChangeRecipe}
           isRecipeLoading={isRecipeLoading}
           onRestrictedFeature={onRestrictedFeature}
+          onRemoveRecipe={onRemoveRecipe}
         />
       ))}
     </div>

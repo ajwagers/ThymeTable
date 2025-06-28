@@ -15,6 +15,7 @@ interface MealListProps {
   dayId?: string;
   isLoading?: boolean;
   onRestrictedFeature?: (feature: string) => void;
+  onRemoveRecipe?: (mealId: string) => void;
 }
 
 const MealList: React.FC<MealListProps> = ({ 
@@ -27,7 +28,8 @@ const MealList: React.FC<MealListProps> = ({
   onChangeRecipe,
   dayId,
   isLoading = false,
-  onRestrictedFeature
+  onRestrictedFeature,
+  onRemoveRecipe
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -38,14 +40,14 @@ const MealList: React.FC<MealListProps> = ({
     }
   };
 
-  // Sort meals so main dishes are always on top
-  const sortedMeals = [...meals].sort((a, b) => 
-    a.category === 'main' ? -1 : b.category === 'main' ? 1 : 0
-  );
+  // Group meals by category
+  const mainMeals = meals.filter(meal => meal.category === 'main');
+  const sideMeals = meals.filter(meal => meal.category === 'side');
+  const allMeals = [...mainMeals, ...sideMeals];
 
   return (
     <div 
-      className="relative min-h-[160px]"
+      className="relative min-h-[180px]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
@@ -53,18 +55,18 @@ const MealList: React.FC<MealListProps> = ({
       }}
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      {sortedMeals.length > 0 ? (
+      {allMeals.length > 0 ? (
         <div className="relative">
           <AnimatePresence>
-            {sortedMeals.map((meal, index) => {
+            {allMeals.map((meal, index) => {
               const isMainDish = meal.category === 'main';
-              const basePosition = index * 4;
+              const basePosition = index * 6; // Increased spacing between cards
               
               let yOffset;
               if (isExpanded) {
-                yOffset = index * 180; // Full expansion
+                yOffset = index * 200; // Full expansion with more space
               } else if (isHovered) {
-                yOffset = isMainDish ? basePosition : basePosition - 120;
+                yOffset = basePosition;
               } else {
                 yOffset = basePosition;
               }
@@ -77,7 +79,7 @@ const MealList: React.FC<MealListProps> = ({
                   animate={{
                     scale: isHovered ? (isMainDish ? 1.08 : 1.04) : 1,
                     y: yOffset,
-                    zIndex: sortedMeals.length - index,
+                    zIndex: allMeals.length - index,
                     rotate: isHovered ? 0 : index * -2,
                   }}
                   transition={{
@@ -96,6 +98,7 @@ const MealList: React.FC<MealListProps> = ({
                     isHovered={isHovered}
                     onChangeRecipe={handleChangeRecipe}
                     dayId={dayId}
+                    onRemoveRecipe={onRemoveRecipe}
                   />
                 </motion.div>
               );

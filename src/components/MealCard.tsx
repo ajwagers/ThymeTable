@@ -1,7 +1,7 @@
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Users, Utensils, MoreVertical, Eye, Shuffle } from 'lucide-react';
+import { Clock, Users, Utensils, MoreVertical, Eye, Shuffle, Trash2 } from 'lucide-react';
 import { Meal } from '../types';
 
 interface MealCardProps {
@@ -11,6 +11,7 @@ interface MealCardProps {
   isHovered?: boolean;
   onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   dayId?: string;
+  onRemoveRecipe?: (mealId: string) => void;
 }
 
 const MealCard: React.FC<MealCardProps> = ({ 
@@ -19,7 +20,8 @@ const MealCard: React.FC<MealCardProps> = ({
   isExpanded = false, 
   isHovered = false,
   onChangeRecipe,
-  dayId
+  dayId,
+  onRemoveRecipe
 }) => {
   const navigate = useNavigate();
   const [showActions, setShowActions] = React.useState(false);
@@ -36,6 +38,13 @@ const MealCard: React.FC<MealCardProps> = ({
     if (onChangeRecipe) {
       onChangeRecipe(meal.id, meal.type, meal.category);
     }
+  };
+
+  const handleRemoveRecipe = () => {
+    if (onRemoveRecipe) {
+      onRemoveRecipe(meal.id);
+    }
+    setShowActions(false);
   };
 
   const getMealTypeColor = () => {
@@ -116,6 +125,13 @@ const MealCard: React.FC<MealCardProps> = ({
                   >
                     <Shuffle className="w-4 h-4 mr-2" />
                     Change Recipe
+                  </button>
+                  <button
+                    onClick={handleRemoveRecipe}
+                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Remove Recipe
                   </button>
                 </div>
               )}
