@@ -84,17 +84,26 @@ function RecipeDetailsPage() {
             
             if (foundRecipe) {
               console.log('Found user recipe:', foundRecipe);
+              console.log('Recipe ingredients:', foundRecipe.ingredients);
               // Process ingredients for display
-              const processedIngredients = (foundRecipe.ingredients || []).map(ingredient => ({
-                ...ingredient,
-                originalAmount: ingredient.amount,
-                originalUnit: ingredient.unit,
-              }));
+              const processedIngredients = (foundRecipe.ingredients || []).map(ingredient => {
+                // Ensure ingredient has the required structure
+                const processedIngredient = {
+                  name: ingredient.name || '',
+                  amount: ingredient.amount || 0,
+                  unit: ingredient.unit || '',
+                  originalAmount: ingredient.amount || 0,
+                  originalUnit: ingredient.unit || '',
+                };
+                console.log('Processed ingredient:', processedIngredient);
+                return processedIngredient;
+              });
 
               setRecipe({
                 ...foundRecipe,
                 ingredients: processedIngredients
               });
+              console.log('Set recipe with ingredients:', processedIngredients);
               setLoading(false);
               return;
             }
@@ -112,11 +121,14 @@ function RecipeDetailsPage() {
         
         if (data.ingredients) {
           // Store original amounts for conversion calculations
-          const processedIngredients = data.ingredients.map(ingredient => ({
-            ...ingredient,
-            originalAmount: ingredient.amount,
-            originalUnit: ingredient.unit,
-          }));
+          const processedIngredients = data.ingredients.map(ingredient => {
+            const processedIngredient = {
+              ...ingredient,
+              originalAmount: ingredient.amount,
+              originalUnit: ingredient.unit,
+            };
+            return processedIngredient;
+          });
 
           setRecipe({
             ...data,
@@ -139,6 +151,7 @@ function RecipeDetailsPage() {
   // Handle measurement system changes and serving adjustments
   useEffect(() => {
     if (recipe?.ingredients) {
+      console.log('Processing ingredients for measurement/serving changes:', recipe.ingredients);
       const updatedIngredients = recipe.ingredients.map(ingredient => {
         const originalAmount = ingredient.originalAmount || ingredient.amount;
         const originalUnit = ingredient.originalUnit || ingredient.unit;
@@ -149,13 +162,15 @@ function RecipeDetailsPage() {
         // Then convert units
         const converted = convertUnit(parseFloat(adjustedAmount), originalUnit);
         
-        return {
+        const updatedIngredient = {
           ...ingredient,
           amount: converted.amount,
           unit: converted.unit,
         };
+        return updatedIngredient;
       });
 
+      console.log('Updated ingredients after processing:', updatedIngredients);
       setRecipe(prev => prev ? {
         ...prev,
         ingredients: updatedIngredients
@@ -327,13 +342,15 @@ function RecipeDetailsPage() {
         {recipe.ingredients && recipe.ingredients.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold mb-4 text-gray-800">Ingredients</h2>
+            {console.log('Rendering ingredients:', recipe.ingredients)}
             <ul className="space-y-2">
               {recipe.ingredients.map((ingredient, index) => {
                 const cleanName = cleanIngredientName(ingredient.name);
+                console.log(`Rendering ingredient ${index}:`, ingredient, 'Clean name:', cleanName);
                 return (
                   <li key={index} className="flex items-center text-gray-700">
                     <span className="w-2 h-2 bg-primary-500 rounded-full mr-2" />
-                    {ingredient.amount} {ingredient.unit} {cleanName}
+                    {ingredient.amount} {ingredient.unit ? `${ingredient.unit} ` : ''}{cleanName}
                   </li>
                 );
               })}
