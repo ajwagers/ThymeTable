@@ -52,9 +52,6 @@ const MealList: React.FC<MealListProps> = ({
         setIsExpanded(false);
       }}
       onClick={() => setIsExpanded(!isExpanded)}
-      style={{
-        zIndex: isHovered ? 100 : 1 // Increase base z-index when hovered
-      }}
     >
       {sortedMeals.length > 0 ? (
         <div className="relative">
@@ -80,18 +77,13 @@ const MealList: React.FC<MealListProps> = ({
                   animate={{
                     scale: isHovered ? (isMainDish ? 1.08 : 1.04) : 1,
                     y: yOffset,
-                    zIndex: isHovered ? (isMainDish ? 200 : 150) : sortedMeals.length - index, // Higher z-index when hovered
+                    zIndex: sortedMeals.length - index,
                     rotate: isHovered ? 0 : index * -2,
                   }}
                   transition={{
                     type: "spring",
                     stiffness: 300,
                     damping: 30
-                  }}
-                  whileHover={{
-                    scale: isMainDish ? 1.12 : 1.06,
-                    zIndex: 300, // Even higher z-index when individual card is hovered
-                    transition: { duration: 0.2 }
                   }}
                   onClick={(e) => {
                     e.stopPropagation();

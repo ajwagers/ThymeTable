@@ -5,6 +5,7 @@
 body {
   font-family: 'Inter', sans-serif;
   @apply bg-cream text-charcoal;
+  position: relative;
 }
 
 @layer components {
