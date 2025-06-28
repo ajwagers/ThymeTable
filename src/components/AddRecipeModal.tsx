@@ -69,6 +69,19 @@ export function AddRecipeModal({ isOpen, onClose, onSave, mealType = 'dinner', c
     
     if (!title.trim()) return;
     
+    // Add any pending ingredient that hasn't been added yet
+    let finalIngredients = [...ingredients];
+    if (newIngredient.name.trim() && newIngredient.amount.trim()) {
+      finalIngredients.push({
+        name: newIngredient.name.trim(),
+        amount: parseFloat(newIngredient.amount),
+        unit: newIngredient.unit.trim() || '',
+      });
+    }
+    
+    // Filter out any instructions that are just whitespace
+    const finalInstructions = instructions.filter(i => i.trim());
+    
     setSaving(true);
     
     try {
@@ -80,8 +93,8 @@ export function AddRecipeModal({ isOpen, onClose, onSave, mealType = 'dinner', c
         calories: parseInt(calories) || 300,
         image: '/No Image.png', // Use custom placeholder image
         cuisines: cuisines.filter(c => c.trim()),
-        instructions: instructions.filter(i => i.trim()),
-        ingredients,
+        instructions: finalInstructions,
+        ingredients: finalIngredients,
         dishTypes: dishTypes.filter(d => d.trim()),
         isUserCreated: true
       };
@@ -220,7 +233,12 @@ export function AddRecipeModal({ isOpen, onClose, onSave, mealType = 'dinner', c
                       value={newIngredient.name}
                       onChange={(e) => setNewIngredient({ ...newIngredient, name: e.target.value })}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddIngredient())}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddIngredient();
+                        }
+                      }}
                     />
                     <input
                       type="number"
@@ -230,7 +248,12 @@ export function AddRecipeModal({ isOpen, onClose, onSave, mealType = 'dinner', c
                       className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                       step="0.1"
                       min="0"
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddIngredient())}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddIngredient();
+                        }
+                      }}
                     />
                     <input
                       type="text"
@@ -238,7 +261,12 @@ export function AddRecipeModal({ isOpen, onClose, onSave, mealType = 'dinner', c
                       value={newIngredient.unit}
                       onChange={(e) => setNewIngredient({ ...newIngredient, unit: e.target.value })}
                       className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddIngredient())}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddIngredient();
+                        }
+                      }}
                     />
                     <button
                       type="button"
