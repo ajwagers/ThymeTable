@@ -602,8 +602,12 @@ export const useMealPlanState = () => {
   const handleDragEnd = (result: DragResult) => {
     const { destination, source, draggableId } = result;
 
-    if (!destination) return;
+    // If dropped outside a valid droppable area
+    if (!destination) {
+      return;
+    }
 
+    // If dropped in the same position
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
@@ -611,36 +615,63 @@ export const useMealPlanState = () => {
       return;
     }
 
-    const [sourceDay, sourceMealType] = source.droppableId.split('-');
-    const [destDay, destMealType] = destination.droppableId.split('-');
+    // Parse droppable IDs to get day and meal type
+    const sourceDroppableId = source.droppableId;
+    const destinationDroppableId = destination.droppableId;
+    
+    const [sourceDayId, sourceMealType] = sourceDroppableId.split('-');
+    const [destDayId, destMealType] = destinationDroppableId.split('-');
 
-    const newDays = JSON.parse(JSON.stringify(days)) as Day[];
-
-    const sourceDayObj = newDays.find(day => day.id === sourceDay);
-    const destDayObj = newDays.find(day => day.id === destDay);
-
-    if (!sourceDayObj || !destDayObj) return;
-
-    const sourceMeals = sourceDayObj.meals.filter(meal => meal.type === sourceMealType);
-    const mealToMove = { ...sourceMeals[source.index] };
-
-    if (sourceMealType !== destMealType) {
-      mealToMove.type = destMealType as 'breakfast' | 'lunch' | 'dinner';
-      fetchRandomRecipe(destDay, destMealType, mealToMove.category);
+    // Find the meal being dragged
+    const sourceDayIndex = days.findIndex(day => day.id === sourceDayId);
+    const destDayIndex = days.findIndex(day => day.id === destDayId);
+    
+    if (sourceDayIndex === -1 || destDayIndex === -1) {
       return;
     }
 
-    sourceDayObj.meals = sourceDayObj.meals.filter(meal => meal.id !== mealToMove.id);
-    destDayObj.meals.push(mealToMove);
+    const sourceDay = days[sourceDayIndex];
+    const destDay = days[destDayIndex];
+    
+    const sourceMeals = sourceDay.meals.filter(meal => meal.type === sourceMealType);
+    const draggedMeal = sourceMeals.find(meal => meal.id === draggableId);
+    
+    if (!draggedMeal) {
+      return;
+    }
 
-    destDayObj.meals.sort((a, b) => {
-      const typeOrder = { breakfast: 0, lunch: 1, dinner: 2 };
-      const categoryOrder = { main: 0, side: 1 };
-      const typeComparison = typeOrder[a.type] - typeOrder[b.type];
-      return typeComparison === 0 ? categoryOrder[a.category] - categoryOrder[b.category] : typeComparison;
-    });
-
+    // Create new days array with the meal moved
+    const newDays = [...days];
+    
+    // Remove meal from source
+    newDays[sourceDayIndex] = {
+      ...sourceDay,
+      meals: sourceDay.meals.filter(meal => meal.id !== draggableId)
+    };
+    
+    // Add meal to destination with updated meal type
+    const updatedMeal = {
+      ...draggedMeal,
+      type: destMealType,
+      id: `${destDayId}-${destMealType}-${Date.now()}` // Generate new ID for the new position
+    };
+    
+    const destMeals = destDay.meals.filter(meal => meal.type === destMealType);
+    const otherMeals = destDay.meals.filter(meal => meal.type !== destMealType);
+    
+    // Insert at the correct position
+    const newDestMeals = [...destMeals];
+    newDestMeals.splice(destination.index, 0, updatedMeal);
+    
+    newDays[destDayIndex] = {
+      ...destDay,
+      meals: [...otherMeals, ...newDestMeals]
+    };
+    
     setDays(newDays);
+    
+    // Save to localStorage
+    localStorage.setItem('mealPlan', JSON.stringify(newDays));
   };
 
   const getListStyle = (isDraggingOver: boolean) => {
