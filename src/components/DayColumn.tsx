@@ -70,7 +70,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
         const isLoading = isRecipeLoading ? isRecipeLoading(loadingKey) : false;
         
         return (
-          <div key={mealType} className="mb-6"> {/* Increased margin bottom for better spacing */}
+          <div key={mealType} className="mb-8"> {/* Further increased margin for better title visibility */}
             <h4 className="text-sm font-medium text-primary-700 mb-1 px-1 capitalize">
               {mealType}
             </h4>
