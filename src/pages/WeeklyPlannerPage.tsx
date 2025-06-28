@@ -24,6 +24,7 @@ function WeeklyPlannerPage() {
     changeRecipeToSearchResult,
     autofillCalendar,
     isAutofilling,
+    removeRecipe,
     resetWeek,
     apiError,
     isRecipeLoading,
@@ -444,6 +445,7 @@ function WeeklyPlannerPage() {
           onChangeRecipe={handleChangeRecipeRequest}
           isRecipeLoading={isRecipeLoading}
           onRestrictedFeature={handleRestrictedFeature}
+          onRemoveRecipe={removeRecipe}
         />
       </DragDropContext>
 

@@ -595,6 +595,19 @@ export const useMealPlanState = () => {
     }
   };
 
+  const removeRecipe = (dayId: string, mealId: string) => {
+    setDays(prevDays => 
+      prevDays.map(day => 
+        day.id === dayId 
+          ? {
+              ...day,
+              meals: day.meals.filter(meal => meal.id !== mealId)
+            }
+          : day
+      )
+    );
+  };
+
   useEffect(() => {
     localStorage.setItem('mealPlan', JSON.stringify(days));
   }, [days]);
@@ -691,6 +704,7 @@ export const useMealPlanState = () => {
     changeRecipeToSearchResult,
     autofillCalendar,
     isAutofilling,
+    removeRecipe,
     resetWeek,
     apiError,
     isRecipeLoading,
