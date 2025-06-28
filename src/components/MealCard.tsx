@@ -1,7 +1,6 @@
 import React from 'react';
 import { Eye, Shuffle, MoreVertical, Clock, Users, Utensils, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Users, Utensils, MoreVertical, Eye, Shuffle } from 'lucide-react';
 import { Meal } from '../types';
 
 interface MealCardProps {
