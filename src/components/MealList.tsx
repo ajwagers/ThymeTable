@@ -47,7 +47,7 @@ const MealList: React.FC<MealListProps> = ({
 
   return (
     <div 
-      className="relative min-h-[160px]"
+      className="relative min-h-[180px]" 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
