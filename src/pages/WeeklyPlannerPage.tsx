@@ -45,6 +45,8 @@ function WeeklyPlannerPage() {
   const [restrictedFeature, setRestrictedFeature] = useState<string>('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [importData, setImportData] = useState('');
+  const [importType, setImportType] = useState<'csv' | 'saved'>('csv');
+  const [selectedSavedPlan, setSelectedSavedPlan] = useState<string>('');
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState('');
 
@@ -146,53 +148,177 @@ function WeeklyPlannerPage() {
   };
 
   const handleImportMealPlan = async () => {
-    if (!importData.trim()) {
-      setImportError('Please paste meal plan data');
-      return;
-    }
-
     setImporting(true);
     setImportError('');
 
     try {
-      // Try to parse the imported data
-      const parsedData = JSON.parse(importData);
-      
-      // Validate the structure
-      if (!parsedData.meal_plan_data || !Array.isArray(parsedData.meal_plan_data)) {
-        throw new Error('Invalid meal plan format');
+      if (importData.trim()) {
+        // Handle CSV import
+        const lines = importData.trim().split('\n');
+        if (lines.length < 2) {
+          throw new Error('CSV file must have at least a header row and one data row');
+        }
+        
+        const header = lines[0].toLowerCase();
+        if (!header.includes('day') || !header.includes('meal') || !header.includes('recipe')) {
+          throw new Error('CSV must contain Day, Meal Type, and Recipe Name columns');
+        }
+        
+        // Parse CSV data
+        const importedDays = new Map();
+        
+        // Initialize days
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        dayNames.forEach(dayName => {
+          importedDays.set(dayName.toLowerCase(), {
+            id: dayName.toLowerCase(),
+            name: dayName,
+            date: '', // Will be set later
+            meals: []
+          });
+        });
+        
+        // Parse data rows
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          // Simple CSV parsing (handles quoted fields)
+          const fields = [];
+          let current = '';
+          let inQuotes = false;
+          
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+              if (inQuotes && line[j + 1] === '"') {
+                current += '"';
+                j++; // Skip next quote
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              fields.push(current);
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          fields.push(current); // Add last field
+          
+          if (fields.length >= 3) {
+            const dayName = fields[0].trim();
+            const mealType = fields[1].trim().toLowerCase();
+            const recipeName = fields[2].trim();
+            
+            const day = importedDays.get(dayName.toLowerCase());
+            if (day && recipeName) {
+              const meal = {
+                id: `${day.id}-${mealType}-${Date.now()}-${Math.random()}`,
+                name: recipeName,
+                type: mealType,
+                category: 'main' as const,
+                readyInMinutes: fields[3] ? parseInt(fields[3]) || 30 : 30,
+                servings: fields[4] ? parseInt(fields[4]) || 4 : 4,
+                calories: fields[5] ? parseInt(fields[5]) || 300 : 300,
+                ingredients: fields[6] ? parseIngredientsFromCSV(fields[6]) : [],
+                instructions: fields[7] ? fields[7].split('|').map(s => s.trim()).filter(s => s) : [],
+                cuisines: [],
+                dishTypes: [],
+                image: '/No Image.png',
+                isUserCreated: true,
+                recipeId: -Date.now() - Math.random()
+              };
+              
+              day.meals.push(meal);
+            }
+          }
+        }
+        
+        // Convert to array and set dates
+        const finalDays = Array.from(importedDays.values()).map((day, index) => ({
+          ...day,
+          date: new Date(Date.now() + index * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          })
+        }));
+        
+        // Load the meal plan data
+        localStorage.setItem('mealPlan', JSON.stringify(finalDays));
+        window.location.reload();
       }
-
-      // Load the meal plan data directly into the current week
-      localStorage.setItem('mealPlan', JSON.stringify(parsedData.meal_plan_data));
-      
-      // Refresh the page to load the new data
-      window.location.reload();
-      
     } catch (error) {
       console.error('Error importing meal plan:', error);
-      setImportError('Invalid meal plan data. Please check the format and try again.');
+      setImportError(error instanceof Error ? error.message : 'Failed to import meal plan');
     } finally {
       setImporting(false);
     }
   };
+  
+  const parseIngredientsFromCSV = (ingredientsStr: string) => {
+    if (!ingredientsStr) return [];
+    
+    return ingredientsStr.split(';').map(ing => {
+      const trimmed = ing.trim();
+      // Try to parse "amount unit name" format
+      const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]*)\s*(.+)$/);
+      if (match) {
+        return {
+          amount: parseFloat(match[1]),
+          unit: match[2] || '',
+          name: match[3].trim()
+        };
+      } else {
+        // Fallback: treat as ingredient name only
+        return {
+          amount: 1,
+          unit: '',
+          name: trimmed
+        };
+      }
+    }).filter(ing => ing.name);
+  };
 
   const handleExportCurrentPlan = () => {
-    const exportData = {
-      name: `Week of ${new Date().toLocaleDateString()}`,
-      description: 'Exported meal plan',
-      meal_plan_data: days,
-      exported_at: new Date().toISOString(),
-      version: '1.0'
-    };
-
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    // Create CSV content
+    const csvRows = [];
+    
+    // Add header
+    csvRows.push('Day,Meal Type,Recipe Name,Prep Time (min),Servings,Calories,Ingredients,Instructions');
+    
+    // Add data rows
+    days.forEach(day => {
+      day.meals.forEach(meal => {
+        const ingredients = meal.ingredients ? 
+          meal.ingredients.map(ing => `${ing.amount} ${ing.unit} ${ing.name}`.trim()).join('; ') : 
+          '';
+        const instructions = meal.instructions ? 
+          meal.instructions.join(' | ') : 
+          '';
+        
+        const row = [
+          day.name,
+          meal.type,
+          `"${meal.name.replace(/"/g, '""')}"`, // Escape quotes in recipe names
+          meal.readyInMinutes || '',
+          meal.servings || '',
+          meal.calories || '',
+          `"${ingredients.replace(/"/g, '""')}"`, // Escape quotes in ingredients
+          `"${instructions.replace(/"/g, '""')}"` // Escape quotes in instructions
+        ];
+        
+        csvRows.push(row.join(','));
+      });
+    });
+    
+    const csvContent = csvRows.join('\n');
+    const dataBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(dataBlob);
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `meal_plan_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `meal_plan_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
