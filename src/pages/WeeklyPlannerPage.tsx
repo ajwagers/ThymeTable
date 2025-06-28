@@ -36,6 +36,7 @@ function WeeklyPlannerPage() {
 
   const { saveMealPlan } = useFavorites();
   const { currentTier, upgradeToTier } = useSubscription();
+  const { savedMealPlans, loadMealPlan } = useFavorites();
   const { canImportRecipes } = useFeatureAccess();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveName, setSaveName] = useState('');
@@ -251,6 +252,35 @@ function WeeklyPlannerPage() {
     } catch (error) {
       console.error('Error importing meal plan:', error);
       setImportError(error instanceof Error ? error.message : 'Failed to import meal plan');
+    } finally {
+      setImporting(false);
+    }
+  };
+  
+  const handleLoadSavedPlan = async () => {
+    if (!selectedSavedPlan) {
+      setImportError('Please select a saved meal plan');
+      return;
+    }
+
+    setImporting(true);
+    setImportError('');
+
+    try {
+      const mealPlanData = await loadMealPlan(selectedSavedPlan);
+      if (mealPlanData) {
+        // Store the loaded meal plan in localStorage to replace current plan
+        localStorage.setItem('mealPlan', JSON.stringify(mealPlanData));
+        setShowImportModal(false);
+        setImportData('');
+        setSelectedSavedPlan('');
+        window.location.reload();
+      } else {
+        throw new Error('Failed to load meal plan data');
+      }
+    } catch (error) {
+      console.error('Error loading saved meal plan:', error);
+      setImportError(error instanceof Error ? error.message : 'Failed to load saved meal plan');
     } finally {
       setImporting(false);
     }
