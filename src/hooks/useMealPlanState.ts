@@ -707,6 +707,7 @@ export const useMealPlanState = () => {
     changeRecipe,
     changeRecipeToSearchResult,
     autofillCalendar,
+    removeRecipe,
     isAutofilling,
     removeRecipe,
     removeRecipe,
