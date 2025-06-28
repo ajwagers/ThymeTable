@@ -152,8 +152,6 @@ export const useMealPlanState = () => {
       ingredients: recipe.ingredients || []
     };
 
-      ingredients: recipe.ingredients || [],
-      instructions: recipe.instructions || [],
     console.log('✅ Created meal from user recipe with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
     return meal;
   };
