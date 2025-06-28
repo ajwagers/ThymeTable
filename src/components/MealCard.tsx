@@ -92,7 +92,7 @@ const MealCard: React.FC<MealCardProps> = ({
               {showDropdown && (
                 <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
                   <button
-                {meal.recipeId && meal.recipeId !== 0 && (
+                    onClick={(e) => {
                       e.stopPropagation();
                       handleViewRecipe();
                       setShowDropdown(false);
