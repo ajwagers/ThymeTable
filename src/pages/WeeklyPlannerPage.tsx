@@ -472,18 +472,20 @@ function WeeklyPlannerPage() {
       <div className="print:block hidden">
         <style>{`
           @media print {
+            @page { size: landscape; margin: 0.5in; }
             body { font-size: 12px; margin: 0; }
             header, footer { display: none !important; }
             .print-header { border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
             .print-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-            .print-day { border: 1px solid #ccc; padding: 10px; min-height: 200px; }
+            .print-day { border: 1px solid #ccc; padding: 8px; min-height: 180px; }
             .print-day-header { font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-            .print-meal-section { margin-bottom: 15px; }
+            .print-meal-section { margin-bottom: 12px; }
             .print-meal-type { font-weight: bold; font-size: 10px; color: #666; margin-bottom: 5px; text-transform: uppercase; }
             .print-recipe { font-size: 11px; margin-bottom: 3px; padding: 2px 0; }
             .print-recipe-main { font-weight: 600; }
             .print-recipe-side { font-style: italic; color: #666; }
             .print-no-meals { font-style: italic; color: #999; font-size: 10px; }
+            .print-summary { page-break-inside: avoid; margin-top: 15px; }
           }
         `}</style>
         <div className="max-w-full mx-auto p-4">
@@ -539,7 +541,7 @@ function WeeklyPlannerPage() {
           </div>
           
           {/* Summary section */}
-          <div className="mt-6 pt-4 border-t border-gray-300">
+          <div className="print-summary mt-6 pt-4 border-t border-gray-300">
             <h3 className="font-bold mb-2">Weekly Summary</h3>
             <div className="text-xs">
               <p>Total meals planned: {days.reduce((total, day) => total + day.meals.length, 0)}</p>
