@@ -210,8 +210,8 @@ function parseIngredientText(text: string): Ingredient {
     }
     
     return {
-    console.log('✅ Python parser result:', recipe);
-    console.error('Python parser failed:', error);
+      name: cleanText,
+      amount: 1,
       unit: unit || ''
     };
   }
