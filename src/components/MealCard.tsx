@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import { Clock, Users, Utensils, MoreVertical, Shuffle, Eye, Trash2, ExternalLink } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Clock, Users, Utensils, MoreVertical, Shuffle, ExternalLink, Trash2, Minus, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Meal } from '../types';
+import { useServings } from '../contexts/ServingsContext';
 
 interface MealCardProps {
   meal: Meal;
@@ -24,7 +26,19 @@ const MealCard: React.FC<MealCardProps> = ({
   onRemoveRecipe
 }) => {
   const navigate = useNavigate();
+  const { mealServings, setMealServings, globalServings, adjustQuantity } = useServings();
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // Get the recipe key for this meal
+  const recipeKey = meal.recipeId ? `recipe-${meal.recipeId}` : `recipe-${meal.id.split('-').pop()}`;
+  const currentServings = mealServings[recipeKey] || globalServings;
+
+  const handleServingsChange = (newServings: number) => {
+    setMealServings(recipeKey, newServings);
+  };
+
+  // Calculate adjusted values based on current servings
+  const adjustedCalories = adjustQuantity(meal.calories, meal.servings, recipeKey);
 
   const handleViewRecipe = () => {
     if (meal.recipeId && meal.recipeId !== 0) {
@@ -138,11 +152,7 @@ const MealCard: React.FC<MealCardProps> = ({
 
             {/* Recipe Content */}
             <div className="p-3">
-              <h4 className="font-medium text-gray-800 text-sm line-clamp-2 mb-2">
-                {meal.name}
-              </h4>
-              
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between text-xs text-gray-500 mb-2">
                 <div className="flex items-center">
                   <Clock className="w-3 h-3 mr-1" />
                   <span>{meal.readyInMinutes} min</span>
@@ -150,14 +160,48 @@ const MealCard: React.FC<MealCardProps> = ({
                 
                 <div className="flex items-center">
                   <Users className="w-3 h-3 mr-1" />
-                  <span>{meal.servings} serv</span>
+                  <span>{currentServings} serv</span>
                 </div>
                 
                 <div className="flex items-center">
                   <Utensils className="w-3 h-3 mr-1" />
-                  <span>{meal.calories} cal</span>
+                  <span>{adjustedCalories} cal</span>
                 </div>
               </div>
+
+              {/* Servings Control - only show when expanded */}
+              {isExpanded && (
+                <div className="mb-3 p-2 bg-gray-50 rounded-md">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Servings:</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleServingsChange(Math.max(1, currentServings - 1));
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded transition-colors"
+                      >
+                        <Minus className="w-3 h-3 text-gray-600" />
+                      </button>
+                      <span className="w-8 text-center text-xs font-medium">{currentServings}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleServingsChange(currentServings + 1);
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded transition-colors"
+                      >
+                        <Plus className="w-3 h-3 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <h4 className="font-medium text-gray-800 text-sm line-clamp-2 mb-2">
+                {meal.name}
+              </h4>
             </div>
           </div>
         </div>
