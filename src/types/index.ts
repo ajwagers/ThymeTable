@@ -23,6 +23,7 @@ export interface Meal {
 }
 
 export interface Day {
+  recipeData?: SpoonacularRecipe; // Store complete recipe data for user-created recipes
   id: string;
   name: string;
   date: string;

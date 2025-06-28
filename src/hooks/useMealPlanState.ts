@@ -152,6 +152,8 @@ export const useMealPlanState = () => {
       ingredients: recipe.ingredients || []
     };
 
+      ingredients: recipe.ingredients || [],
+      instructions: recipe.instructions || [],
     console.log('✅ Created meal from user recipe with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
     return meal;
   };
@@ -202,7 +204,9 @@ export const useMealPlanState = () => {
     const mealNames = {
       breakfast: category === 'main' ? 'Simple Breakfast' : 'Breakfast Side',
       lunch: category === 'main' ? 'Quick Lunch' : 'Lunch Side',
-      dinner: category === 'main' ? 'Easy Dinner' : 'Dinner Side'
+      isUserCreated: true,
+      // Store the complete recipe data for later retrieval
+      recipeData: recipe
     };
 
     return {

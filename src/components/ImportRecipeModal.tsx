@@ -102,9 +102,14 @@ export function ImportRecipeModal({
       return;
     }
 
+    // Ensure we have a placeholder image if none exists
+    const recipeWithImage = {
+      ...editedRecipe,
+      image: editedRecipe.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'
+    };
     setSaving(true);
     try {
-      await onSave(editedRecipe);
+      await onSave(recipeWithImage);
       resetModal();
       onClose();
     } catch (error) {

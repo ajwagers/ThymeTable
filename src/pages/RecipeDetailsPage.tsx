@@ -53,19 +53,29 @@ function RecipeDetailsPage() {
             for (const day of days) {
               for (const meal of day.meals) {
                 if (meal.recipeId === numericId) {
+                  // Use the stored recipe data if available, otherwise construct from meal data
+                  if (meal.recipeData) {
+                    foundRecipe = {
+                      ...meal.recipeData,
+                      // Ensure we have a placeholder image if none exists
+                      image: meal.recipeData.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'
+                    };
+                  } else {
+                    // Fallback to constructing from meal data
                   foundRecipe = {
                     id: numericId,
                     title: meal.name,
                     readyInMinutes: meal.readyInMinutes || 30,
                     servings: meal.servings || 4,
                     calories: meal.calories || 300,
-                    image: meal.image || '',
+                      image: meal.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
                     cuisines: meal.cuisines || [],
                     instructions: meal.instructions || [],
                     ingredients: meal.ingredients || [],
                     dishTypes: meal.dishTypes || [],
                     isUserCreated: true
                   };
+                  }
                   break;
                 }
               }
@@ -74,7 +84,7 @@ function RecipeDetailsPage() {
             
             if (foundRecipe) {
               // Process ingredients for display
-              const processedIngredients = foundRecipe.ingredients.map(ingredient => ({
+              const processedIngredients = (foundRecipe.ingredients || []).map(ingredient => ({
                 ...ingredient,
                 originalAmount: ingredient.amount,
                 originalUnit: ingredient.unit,
