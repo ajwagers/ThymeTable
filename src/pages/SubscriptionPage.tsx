@@ -98,7 +98,6 @@ function SubscriptionPage() {
     { icon: <Filter className="w-4 h-4" />, text: 'Unlimited custom filters' },
     { icon: <Check className="w-4 h-4" />, text: 'Early access to new features' },
     { icon: <Check className="w-4 h-4" />, text: 'Advanced analytics' },
-    { icon: <Check className="w-4 h-4" />, text: 'Premium recipe collection' },
   ];
 
   const getCurrentSubscriptionStatus = () => {
@@ -435,12 +434,6 @@ function SubscriptionPage() {
                 </tr>
                 <tr>
                   <td className="py-4 px-4 text-gray-700">AI Autofill Calendar</td>
-                  <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
-                  <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
-                  <td className="py-4 px-4 text-center"><Check className="w-4 h-4 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 text-gray-700">AI Recommendations</td>
                   <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-4 text-center"><X className="w-4 h-4 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-4 text-center"><Check className="w-4 h-4 text-green-500 mx-auto" /></td>

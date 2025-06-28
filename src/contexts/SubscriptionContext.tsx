@@ -21,7 +21,6 @@ interface SubscriptionContextType {
     canExportGroceryList: boolean;
     canImportRecipes: boolean;
     canUseAdvancedFilters: boolean;
-    canAccessPremiumRecipes: boolean;
     canUseAIRecommendations: boolean;
     canShareMealPlans: boolean;
   };
@@ -43,7 +42,6 @@ const TIER_LIMITS = {
     canExportGroceryList: false,
     canImportRecipes: false,
     canUseAdvancedFilters: false,
-    canAccessPremiumRecipes: false,
     canUseAIRecommendations: false,
     canShareMealPlans: false,
   },
@@ -53,7 +51,6 @@ const TIER_LIMITS = {
     canExportGroceryList: true,
     canImportRecipes: true,
     canUseAdvancedFilters: true,
-    canAccessPremiumRecipes: false,
     canUseAIRecommendations: false,
     canShareMealPlans: true,
   },
@@ -63,7 +60,6 @@ const TIER_LIMITS = {
     canExportGroceryList: true,
     canImportRecipes: true,
     canUseAdvancedFilters: true,
-    canAccessPremiumRecipes: true,
     canUseAIRecommendations: true,
     canShareMealPlans: true,
   },
@@ -205,7 +201,6 @@ export function useFeatureAccess() {
     canExportGroceryList: checkFeatureAccess('canExportGroceryList'),
     canImportRecipes: checkFeatureAccess('canImportRecipes'),
     canUseAdvancedFilters: checkFeatureAccess('canUseAdvancedFilters'),
-    canAccessPremiumRecipes: checkFeatureAccess('canAccessPremiumRecipes'),
     canUseAIRecommendations: checkFeatureAccess('canUseAIRecommendations'),
     canShareMealPlans: checkFeatureAccess('canShareMealPlans'),
     currentTier,
