@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { Sparkles, RefreshCw, AlertCircle, X, Save, ExternalLink, Crown, Lock, TrendingUp, Upload, FileText } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertCircle, X, Save, ExternalLink, Crown, Lock, TrendingUp, Upload, FileText, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import ChangeRecipeModal from '../components/ChangeRecipeModal';
@@ -50,6 +50,9 @@ function WeeklyPlannerPage() {
   const [selectedSavedPlan, setSelectedSavedPlan] = useState<string>('');
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState('');
+
+  // Print state
+  const [isPrintMode, setIsPrintMode] = useState(false);
 
   // Usage tracking state
   const [showUsageWarning, setShowUsageWarning] = useState(false);
@@ -355,6 +358,14 @@ function WeeklyPlannerPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handlePrintPlan = () => {
+    setIsPrintMode(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrintMode(false);
+    }, 100);
+  };
+
   const handleChangeRecipeRequest = (dayId: string, mealId: string, mealType: string, category: 'main' | 'side') => {
     setChangeModalData({ dayId, mealId, mealType, category });
     setShowChangeModal(true);
@@ -455,6 +466,92 @@ function WeeklyPlannerPage() {
     }
   };
 
+  // Print view component
+  if (isPrintMode) {
+    return (
+      <div className="print:block hidden">
+        <style>{`
+          @media print {
+            body { font-size: 12px; margin: 0; }
+            header, footer { display: none !important; }
+            .print-header { border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+            .print-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+            .print-day { border: 1px solid #ccc; padding: 10px; min-height: 200px; }
+            .print-day-header { font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            .print-meal-section { margin-bottom: 15px; }
+            .print-meal-type { font-weight: bold; font-size: 10px; color: #666; margin-bottom: 5px; text-transform: uppercase; }
+            .print-recipe { font-size: 11px; margin-bottom: 3px; padding: 2px 0; }
+            .print-recipe-main { font-weight: 600; }
+            .print-recipe-side { font-style: italic; color: #666; }
+            .print-no-meals { font-style: italic; color: #999; font-size: 10px; }
+          }
+        `}</style>
+        <div className="max-w-full mx-auto p-4">
+          <div className="print-header">
+            <h1 className="text-2xl font-bold text-center">Weekly Meal Plan</h1>
+            <p className="text-center text-sm text-gray-600 mt-2">
+              Generated on {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+          
+          <div className="print-grid">
+            {days.map((day) => (
+              <div key={day.id} className="print-day">
+                <div className="print-day-header">
+                  <div>{day.name}</div>
+                  <div className="text-xs text-gray-500">{day.date}</div>
+                </div>
+                
+                {['breakfast', 'lunch', 'dinner'].map((mealType) => {
+                  const mealsForType = day.meals.filter(meal => meal.type === mealType);
+                  const mainMeals = mealsForType.filter(meal => meal.category === 'main');
+                  const sideMeals = mealsForType.filter(meal => meal.category === 'side');
+                  
+                  return (
+                    <div key={mealType} className="print-meal-section">
+                      <div className="print-meal-type">{mealType}</div>
+                      {mealsForType.length === 0 ? (
+                        <div className="print-no-meals">No meals planned</div>
+                      ) : (
+                        <>
+                          {mainMeals.map((meal, index) => (
+                            <div key={meal.id} className="print-recipe print-recipe-main">
+                              {meal.name}
+                            </div>
+                          ))}
+                          {sideMeals.map((meal, index) => (
+                            <div key={meal.id} className="print-recipe print-recipe-side">
+                              + {meal.name}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          
+          {/* Summary section */}
+          <div className="mt-6 pt-4 border-t border-gray-300">
+            <h3 className="font-bold mb-2">Weekly Summary</h3>
+            <div className="text-xs">
+              <p>Total meals planned: {days.reduce((total, day) => total + day.meals.length, 0)}</p>
+              <p>Main dishes: {days.reduce((total, day) => total + day.meals.filter(m => m.category === 'main').length, 0)}</p>
+              <p>Side dishes: {days.reduce((total, day) => total + day.meals.filter(m => m.category === 'side').length, 0)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       {isAutofilling && (
@@ -517,6 +614,16 @@ function WeeklyPlannerPage() {
         <h2 className="text-xl font-medium text-gray-800 px-1">Weekly Meal Plan</h2>
         <div className="flex gap-2">
           {/* Import/Export Actions */}
+          <button
+            onClick={handlePrintPlan}
+            className="btn-secondary"
+            disabled={days.every(day => day.meals.length === 0)}
+            title="Print weekly meal plan"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Print Plan
+          </button>
+          
           <button
             onClick={() => setShowImportModal(true)}
             className="btn-secondary"
