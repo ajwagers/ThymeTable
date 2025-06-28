@@ -490,7 +490,7 @@ function WeeklyPlannerPage() {
           <button
             onClick={() => setShowImportModal(true)}
             className="btn-secondary"
-            title="Import a meal plan"
+            title="Import CSV or load saved meal plan"
           >
             <Upload className="w-4 h-4 mr-2" />
             Import
@@ -728,7 +728,7 @@ function WeeklyPlannerPage() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                   <Upload className="w-5 h-5 mr-2 text-primary-500" />
-                  Import Meal Plan
+                  Import or Load Meal Plan
                 </h3>
                 <button
                   onClick={() => setShowImportModal(false)}
@@ -739,18 +739,73 @@ function WeeklyPlannerPage() {
               </div>
 
               <div className="space-y-4">
+                {/* Import Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Import Type
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        value="csv"
+                        checked={importType === 'csv'}
+                        onChange={(e) => setImportType(e.target.value as 'csv' | 'saved')}
+                        className="mr-2"
+                      />
+                      Import CSV File
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        value="saved"
+                        checked={importType === 'saved'}
+                        onChange={(e) => setImportType(e.target.value as 'csv' | 'saved')}
+                        className="mr-2"
+                      />
+                      Load Saved Plan
+                    </label>
+                  </div>
+                </div>
+
+                {importType === 'csv' ? (
                 <div>
                   <label htmlFor="import-data" className="block text-sm font-medium text-gray-700 mb-2">
-                    Meal Plan Data (JSON)
+                    CSV Data
                   </label>
                   <textarea
                     id="import-data"
                     value={importData}
                     onChange={(e) => setImportData(e.target.value)}
                     className="w-full h-64 px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
-                    placeholder="Paste your exported meal plan JSON data here..."
+                    placeholder="Paste your CSV data here or copy from a spreadsheet..."
                   />
                 </div>
+                ) : (
+                  <div>
+                    <label htmlFor="saved-plan" className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Saved Meal Plan
+                    </label>
+                    <select
+                      id="saved-plan"
+                      value={selectedSavedPlan}
+                      onChange={(e) => setSelectedSavedPlan(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="">Choose a saved meal plan...</option>
+                      {savedMealPlans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.name} - {new Date(plan.created_at).toLocaleDateString()}
+                        </option>
+                      ))}
+                    </select>
+                    {savedMealPlans.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        No saved meal plans found. Save a meal plan first to load it here.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {importError && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -758,22 +813,35 @@ function WeeklyPlannerPage() {
                   </div>
                 )}
 
-                <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+                {importType === 'csv' && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
                   <h4 className="text-sm font-medium text-amber-800 mb-2">⚠️ Warning:</h4>
                   <p className="text-sm text-amber-700">
-                    Importing a meal plan will replace your current weekly plan. Make sure to export your current plan first if you want to keep it.
+                      Importing will replace your current weekly plan. Export your current plan first if you want to keep it.
                   </p>
                 </div>
+                )}
 
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                {importType === 'csv' ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                   <h4 className="text-sm font-medium text-blue-800 mb-2">How to import:</h4>
                   <ol className="text-sm text-blue-700 space-y-1">
-                    <li>1. Export a meal plan from Weekly Diet Planner App or another source</li>
-                    <li>2. Copy the JSON data from the exported file</li>
+                      <li>1. Export a meal plan as CSV from Weekly Diet Planner App</li>
+                      <li>2. Open the CSV file in a spreadsheet app or text editor</li>
                     <li>3. Paste it in the text area above</li>
-                    <li>4. Click "Import Plan" to load it into your current week</li>
+                      <li>4. Click "Import CSV" to load it into your current week</li>
+                      <li>5. CSV format: Day,Meal Type,Recipe Name,Prep Time,Servings,Calories,Ingredients,Instructions</li>
                   </ol>
                 </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                    <h4 className="text-sm font-medium text-green-800 mb-2">Load Saved Plan:</h4>
+                    <p className="text-sm text-green-700">
+                      Select one of your previously saved meal plans to load it into your current week. 
+                      This will replace your current meal plan.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 mt-6">
@@ -785,19 +853,23 @@ function WeeklyPlannerPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleImportMealPlan}
-                  disabled={!importData.trim() || importing}
+                  onClick={importType === 'csv' ? handleImportMealPlan : handleLoadSavedPlan}
+                  disabled={
+                    importing || 
+                    (importType === 'csv' && !importData.trim()) ||
+                    (importType === 'saved' && !selectedSavedPlan)
+                  }
                   className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {importing ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                      Importing...
+                      {importType === 'csv' ? 'Importing...' : 'Loading...'}
                     </div>
                   ) : (
                     <>
                       <Upload className="w-4 h-4 mr-2" />
-                      Import Plan
+                      {importType === 'csv' ? 'Import CSV' : 'Load Plan'}
                     </>
                   )}
                 </button>
