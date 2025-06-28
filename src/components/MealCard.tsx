@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import { Eye, Shuffle, MoreVertical, Clock, Users, Utensils, Trash2 } from 'lucide-react';
+import { Eye, Shuffle, MoreVertical, Clock, Users, Utensils, Trash2, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Meal } from '../types';
 
@@ -25,6 +25,7 @@ const MealCard: React.FC<MealCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isCardHovered, setIsCardHovered] = useState(false);
 
   const handleViewRecipe = () => {
     if (meal.recipeId) {
@@ -67,9 +68,14 @@ const MealCard: React.FC<MealCardProps> = ({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`meal-card ${getMealTypeColor()} ${
+          className={`meal-card group relative transition-all duration-200 ${getMealTypeColor()} ${
             snapshot.isDragging ? 'shadow-lg rotate-3 scale-105' : ''
-          } transition-all duration-200`}
+          }`}
+          onMouseEnter={() => setIsCardHovered(true)}
+          onMouseLeave={() => {
+            setIsCardHovered(false);
+            setShowDropdown(false);
+          }}
         >
           <div className="relative">
             {/* Category Badge */}
@@ -84,22 +90,32 @@ const MealCard: React.FC<MealCardProps> = ({
                   e.stopPropagation();
                   setShowDropdown(!showDropdown);
                 }}
-                className="p-1 hover:bg-white/50 rounded-full transition-colors"
+                className={`p-2 rounded-full shadow-lg transition-all duration-200 transform ${
+                  isCardHovered || showDropdown
+                    ? 'bg-white scale-110 opacity-100 shadow-xl' 
+                    : 'bg-white/70 scale-100 opacity-60'
+                } hover:bg-white hover:scale-125 hover:shadow-2xl`}
+                title="Recipe options"
               >
-                <MoreVertical className="w-4 h-4 text-gray-600" />
+                <MoreVertical className={`w-4 h-4 transition-colors duration-200 ${
+                  isCardHovered || showDropdown ? 'text-gray-800' : 'text-gray-600'
+                }`} />
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
+                <div className="absolute top-14 right-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Small arrow pointing up */}
+                  <div className="absolute -top-1 right-4 w-2 h-2 bg-white border-l border-t border-gray-200 transform rotate-45"></div>
+                  
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleViewRecipe();
                       setShowDropdown(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center transition-colors duration-150"
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-4 h-4 mr-3 text-blue-500" />
                     View Recipe
                   </button>
                   <button
@@ -108,9 +124,9 @@ const MealCard: React.FC<MealCardProps> = ({
                       handleChangeRecipe();
                       setShowDropdown(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center transition-colors duration-150"
                   >
-                    <Shuffle className="w-4 h-4" />
+                    <Shuffle className="w-4 h-4 mr-3 text-green-500" />
                     Change Recipe
                   </button>
                   <button
@@ -118,9 +134,9 @@ const MealCard: React.FC<MealCardProps> = ({
                       e.stopPropagation();
                       handleRemoveRecipe();
                     }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 text-red-600 flex items-center gap-2"
+                    className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center transition-colors duration-150 border-t border-gray-100 mt-1 pt-3"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 mr-3 text-red-500" />
                     Remove Recipe
                   </button>
                 </div>
