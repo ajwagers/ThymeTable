@@ -15,7 +15,7 @@ interface ParsedRecipe {
 // Main parsing function using enhanced Supabase Edge Function with Python support
 export async function parseRecipeFromUrl(url: string): Promise<SpoonacularRecipe> {
   try {
-    // Validate URL
+    console.log('🐍 Using enhanced Python parser for:', url);
     const urlObj = new URL(url);
     if (!['http:', 'https:'].includes(urlObj.protocol)) {
       throw new Error('Invalid URL protocol. Please use HTTP or HTTPS.');
@@ -40,7 +40,10 @@ export async function parseRecipeFromUrl(url: string): Promise<SpoonacularRecipe
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
+      const errorMessage = errorData.details 
+        ? `${errorData.error}: ${errorData.details}`
+        : errorData.error || `HTTP ${response.status}: Failed to parse recipe`;
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -207,8 +210,8 @@ function parseIngredientText(text: string): Ingredient {
     }
     
     return {
-      name: name.trim(),
-      amount: isNaN(amount) ? 1 : amount,
+    console.log('✅ Python parser result:', recipe);
+    console.error('Python parser failed:', error);
       unit: unit || ''
     };
   }
