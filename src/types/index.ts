@@ -53,6 +53,7 @@ export interface SpoonacularRecipe {
   cuisines: string[];
   instructions?: string[];
   ingredients?: Ingredient[];
+  recipeData?: SpoonacularRecipe; // Store complete recipe data for user-created recipes
   dishTypes?: string[];
   isUserCreated?: boolean;  // Add this field
 }

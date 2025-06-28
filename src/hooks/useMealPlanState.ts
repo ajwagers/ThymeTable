@@ -145,14 +145,16 @@ export const useMealPlanState = () => {
       type: mealType as 'breakfast' | 'lunch' | 'dinner',
       category,
       cuisine: recipe.cuisines?.[0] || 'Various',
+      recipeData: recipe, // Store the complete recipe data
       prepTime: recipe.readyInMinutes,
       servings: recipe.servings,
       calories: recipe.calories,
-      image: recipe.image || '',
+      image: recipe.image || '/No Image.png',
       ingredients: recipe.ingredients || []
     };
 
     console.log('✅ Created meal from user recipe with recipeId:', meal.recipeId, 'for recipe:', recipe.title);
+    console.log('✅ Stored recipe data:', meal.recipeData);
     return meal;
   };
 

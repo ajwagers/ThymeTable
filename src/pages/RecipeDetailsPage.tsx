@@ -58,7 +58,7 @@ function RecipeDetailsPage() {
                     foundRecipe = {
                       ...meal.recipeData,
                       // Ensure we have a placeholder image if none exists
-                      image: meal.recipeData.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'
+                      image: meal.recipeData.image || '/No Image.png'
                     };
                   } else {
                     // Fallback to constructing from meal data
@@ -68,7 +68,7 @@ function RecipeDetailsPage() {
                     readyInMinutes: meal.readyInMinutes || 30,
                     servings: meal.servings || 4,
                     calories: meal.calories || 300,
-                      image: meal.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
+                      image: meal.image || '/No Image.png',
                     cuisines: meal.cuisines || [],
                     instructions: meal.instructions || [],
                     ingredients: meal.ingredients || [],
@@ -83,6 +83,7 @@ function RecipeDetailsPage() {
             }
             
             if (foundRecipe) {
+              console.log('Found user recipe:', foundRecipe);
               // Process ingredients for display
               const processedIngredients = (foundRecipe.ingredients || []).map(ingredient => ({
                 ...ingredient,

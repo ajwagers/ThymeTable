@@ -78,7 +78,7 @@ export function AddRecipeModal({ isOpen, onClose, onSave, mealType = 'dinner', c
         readyInMinutes: parseInt(prepTime) || 30,
         servings: parseInt(servings) || 4,
         calories: parseInt(calories) || 300,
-        image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400', // Default placeholder image
+        image: '/No Image.png', // Use custom placeholder image
         cuisines: cuisines.filter(c => c.trim()),
         instructions: instructions.filter(i => i.trim()),
         ingredients,
