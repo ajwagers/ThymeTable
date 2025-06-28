@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Draggable } from '@hello-pangea/dnd';
 import { Eye, Shuffle, MoreVertical, Clock, Users, Utensils, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Meal } from '../types';
@@ -10,31 +11,38 @@ interface MealCardProps {
   isHovered?: boolean;
   onChangeRecipe?: (mealId: string, mealType: string, category: 'main' | 'side', useRandom?: boolean, favoriteRecipeId?: number) => void;
   dayId?: string;
+  onRemoveRecipe?: (mealId: string) => void;
 }
 
 const MealCard: React.FC<MealCardProps> = ({ 
   meal, 
   index, 
   isExpanded = false, 
-  isHovered = false,
+  isHovered = false, 
   onChangeRecipe,
-  dayId
+  dayId,
+  onRemoveRecipe
 }) => {
   const navigate = useNavigate();
-  const [showActions, setShowActions] = React.useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
-  const handleViewRecipe = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleViewRecipe = () => {
     if (meal.recipeId) {
       navigate(`/recipe/${meal.recipeId}`);
     }
   };
 
-  const handleChangeRecipe = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleChangeRecipe = () => {
     if (onChangeRecipe) {
       onChangeRecipe(meal.id, meal.type, meal.category);
     }
+  };
+
+  const handleRemoveRecipe = () => {
+    if (onRemoveRecipe) {
+      onRemoveRecipe(meal.id);
+    }
+    setShowDropdown(false);
   };
 
   const getMealTypeColor = () => {
@@ -47,11 +55,9 @@ const MealCard: React.FC<MealCardProps> = ({
   };
 
   const getCategoryBadgeColor = () => {
-    switch (meal.category) {
-      case 'main': return 'bg-primary-100 text-primary-700';
-      case 'side': return 'bg-terra-100 text-terra-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+    return meal.category === 'main' 
+      ? 'bg-primary-100 text-primary-700' 
+      : 'bg-terra-100 text-terra-700';
   };
 
   return (
@@ -62,91 +68,98 @@ const MealCard: React.FC<MealCardProps> = ({
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className={`meal-card ${getMealTypeColor()} ${
-            snapshot.isDragging ? 'shadow-lg scale-105 rotate-2' : ''
+            snapshot.isDragging ? 'shadow-lg rotate-3 scale-105' : ''
           } transition-all duration-200`}
-          onMouseEnter={() => setShowActions(true)}
-          onMouseLeave={() => setShowActions(false)}
         >
-          {snapshot.isDragging && (
-            <div className="absolute -top-2 -right-2 bg-primary-500 text-white text-xs px-2 py-1 rounded-full">
-              Moving...
+          <div className="relative">
+            {/* Category Badge */}
+            <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${getCategoryBadgeColor()}`}>
+              {meal.category}
             </div>
-          )}
 
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-gray-800 text-sm line-clamp-2 leading-tight">
-                {meal.name}
-              </h4>
-              {meal.category && (
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getCategoryBadgeColor()}`}>
-                  {meal.category}
-                </span>
-              )}
-            </div>
-            
-            <div className="relative ml-2">
+            {/* Dropdown Menu */}
+            <div className="absolute top-2 right-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowActions(!showActions);
+                  setShowDropdown(!showDropdown);
                 }}
-                className={`p-1 rounded-full transition-all duration-200 ${
-                  showActions || isHovered ? 'bg-white shadow-sm opacity-100' : 'opacity-0'
-                }`}
+                className="p-1 hover:bg-white/50 rounded-full transition-colors"
               >
                 <MoreVertical className="w-4 h-4 text-gray-600" />
               </button>
-              
-              {showActions && (
-                <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-[120px]">
-                  {meal.recipeId && (
-                    <button
-                      onClick={handleViewRecipe}
-                      className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Recipe
-                    </button>
-                  )}
+
+              {showDropdown && (
+                <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
                   <button
-                    onClick={handleChangeRecipe}
-                    className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewRecipe();
+                      setShowDropdown(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <Shuffle className="w-4 h-4 mr-2" />
+                    <Eye className="w-4 h-4" />
+                    View Recipe
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleChangeRecipe();
+                      setShowDropdown(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Shuffle className="w-4 h-4" />
                     Change Recipe
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveRecipe();
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 text-red-600 flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Remove Recipe
                   </button>
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="flex justify-between text-xs text-gray-500">
-            <div className="flex items-center">
-              <Clock className="w-3 h-3 mr-1" />
-              <span>{meal.readyInMinutes} min</span>
-            </div>
-            
-            <div className="flex items-center">
-              <Users className="w-3 h-3 mr-1" />
-              <span>{meal.servings} serv</span>
-            </div>
-            
-            <div className="flex items-center">
-              <Utensils className="w-3 h-3 mr-1" />
-              <span>{meal.calories} cal</span>
-            </div>
-          </div>
-
-          {meal.image && (
-            <div className="mt-2 rounded overflow-hidden">
+            {/* Recipe Image */}
+            {meal.image && (
               <img 
                 src={meal.image} 
                 alt={meal.name}
-                className="w-full h-16 object-cover"
+                className="w-full h-24 object-cover rounded-t-lg"
               />
+            )}
+
+            {/* Recipe Content */}
+            <div className="p-3">
+              <h4 className="font-medium text-gray-800 text-sm line-clamp-2 mb-2">
+                {meal.name}
+              </h4>
+              
+              <div className="flex justify-between text-xs text-gray-500">
+                <div className="flex items-center">
+                  <Clock className="w-3 h-3 mr-1" />
+                  <span>{meal.readyInMinutes} min</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <Users className="w-3 h-3 mr-1" />
+                  <span>{meal.servings} serv</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <Utensils className="w-3 h-3 mr-1" />
+                  <span>{meal.calories} cal</span>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </Draggable>
