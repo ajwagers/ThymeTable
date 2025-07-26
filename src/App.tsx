@@ -20,8 +20,8 @@ import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 function App() {
   return (
     <AuthProvider>
-      <DietaryProvider>
-        <SubscriptionProvider>
+      <SubscriptionProvider>
+        <DietaryProvider>
           <FavoritesProvider>
             <MeasurementProvider>
               <ServingsProvider>
@@ -124,8 +124,8 @@ function App() {
               </ServingsProvider>
             </MeasurementProvider>
           </FavoritesProvider>
-        </SubscriptionProvider>
-      </DietaryProvider>
+        </DietaryProvider>
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }
