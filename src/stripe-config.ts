@@ -46,7 +46,7 @@ export const stripeProducts: StripeProduct[] = [
   },
   {
     id: 'prod_SZRrSsfDZTjv8X',
-    priceId: 'YOUR_ACTUAL_ANNUAL_PREMIUM_PRICE_ID',
+    priceId: 'price_1ReIy503qXIWnFNqEwKyvgk8',
     name: 'Annual Premium Membership',
     description: 'Premium Membership unlocks all features of the Weekly Diet Planner App.',
     mode: 'subscription',
