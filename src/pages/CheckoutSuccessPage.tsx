@@ -15,9 +15,6 @@ function CheckoutSuccessPage() {
   useEffect(() => {
     const priceId = searchParams.get('price_id');
     
-    // Also refresh subscription data from the server (this may take longer due to webhook processing)
-    refreshSubscription();
-
     // Start countdown timer for automatic redirect
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -25,7 +22,10 @@ function CheckoutSuccessPage() {
           setIsRedirecting(true);
           // Redirect to main app after countdown
           setTimeout(() => {
-            navigate('/', { replace: true });
+            // Refresh subscription data just before redirect to ensure we have the latest status
+            refreshSubscription().finally(() => {
+              navigate('/', { replace: true });
+            });
           }, 500);
           return 0;
         }
@@ -34,7 +34,7 @@ function CheckoutSuccessPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [refreshSubscription, navigate, searchParams]);
+  }, [navigate, searchParams, refreshSubscription]);
 
   const sessionId = searchParams.get('session_id');
   const priceId = searchParams.get('price_id');
