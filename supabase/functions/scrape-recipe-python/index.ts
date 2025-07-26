@@ -71,7 +71,6 @@ def main():
             "ingredients": scraper.ingredients(),
             # The instructions() method returns a single string; split it and remove empty lines for cleaner JSON
             "instructions": [line for line in scraper.instructions().split('\\n') if line.strip()],
-            "image_url": scraper.image(),
             "nutrients": scraper.nutrients(),
             "canonical_url": scraper.canonical_url(),
             "host": scraper.host(),
