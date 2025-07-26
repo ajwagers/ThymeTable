@@ -3,9 +3,9 @@ import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import { DietaryProvider } from './contexts/DietaryContext';
 import { ServingsProvider } from './contexts/ServingsContext';
 import { MeasurementProvider } from './contexts/MeasurementContext';
-import { DietaryProvider } from './contexts/DietaryContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import Header from './components/Header';
 import WeeklyPlannerPage from './pages/WeeklyPlannerPage';
@@ -21,8 +21,8 @@ function App() {
   return (
     <AuthProvider>
       <SubscriptionProvider>
-        <FavoritesProvider>
-          <DietaryProvider>
+        <DietaryProvider>
+          <FavoritesProvider>
             <MeasurementProvider>
               <ServingsProvider>
                 <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -123,8 +123,8 @@ function App() {
                 </div>
               </ServingsProvider>
             </MeasurementProvider>
-          </DietaryProvider>
-        </FavoritesProvider>
+          </FavoritesProvider>
+        </DietaryProvider>
       </SubscriptionProvider>
     </AuthProvider>
   );
