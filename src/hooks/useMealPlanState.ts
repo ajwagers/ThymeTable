@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Day, DragResult, Meal } from '../types';
 import { createEmptyWeek } from '../data/initialData';
 import { getRandomRecipes, getRecipeDetails } from '../services/spoonacular';
+import { useAuth } from '../contexts/AuthContext';
 import { useDietary } from '../contexts/DietaryContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 
 export const useMealPlanState = () => {
+  const { user } = useAuth();
   const { getSpoonacularParams, isRecipeAllowed } = useDietary();
   const { favorites } = useFavorites();
   const { currentTier } = useSubscription();
@@ -23,8 +25,52 @@ export const useMealPlanState = () => {
   const [lastRandomRecipeDate, setLastRandomRecipeDate] = useState<string>('');
   const FREE_TIER_DAILY_RANDOM_LIMIT = 10;
 
+  // Reset meal plan state when user changes
+  useEffect(() => {
+    if (!user) {
+      // User logged out - reset to empty state
+      setDays(createEmptyWeek());
+      setApiError(null);
+      setLoadingRecipes(new Set());
+      setDailyRandomRecipeCount(0);
+      setLastRandomRecipeDate('');
+    } else {
+      // User logged in - try to load their meal plan from localStorage
+      // If no meal plan exists, this will use the default empty plan
+      const savedMealPlan = localStorage.getItem('mealPlan');
+      if (savedMealPlan) {
+        try {
+          const parsedDays = JSON.parse(savedMealPlan);
+          setDays(parsedDays);
+        } catch (error) {
+          console.error('Error parsing saved meal plan:', error);
+          setDays(createEmptyWeek());
+        }
+      } else {
+        setDays(createEmptyWeek());
+      }
+      
+      // Reset usage tracking for the new user session
+      const today = new Date().toDateString();
+      const savedDate = localStorage.getItem('lastRandomRecipeDate');
+      const savedCount = parseInt(localStorage.getItem('dailyRandomRecipeCount') || '0');
+      
+      if (savedDate === today) {
+        setDailyRandomRecipeCount(savedCount);
+        setLastRandomRecipeDate(savedDate);
+      } else {
+        setDailyRandomRecipeCount(0);
+        setLastRandomRecipeDate(today);
+        localStorage.setItem('lastRandomRecipeDate', today);
+        localStorage.setItem('dailyRandomRecipeCount', '0');
+      }
+    }
+  }, [user]);
+
   // Load daily usage for free tier
   useEffect(() => {
+    if (!user) return; // Don't track usage if no user
+    
     if (currentTier === 'free') {
       const today = new Date().toDateString();
       const savedDate = localStorage.getItem('lastRandomRecipeDate');
@@ -40,7 +86,7 @@ export const useMealPlanState = () => {
         localStorage.setItem('dailyRandomRecipeCount', '0');
       }
     }
-  }, [currentTier]);
+  }, [user, currentTier]);
 
   const resetWeek = () => {
     setDays(createEmptyWeek());
@@ -204,9 +250,7 @@ export const useMealPlanState = () => {
     const mealNames = {
       breakfast: category === 'main' ? 'Simple Breakfast' : 'Breakfast Side',
       lunch: category === 'main' ? 'Quick Lunch' : 'Lunch Side',
-      isUserCreated: true,
-      // Store the complete recipe data for later retrieval
-      recipeData: recipe
+      dinner: category === 'main' ? 'Easy Dinner' : 'Dinner Side'
     };
 
     return {
@@ -248,12 +292,6 @@ export const useMealPlanState = () => {
     // Check if user can use autofill (Premium feature)
     if (currentTier !== 'premium') {
       setApiError('Autofill Calendar is a Premium feature. Upgrade to Premium to use AI-powered meal planning.');
-      return;
-    }
-
-    // Autofill is a Premium-only feature
-    if (currentTier !== 'premium') {
-      setApiError('Autofill Calendar is a Premium feature. Upgrade to access AI-powered meal planning.');
       return;
     }
 
@@ -315,12 +353,6 @@ export const useMealPlanState = () => {
 
   const fetchRandomRecipe = async (dayId: string, mealType: string, category: 'main' | 'side' = 'main') => {
     // Check daily limit for free tier
-    if (currentTier === 'free' && dailyRandomRecipeCount >= FREE_TIER_DAILY_LIMIT) {
-      setApiError(`Daily random recipe limit reached (${FREE_TIER_DAILY_LIMIT}). Upgrade to Standard or Premium for unlimited random recipes.`);
-      return;
-    }
-
-    // Check daily limit for free tier
     if (currentTier === 'free' && dailyRandomRecipeCount >= FREE_TIER_DAILY_RANDOM_LIMIT) {
       setApiError(`Daily random recipe limit reached (${FREE_TIER_DAILY_RANDOM_LIMIT}). Upgrade to Standard or Premium for unlimited random recipes.`);
       return;
@@ -378,13 +410,6 @@ export const useMealPlanState = () => {
           setDailyRandomRecipeCount(newCount);
           localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
         }
-      }
-      
-      // Update daily count for free tier on successful recipe fetch
-      if (currentTier === 'free' && meal) {
-        const newCount = dailyRandomRecipeCount + 1;
-        setDailyRandomRecipeCount(newCount);
-        localStorage.setItem('dailyRandomRecipeCount', newCount.toString());
       }
     } catch (error) {
       console.error('Error fetching random recipe:', error);
@@ -613,8 +638,9 @@ export const useMealPlanState = () => {
   };
 
   useEffect(() => {
+    if (!user) return; // Don't save if no user
     localStorage.setItem('mealPlan', JSON.stringify(days));
-  }, [days]);
+  }, [days, user]);
 
   const handleDragEnd = (result: DragResult) => {
     const { destination, source, draggableId } = result;
@@ -688,7 +714,9 @@ export const useMealPlanState = () => {
     setDays(newDays);
     
     // Save to localStorage
-    localStorage.setItem('mealPlan', JSON.stringify(newDays));
+    if (user) {
+      localStorage.setItem('mealPlan', JSON.stringify(newDays));
+    }
   };
 
   const getListStyle = (isDraggingOver: boolean) => {
@@ -709,8 +737,6 @@ export const useMealPlanState = () => {
     autofillCalendar,
     removeRecipe,
     isAutofilling,
-    removeRecipe,
-    removeRecipe,
     resetWeek,
     apiError,
     isRecipeLoading,
