@@ -24,7 +24,7 @@ export const stripeProducts: StripeProduct[] = [
   },
   {
     id: 'prod_SZRrHCyKckpmRQ',
-    priceId: 'YOUR_ACTUAL_ANNUAL_STANDARD_PRICE_ID',
+    priceId: 'price_1ReIy903qXIWnFNqrdZdr2PZ',
     name: 'Annual Standard Membership',
     description: 'Standard Membership unlocks the standard tier features of the Weekly Diet Planner App.',
     mode: 'subscription',
