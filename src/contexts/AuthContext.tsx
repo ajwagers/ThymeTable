@@ -43,6 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
+      // Clear user-specific local storage data before signing out
+      localStorage.removeItem('mealPlan');
+      localStorage.removeItem('dailyRandomRecipeCount');
+      localStorage.removeItem('lastRandomRecipeDate');
+      localStorage.removeItem('dailySearchCount');
+      localStorage.removeItem('lastSearchDate');
+      
     if (error) throw error;
   };
 
