@@ -12,8 +12,8 @@ export interface StripeProduct {
 
 export const stripeProducts: StripeProduct[] = [
   {
-    id: 'prod_SZ3g1ykeQCtNu4',
-    priceId: 'price_1RdvYo03xOQRAfiHLrCApNpF',
+    id: 'prod_SZRrefckGcKJap',
+    priceId: 'price_1ReIyE03qXIWnFNq9QBBJMld',
     name: 'Monthly Standard Membership',
     description: 'Standard Membership unlocks the standard tier features of the Weekly Diet Planner App.',
     mode: 'subscription',
@@ -23,8 +23,8 @@ export const stripeProducts: StripeProduct[] = [
     tier: 'standard'
   },
   {
-    id: 'prod_SZE42TklCwEf8i',
-    priceId: 'price_1Re5cG03xOQRAfiHebSj9CCu',
+    id: 'prod_SZRrHCyKckpmRQ',
+    priceId: 'price_1ReIy903qXIWnFNqrdZdr2PZ',
     name: 'Annual Standard Membership',
     description: 'Standard Membership unlocks the standard tier features of the Weekly Diet Planner App.',
     mode: 'subscription',
@@ -34,8 +34,8 @@ export const stripeProducts: StripeProduct[] = [
     tier: 'standard'
   },
   {
-    id: 'prod_SXimRxxHi8UZxj',
-    priceId: 'price_1RcdLK03xOQRAfiHrJEHhP7a',
+    id: 'prod_SZRsIxM9Z4tU5s',
+    priceId: 'price_1ReIyH03qXIWnFNq3xrvAgjU',
     name: 'Monthly Premium Membership',
     description: 'Premium Membership gives you access to all the features of the Weekly Diet Planner App.',
     mode: 'subscription',
@@ -45,8 +45,8 @@ export const stripeProducts: StripeProduct[] = [
     tier: 'premium'
   },
   {
-    id: 'prod_SZE6ADEdr15g6s',
-    priceId: 'price_1Re5e303xOQRAfiHSMoawEJW',
+    id: 'prod_SZRrSsfDZTjv8X',
+    priceId: 'price_1ReIy503qXIWnFNqEwKyvgk8',
     name: 'Annual Premium Membership',
     description: 'Premium Membership unlocks all features of the Weekly Diet Planner App.',
     mode: 'subscription',
