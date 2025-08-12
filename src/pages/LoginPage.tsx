@@ -21,7 +21,7 @@ function LoginPage() {
     {
       icon: <Shield className="w-6 h-6 text-terra-500" />,
       title: "Allergy-Safe Meal Planning",
-      description: "Create weekly meal plans that avoid food allergies, intolerances, and cross-contamination risks",
+      description: "Create weekly meal plans that avoid food allergies, intolerances, and limit cross-contamination risks",
       keywords: ["food allergy meal planner", "allergy-safe recipes", "cross-contamination meal planning"]
     },
     {
@@ -92,7 +92,7 @@ function LoginPage() {
       ? 'Sign Up - Weekly Diet Planner for Restrictive Diets & Food Allergies'
       : 'Sign In - Weekly Diet Planner App for Special Diets',
     description: isSignUp
-      ? 'Join thousands of families managing restrictive diets with our specialized meal planning app. Free trial for celiac, keto, allergies, and medical diets.'
+      ? 'Join other families managing restrictive diets with our specialized meal planning app. Try it for free today!'
       : 'Sign in to your weekly diet planner account. Plan safe meals for celiac, food allergies, keto, gluten-free, and other restrictive diets.',
     keywords: 'weekly meal planner, restrictive diet app, food allergy meal planning, celiac meal planner, keto weekly planner, gluten-free meal planning, medical diet planner, family meal planning app'
   };
