@@ -369,15 +369,14 @@ function LoginPage() {
                 <div className="text-center">
                   <h3 className="font-semibold text-charcoal mb-3">Why Families Choose Our Meal Planning App</h3>
                   <blockquote className="text-sm text-gray-600 italic mb-4">
-                    "Finally found a weekly meal planner that actually understands celiac disease and multiple food allergies. 
-                    Planning safe meals for my family used to take hours - now it takes minutes!"
+                    "Planning safe meals for my family used to take hours - now it takes minutes!"
                   </blockquote>
-                  <cite className="text-xs text-gray-500">- Sarah M., Mother of 3 with Celiac Disease</cite>
+                  <cite className="text-xs text-gray-500">- Anonymous User</cite>
                   
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <p className="text-xs text-gray-600">
-                      <strong>Join 10,000+ families</strong> successfully managing restrictive diets with our specialized meal planning software. 
-                      <strong>Free trial available</strong> - no credit card required.
+                      <strong>Join other families</strong> successfully managing restrictive diets with our specialized meal planning software. 
+                      <strong>Start using the free tier today!</strong> - no credit card required.
                     </p>
                   </div>
                 </div>
@@ -389,7 +388,7 @@ function LoginPage() {
           <footer className="mt-12 pt-8 border-t border-primary-200">
             <div className="text-center text-sm text-gray-600">
               <p>
-                <strong>Weekly Diet Planner App</strong> - The leading meal planning software for families managing 
+                <strong>Weekly Diet Planner App</strong> - An innovative meal planning software for families managing 
                 restrictive diets, food allergies, and medical dietary requirements. Start your free trial today and 
                 discover stress-free meal planning for celiac, keto, gluten-free, and specialized diets.
               </p>
