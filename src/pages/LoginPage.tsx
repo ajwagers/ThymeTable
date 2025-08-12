@@ -171,14 +171,14 @@ function LoginPage() {
                   The only <strong>specialized meal planning app</strong> that understands complex dietary challenges. 
                   Whether you're managing <strong>celiac disease</strong>, <strong>multiple food allergies</strong>, 
                   <strong>keto</strong>, <strong>gluten-free</strong>, or other <strong>medical dietary restrictions</strong>, 
-                  our weekly diet planner makes complicated meal planning simple and safe for your entire family.
+                  our weekly diet planner makes complicated meal planning simple for your entire family.
                 </p>
                 
                 {/* Additional SEO paragraph */}
                 <div className="mt-6 p-4 bg-white/50 rounded-lg">
                   <p className="text-base text-gray-700">
-                    Join over <strong>10,000+ families</strong> who trust our meal planning software to create 
-                    <strong> weekly meal plans</strong> that are safe, nutritious, and delicious. Our app specializes in 
+                    Join over other families who trust our meal planning software to create 
+                    <strong> weekly meal plans</strong> that are safe, nutritious, and delicious. Our app helps with 
                     <strong> allergy-friendly recipes</strong>, <strong>celiac-safe meal planning</strong>, and 
                     <strong> medical diet compliance</strong> - making it the perfect choice for families with complex dietary needs.
                   </p>
