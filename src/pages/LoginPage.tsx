@@ -49,7 +49,7 @@ function LoginPage() {
     {
       icon: <Shield className="w-5 h-5 text-primary-500" />,
       title: "Medically-Compliant Recipes",
-      description: "verified safe for celiac, diabetes, kidney disease, and other medical dietary restrictions"
+      description: "helps you find recipes safe for celiac, diabetes, kidney disease, and other medical dietary restrictions"
     },
     {
       icon: <Filter className="w-5 h-5 text-primary-500" />,
