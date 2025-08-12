@@ -177,7 +177,7 @@ function LoginPage() {
                 {/* Additional SEO paragraph */}
                 <div className="mt-6 p-4 bg-white/50 rounded-lg">
                   <p className="text-base text-gray-700">
-                    Join over other families who trust our meal planning software to create 
+                    Join other families who trust our meal planning software to create 
                     <strong> weekly meal plans</strong> that are safe, nutritious, and delicious. Our app helps with 
                     <strong> allergy-friendly recipes</strong>, <strong>celiac-safe meal planning</strong>, and 
                     <strong> medical diet compliance</strong> - making it the perfect choice for families with complex dietary needs.
