@@ -2,6 +2,8 @@
 
 **Summary:** Managing food allergies doesn't have to make meal planning overwhelming. Learn our top strategies for creating safe, delicious weekly meal plans that work for your family.
 
+![Family meal planning with fresh ingredients and allergen-free foods on a kitchen counter](https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800)
+
 ---
 
 Living with food allergies requires diligence.  Careful planning can help reduce the stress.  A restrictive diet doesn't mean sacrificing flavor or variety in your meals. With the right strategies, you can create weekly meal plans that are both safe and satisfying for your entire family. Here are ten essential tips to streamline your allergy-friendly meal planning process.
