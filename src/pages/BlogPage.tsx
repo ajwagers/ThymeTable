@@ -53,14 +53,7 @@ function BlogPage() {
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button 
-            onClick={() => navigate('/')}
-            className="btn-secondary"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Planner
-          </button>
+        <div className="text-center">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Table Thyme: The Meal Planning Blog</h1>
             <p className="text-gray-600">Expert tips and guides for successful meal planning</p>
