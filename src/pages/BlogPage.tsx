@@ -19,54 +19,6 @@ function BlogPage() {
       category: "Food Allergies",
       tags: ["food allergies", "meal planning", "safety", "tips"],
       image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
-    },
-    {
-      id: 2,
-      title: "The Complete Guide to Gluten-Free Meal Planning",
-      excerpt: "Whether you have celiac disease or gluten sensitivity, this comprehensive guide will help you master gluten-free meal planning with confidence.",
-      content: "Living gluten-free can seem daunting at first, but with the right approach to meal planning, you can enjoy a varied and delicious diet. This guide covers everything from reading labels to meal prep strategies...",
-      author: "Nutrition Expert",
-      date: "2024-01-10",
-      readTime: "8 min read",
-      category: "Gluten-Free",
-      tags: ["gluten-free", "celiac", "meal prep", "guide"],
-      image: "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=800"
-    },
-    {
-      id: 3,
-      title: "Keto Meal Planning: A Week of Delicious Low-Carb Recipes",
-      excerpt: "Discover how to create satisfying keto meal plans that keep you in ketosis while enjoying flavorful, varied meals throughout the week.",
-      content: "The ketogenic diet can be incredibly effective, but meal planning is crucial for success. Here's a complete week of keto-friendly recipes and meal planning strategies...",
-      author: "Keto Specialist",
-      date: "2024-01-05",
-      readTime: "6 min read",
-      category: "Keto",
-      tags: ["keto", "low-carb", "recipes", "weekly planning"],
-      image: "https://images.pexels.com/photos/1640771/pexels-photo-1640771.jpeg?auto=compress&cs=tinysrgb&w=800"
-    },
-    {
-      id: 4,
-      title: "Family Meal Planning: Managing Multiple Dietary Restrictions",
-      excerpt: "When family members have different dietary needs, meal planning can feel impossible. Learn strategies to keep everyone happy and healthy.",
-      content: "Managing a household where one person is vegan, another has food allergies, and someone else follows a keto diet might seem overwhelming. Here's how to make it work...",
-      author: "Family Nutrition Coach",
-      date: "2023-12-28",
-      readTime: "7 min read",
-      category: "Family Planning",
-      tags: ["family", "multiple diets", "meal planning", "strategies"],
-      image: "https://images.pexels.com/photos/1640770/pexels-photo-1640770.jpeg?auto=compress&cs=tinysrgb&w=800"
-    },
-    {
-      id: 5,
-      title: "Seasonal Meal Planning: Making the Most of Fresh Ingredients",
-      excerpt: "Learn how to plan meals around seasonal produce for better nutrition, flavor, and budget-friendly meal planning throughout the year.",
-      content: "Eating seasonally isn't just trendy—it's a smart approach to meal planning that can improve your health, reduce costs, and enhance flavors. Here's how to plan meals around the seasons...",
-      author: "Seasonal Cooking Expert",
-      date: "2023-12-20",
-      readTime: "5 min read",
-      category: "Seasonal Cooking",
-      tags: ["seasonal", "fresh ingredients", "budget-friendly", "nutrition"],
-      image: "https://images.pexels.com/photos/1640769/pexels-photo-1640769.jpeg?auto=compress&cs=tinysrgb&w=800"
     }
   ];
 
@@ -91,7 +43,7 @@ function BlogPage() {
   return (
     <>
       <Helmet>
-        <title>Meal Planning Blog - Weekly Diet Planner App</title>
+        <title>Table Thyme: The Meal Planning Blog - Weekly Diet Planner App</title>
         <meta name="description" content="Expert tips, guides, and strategies for meal planning with restrictive diets, food allergies, and special dietary needs. Learn from nutrition professionals." />
         <meta name="keywords" content="meal planning blog, food allergy tips, gluten-free recipes, keto meal planning, family nutrition, dietary restrictions" />
         <link rel="canonical" href="https://weeklydietplanner.app/blog" />
@@ -108,7 +60,7 @@ function BlogPage() {
             Back to Planner
           </button>
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Meal Planning Blog</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Table Thyme: The Meal Planning Blog</h1>
             <p className="text-gray-600">Expert tips and guides for successful meal planning</p>
           </div>
           <div></div>
