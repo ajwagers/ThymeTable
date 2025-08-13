@@ -312,6 +312,16 @@ function LoginPage() {
                             ? 'Already planning meals with us? Sign in to your account' 
                             : "New to restrictive diet meal planning? Start your free trial"}
                         </button>
+                        {/* New button to link to the blog */}
+                          <div className="mt-4">
+                            <Link
+                              to="/blog"
+                              className="text-primary-600 text-sm font-medium hover:underline inline-flex items-center gap-1"
+                            >
+                              Read Our Blog for Meal Planning Tips
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
                       </div>
                     </>
                   )}
