@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async'; // Add this dependency
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, Calendar, Clock, Shield, Filter, Heart, ChevronRight, Mail, ExternalLink, Users } from 'lucide-react';
+import { LogIn, Calendar, Clock, Shield, Filter, Heart, ChevronRight, Mail, ExternalLink, Users, FileText } from 'lucide-react';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -211,6 +211,21 @@ function LoginPage() {
             <div className="space-y-8">
               {/* Login form */}
               <section aria-labelledby="login-heading">
+                {/* Prominent Blog Link Button */}
+                <div className="mb-6 text-center">
+                  <Link
+                    to="/blog"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-terra-500 to-primary-500 hover:from-terra-600 hover:to-primary-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Read Our Meal Planning Blog
+                    <ExternalLink className="w-4 h-4" />
+                  </Link>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Expert tips and guides for restrictive diet meal planning
+                  </p>
+                </div>
+
                 <div className="bg-white p-6 rounded-lg shadow-lg border border-primary-200">
                   {emailConfirmationRequired ? (
                     <div className="text-center">
@@ -312,16 +327,6 @@ function LoginPage() {
                             ? 'Already planning meals with us? Sign in to your account' 
                             : "New to restrictive diet meal planning? Start your free trial"}
                         </button>
-                        {/* New button to link to the blog */}
-                          <div className="mt-4">
-                            <Link
-                              to="/blog"
-                              className="text-primary-600 text-sm font-medium hover:underline inline-flex items-center gap-1"
-                            >
-                              Read Our Blog for Meal Planning Tips
-                              <ExternalLink className="w-3 h-3" />
-                            </Link>
-                          </div>
                       </div>
                     </>
                   )}
