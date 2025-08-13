@@ -57,6 +57,17 @@ const Header: React.FC = () => {
               <h1 className="text-2xl font-semibold tracking-tight">
                 Weekly Diet <span className="text-lemon">Planner</span>
               </h1>
+
+              {/* New "Back to Planner" button */}
+              {location.pathname.startsWith('/blog') && (
+                <button
+                  onClick={() => navigate('/')}
+                  className="btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  <span>Back to Planner</span>
+                </button>
+              )}
               
               {/* Subscription Status Badge */}
               {user && (
@@ -123,17 +134,6 @@ const Header: React.FC = () => {
                   <FileText className="h-4 w-4 mr-1" />
                   <span>Blog</span>
                 </button>
-
-                {/* New "Back to Planner" button */}
-                {location.pathname.startsWith('/blog') && (
-                  <button
-                    onClick={() => navigate('/')}
-                    className="btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-1" />
-                    <span>Back to Planner</span>
-                  </button>
-                )}
                 
                 {/* Saved Plans - Standard+ feature */}
                 {currentTier === 'free' ? (
