@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Utensils, Clock, Filter, LogOut, ShoppingCart, Heart, BookOpen, ExternalLink, Crown, Lock } from 'lucide-react';
+import { Utensils, Clock, Filter, LogOut, ShoppingCart, Heart, BookOpen, ExternalLink, Crown, Lock, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDietary } from '../contexts/DietaryContext';
 import { useSubscription, useFeatureAccess } from '../contexts/SubscriptionContext';
@@ -112,6 +112,16 @@ const Header: React.FC = () => {
                 >
                   <Heart className="h-4 w-4 mr-1" />
                   <span>Favorites</span>
+                </button>
+
+                <button 
+                  onClick={() => navigate('/blog')}
+                  className={`btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white ${
+                    isActive('/blog') ? 'bg-white/20' : ''
+                  }`}
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  <span>Blog</span>
                 </button>
 
                 {/* Saved Plans - Standard+ feature */}

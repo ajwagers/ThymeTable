@@ -17,6 +17,7 @@ import SavedMealPlansPage from './pages/SavedMealPlansPage';
 import LoginPage from './pages/LoginPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
+import BlogPage from './pages/BlogPage';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/subscription" element={<SubscriptionPage />} />
                         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+                        <Route path="/blog" element={<BlogPage />} />
                         <Route
                           path="/"
                           element={
