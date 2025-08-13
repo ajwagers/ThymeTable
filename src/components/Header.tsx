@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Utensils, Clock, Filter, LogOut, ShoppingCart, Heart, BookOpen, ExternalLink, Crown, Lock, FileText } from 'lucide-react';
+import { Utensils, Clock, Filter, LogOut, ShoppingCart, Heart, BookOpen, ExternalLink, Crown, Lock, FileText, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDietary } from '../contexts/DietaryContext';
 import { useSubscription, useFeatureAccess } from '../contexts/SubscriptionContext';
@@ -213,26 +213,12 @@ const Header: React.FC = () => {
                   <LogOut className="h-4 w-4 mr-1" />
                   <span>Sign Out</span>
                 </button>
-                
-              </>
+              </div>
             )}
-          </div>
           </div>
         </div>
-          <div className="flex items-center space-x-3">
-            {/* New "Back to Planner" button - visible for all users on blog pages */}
-            {location.pathname.startsWith('/blog') && (
-              <button
-                onClick={() => navigate('/')}
-                className="btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              >
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                <span>Back to Planner</span>
-              </button>
-            )}
-            
-            {user && (
-              <>
+      </header>
+
       <DietaryFiltersModal 
         isOpen={showDietaryModal} 
         onClose={() => setShowDietaryModal(false)} 
