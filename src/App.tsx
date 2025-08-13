@@ -36,8 +36,6 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/subscription" element={<SubscriptionPage />} />
                         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
-                        <Route path="/blog" element={<BlogPage />} />
-                        <Route path="/blog/:slug" element={<ArticlePage />} />
                         <Route
                           path="/"
                           element={
