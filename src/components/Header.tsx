@@ -124,6 +124,17 @@ const Header: React.FC = () => {
                   <span>Blog</span>
                 </button>
 
+                {/* New "Back to Planner" button */}
+                {location.pathname.startsWith('/blog') && (
+                  <button
+                    onClick={() => navigate('/')}
+                    className="btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    <span>Back to Planner</span>
+                  </button>
+                )}
+                
                 {/* Saved Plans - Standard+ feature */}
                 {currentTier === 'free' ? (
                   <button 
@@ -202,6 +213,7 @@ const Header: React.FC = () => {
                   <LogOut className="h-4 w-4 mr-1" />
                   <span>Sign Out</span>
                 </button>
+                
               </div>
             )}
           </div>
