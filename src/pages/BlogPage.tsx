@@ -14,7 +14,7 @@ function BlogPage() {
       excerpt: "Managing food allergies doesn't have to make meal planning overwhelming. Learn our top strategies for creating safe, delicious weekly meal plans that work for your family.",
       content: "Meal planning with food allergies requires extra attention to detail, but it doesn't have to be stressful. Here are our top 10 tips to help you create safe, nutritious, and delicious meal plans...",
       author: "Weekly Diet Planner Team",
-      date: "2024-01-15",
+      date: "2025-08-13",
       readTime: "5 min read",
       category: "Food Allergies",
       tags: ["food allergies", "meal planning", "safety", "tips"],
