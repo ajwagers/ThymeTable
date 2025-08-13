@@ -51,6 +51,12 @@ function BlogPage() {
       </Helmet>
 
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        {/* Test content to verify component is rendering */}
+        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+          <h1 className="text-2xl font-bold text-red-600">TEST: BlogPage is rendering!</h1>
+          <p className="text-gray-700">If you see this, the component is working. Posts count: {blogPosts.length}</p>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button 
