@@ -36,6 +36,10 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/subscription" element={<SubscriptionPage />} />
                         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+                        {/* Publicly accessible blog routes */}
+                        <Route path="/blog" element={<BlogPage />} />
+                        <Route path="/blog/:slug" element={<ArticlePage />} />
+                        {/* Private routes */}
                         <Route
                           path="/"
                           element={
