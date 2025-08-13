@@ -18,6 +18,7 @@ import LoginPage from './pages/LoginPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import BlogPage from './pages/BlogPage';
+import ArticlePage from './pages/ArticlePage';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                         <Route path="/subscription" element={<SubscriptionPage />} />
                         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
                         <Route path="/blog" element={<BlogPage />} />
+                        <Route path="/blog/:slug" element={<ArticlePage />} />
                         <Route
                           path="/"
                           element={

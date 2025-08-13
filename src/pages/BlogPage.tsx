@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Calendar, Clock, User, Tag, ChevronRight, Utensils, Heart, Filter, Sparkles } from 'lucide-react';
 
@@ -11,11 +11,12 @@ function BlogPage() {
     {
       id: 1,
       title: "10 Essential Tips for Meal Planning with Food Allergies",
+      slug: "food-allergy-meal-planning",
       excerpt: "Managing food allergies doesn't have to make meal planning overwhelming. Learn our top strategies for creating safe, delicious weekly meal plans that work for your family.",
       content: "Meal planning with food allergies requires extra attention to detail, but it doesn't have to be stressful. Here are our top 10 tips to help you create safe, nutritious, and delicious meal plans...",
       author: "Weekly Diet Planner Team",
-      date: "2025-08-13",
-      readTime: "5 min read",
+      date: "2025-01-15",
+      readTime: "8 min read",
       category: "Food Allergies",
       tags: ["food allergies", "meal planning", "safety", "tips"],
       image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
@@ -110,10 +111,10 @@ function BlogPage() {
                       <Clock className="w-4 h-4 ml-4 mr-1" />
                       {filteredPosts[0].readTime}
                     </div>
-                    <button className="btn-primary">
-                      Read More
+                    <Link to={`/blog/${filteredPosts[0].slug}`} className="btn-primary inline-flex items-center">
+                      Read Full Article
                       <ChevronRight className="w-4 h-4 ml-1" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
                 <div>
@@ -173,10 +174,13 @@ function BlogPage() {
                       <User className="w-4 h-4 mr-1" />
                       {post.author}
                     </div>
-                    <button className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center">
+                    <Link 
+                      to={`/blog/${post.slug}`}
+                      className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center"
+                    >
                       Read More
                       <ChevronRight className="w-4 h-4 ml-1" />
-                    </button>
+                    </Link>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-gray-100">
