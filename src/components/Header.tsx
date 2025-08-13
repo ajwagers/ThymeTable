@@ -214,12 +214,25 @@ const Header: React.FC = () => {
                   <span>Sign Out</span>
                 </button>
                 
-              </div>
+              </>
             )}
           </div>
+          </div>
         </div>
-      </header>
-
+          <div className="flex items-center space-x-3">
+            {/* New "Back to Planner" button - visible for all users on blog pages */}
+            {location.pathname.startsWith('/blog') && (
+              <button
+                onClick={() => navigate('/')}
+                className="btn-secondary bg-white/10 hover:bg-white/20 border-white/20 text-white"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                <span>Back to Planner</span>
+              </button>
+            )}
+            
+            {user && (
+              <>
       <DietaryFiltersModal 
         isOpen={showDietaryModal} 
         onClose={() => setShowDietaryModal(false)} 
