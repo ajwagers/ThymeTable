@@ -3,48 +3,39 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowLeft, Calendar, Clock, User, Tag, Share2, Heart, ExternalLink } from 'lucide-react';
-
-// Import the markdown content
-import foodAllergyArticle from '../content/articles/food_allergy_meal_planning.md?raw';
+import { ArrowLeft, Calendar, Clock, User, Tag, Share2, Heart, ExternalLink, AlertCircle } from 'lucide-react';
+import { getArticleBySlug } from '../services/blog';
+import { BlogArticle } from '../types/blog';
 
 function ArticlePage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [article, setArticle] = useState<{
-    title: string;
-    content: string;
-    author: string;
-    date: string;
-    readTime: string;
-    category: string;
-    tags: string[];
-    excerpt: string;
-  } | null>(null);
+  const [article, setArticle] = useState<BlogArticle | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Map slugs to article data
-    const articleMap: Record<string, any> = {
-      'food-allergy-meal-planning': {
-        title: "10 Essential Tips for Meal Planning with Food Allergies",
-        content: foodAllergyArticle,
-        author: "Weekly Diet Planner Team",
-        date: "2025-01-15",
-        readTime: "8 min read",
-        category: "Food Allergies",
-        tags: ["food allergies", "meal planning", "safety", "tips", "family nutrition"],
-        excerpt: "Managing food allergies doesn't have to make meal planning overwhelming. Learn our top strategies for creating safe, delicious weekly meal plans that work for your family."
+    const fetchArticle = async () => {
+      if (!slug) {
+        setError('No article slug provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getArticleBySlug(slug);
+        setArticle(data);
+      } catch (error) {
+        console.error('Error fetching article:', error);
+        setError('Failed to load article');
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (slug && articleMap[slug]) {
-      setArticle(articleMap[slug]);
-    } else {
-      // Article not found
-      setArticle(null);
-    }
-    setLoading(false);
+    fetchArticle();
   }, [slug]);
 
   const getCategoryColor = (category: string) => {
@@ -81,6 +72,25 @@ function ArticlePage() {
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <div className="text-center py-12">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Error Loading Article</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={() => navigate('/blog')}
+            className="btn-primary"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Blog
+          </button>
         </div>
       </div>
     );
@@ -186,7 +196,7 @@ function ArticlePage() {
               </span>
               <div className="flex items-center text-sm text-gray-500">
                 <Calendar className="w-4 h-4 mr-1" />
-                {new Date(article.date).toLocaleDateString('en-US', { 
+                {new Date(article.published_date).toLocaleDateString('en-US', { 
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
@@ -194,7 +204,7 @@ function ArticlePage() {
               </div>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
-                {article.readTime}
+                {article.read_time}
               </div>
             </div>
 
@@ -209,7 +219,7 @@ function ArticlePage() {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {article.tags.map((tag) => (
+                {(article.tags || []).map((tag) => (
                   <span
                     key={tag}
                     className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs"

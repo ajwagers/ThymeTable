@@ -1,34 +1,41 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Calendar, Clock, User, Tag, ChevronRight, Utensils, Heart, Filter, Sparkles } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, User, Tag, ChevronRight, Utensils, Heart, Filter, Sparkles, Settings } from 'lucide-react';
+import { getAllPublishedArticles } from '../services/blog';
+import { BlogArticle } from '../types/blog';
+import { useAuth } from '../contexts/AuthContext';
 
 function BlogPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [articles, setArticles] = React.useState<BlogArticle[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // Sample blog posts data
-  const blogPosts = [
-    {
-      id: 1,
-      title: "10 Essential Tips for Meal Planning with Food Allergies",
-      slug: "food-allergy-meal-planning",
-      excerpt: "Managing food allergies doesn't have to make meal planning overwhelming. Learn our top strategies for creating safe, delicious weekly meal plans that work for your family.",
-      content: "Meal planning with food allergies requires extra attention to detail, but it doesn't have to be stressful. Here are our top 10 tips to help you create safe, nutritious, and delicious meal plans...",
-      author: "Weekly Diet Planner Team",
-      date: "2025-01-15",
-      readTime: "8 min read",
-      category: "Food Allergies",
-      tags: ["food allergies", "meal planning", "safety", "tips"],
-      image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
-    }
-  ];
+  React.useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setLoading(true);
+        const data = await getAllPublishedArticles();
+        setArticles(data);
+      } catch (error) {
+        console.error('Error fetching articles:', error);
+        setError('Failed to load articles');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
 
   const categories = ["All", "Food Allergies", "Gluten-Free", "Keto", "Family Planning", "Seasonal Cooking"];
   const [selectedCategory, setSelectedCategory] = React.useState("All");
 
-  const filteredPosts = selectedCategory === "All" 
-    ? blogPosts 
-    : blogPosts.filter(post => post.category === selectedCategory);
+  const filteredArticles = selectedCategory === "All" 
+    ? articles 
+    : articles.filter(article => article.category === selectedCategory);
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -40,6 +47,32 @@ function BlogPage() {
     };
     return colors[category as keyof typeof colors] || "bg-gray-100 text-gray-700";
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <div className="text-center py-12">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="btn-primary"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -55,7 +88,18 @@ function BlogPage() {
         {/* Header */}
         <div className="text-center">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Table Thyme: The Meal Planning Blog</h1>
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <h1 className="text-3xl font-bold text-gray-800">Table Thyme: The Meal Planning Blog</h1>
+              {user && (
+                <button
+                  onClick={() => navigate('/admin/blog')}
+                  className="btn-secondary text-sm"
+                  title="Blog Admin"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <p className="text-gray-600">Expert tips and guides for successful meal planning</p>
           </div>
           <div></div>
@@ -81,31 +125,31 @@ function BlogPage() {
         </div>
 
         {/* Featured Post */}
-        {filteredPosts.length > 0 && (
+        {filteredArticles.length > 0 && (
           <div className="mb-12">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">Featured Article</h2>
             <div className="bg-gradient-to-r from-primary-50 to-terra-50 rounded-xl p-8 border border-primary-200">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(filteredPosts[0].category)}`}>
-                      {filteredPosts[0].category}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(filteredArticles[0].category)}`}>
+                      {filteredArticles[0].category}
                     </span>
                     <div className="flex items-center text-sm text-gray-500">
                       <Calendar className="w-4 h-4 mr-1" />
-                      {new Date(filteredPosts[0].date).toLocaleDateString()}
+                      {new Date(filteredArticles[0].published_date).toLocaleDateString()}
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">{filteredPosts[0].title}</h3>
-                  <p className="text-gray-600 mb-6">{filteredPosts[0].excerpt}</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">{filteredArticles[0].title}</h3>
+                  <p className="text-gray-600 mb-6">{filteredArticles[0].excerpt}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm text-gray-500">
                       <User className="w-4 h-4 mr-1" />
-                      {filteredPosts[0].author}
+                      {filteredArticles[0].author}
                       <Clock className="w-4 h-4 ml-4 mr-1" />
-                      {filteredPosts[0].readTime}
+                      {filteredArticles[0].read_time}
                     </div>
-                    <Link to={`/blog/${filteredPosts[0].slug}`} className="btn-primary inline-flex items-center">
+                    <Link to={`/blog/${filteredArticles[0].slug}`} className="btn-primary inline-flex items-center">
                       Read Full Article
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Link>
@@ -113,8 +157,8 @@ function BlogPage() {
                 </div>
                 <div>
                   <img
-                    src={filteredPosts[0].image}
-                    alt={filteredPosts[0].title}
+                    src={filteredArticles[0].image_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800'}
+                    alt={filteredArticles[0].title}
                     className="w-full h-64 object-cover rounded-lg shadow-md"
                   />
                 </div>
@@ -128,21 +172,26 @@ function BlogPage() {
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">
             {selectedCategory === "All" ? "Latest Articles" : `${selectedCategory} Articles`}
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.slice(1).map((post) => (
+          {filteredArticles.length <= 1 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No additional articles to display.</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredArticles.slice(1).map((article) => (
               <article
-                key={post.id}
+                key={article.id}
                 className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group cursor-pointer"
               >
                 <div className="relative">
                   <img
-                    src={post.image}
-                    alt={post.title}
+                    src={article.image_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800'}
+                    alt={article.title}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(post.category)}`}>
-                      {post.category}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(article.category)}`}>
+                      {article.category}
                     </span>
                   </div>
                 </div>
@@ -150,26 +199,26 @@ function BlogPage() {
                 <div className="p-6">
                   <div className="flex items-center text-sm text-gray-500 mb-3">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {new Date(post.date).toLocaleDateString()}
+                    {new Date(article.published_date).toLocaleDateString()}
                     <Clock className="w-4 h-4 ml-4 mr-1" />
-                    {post.readTime}
+                    {article.read_time}
                   </div>
                   
                   <h3 className="font-semibold text-gray-800 text-lg mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors">
-                    {post.title}
+                    {article.title}
                   </h3>
                   
                   <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                    {post.excerpt}
+                    {article.excerpt}
                   </p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm text-gray-500">
                       <User className="w-4 h-4 mr-1" />
-                      {post.author}
+                      {article.author}
                     </div>
                     <Link 
-                      to={`/blog/${post.slug}`}
+                      to={`/blog/${article.slug}`}
                       className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center"
                     >
                       Read More
@@ -179,7 +228,7 @@ function BlogPage() {
                   
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <div className="flex flex-wrap gap-2">
-                      {post.tags.slice(0, 3).map((tag) => (
+                      {(article.tags || []).slice(0, 3).map((tag) => (
                         <span
                           key={tag}
                           className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs"
@@ -194,6 +243,7 @@ function BlogPage() {
               </article>
             ))}
           </div>
+          )}
         </div>
 
         {/* Newsletter Signup */}

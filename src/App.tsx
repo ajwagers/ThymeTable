@@ -19,6 +19,7 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import BlogPage from './pages/BlogPage';
 import ArticlePage from './pages/ArticlePage';
+import BlogAdminPage from './pages/BlogAdminPage';
 
 function App() {
   return (
@@ -39,6 +40,15 @@ function App() {
                         {/* Publicly accessible blog routes */}
                         <Route path="/blog" element={<BlogPage />} />
                         <Route path="/blog/:slug" element={<ArticlePage />} />
+                        {/* Admin routes */}
+                        <Route
+                          path="/admin/blog"
+                          element={
+                            <PrivateRoute>
+                              <BlogAdminPage />
+                            </PrivateRoute>
+                          }
+                        />
                         {/* Private routes */}
                         <Route
                           path="/"
