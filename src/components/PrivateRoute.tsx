@@ -1,9 +1,16 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+// src/components/PrivateRoute.tsx
+import React from 'react';
+import { Navigate, useNavigate } from 'react-router-dom'; // Add useNavigate
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 
-export function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
+interface PrivateRouteProps {
+  children: React.ReactNode;
+  allowedEmail?: string; // Add this prop
+}
+
+export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedEmail }) => {
+  const { user, loading } = useAuth(); // Get user and loading state
+  const navigate = useNavigate(); // Initialize useNavigate
 
   if (loading) {
     return (
@@ -13,9 +20,15 @@ export function PrivateRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Add the email check here
+  if (user) {
+    if (allowedEmail && user.email !== allowedEmail) {
+      // If an allowedEmail is specified and the user's email doesn't match, redirect
+      navigate('/'); // Redirect to home page
+      return null; // Don't render children
+    }
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
-}
+  return <Navigate to="/login" replace />;
+};
