@@ -44,7 +44,7 @@ function App() {
                         <Route
                           path="/admin/blog"
                           element={
-                            <PrivateRoute>
+                            <PrivateRoute allowedEmail="ajwagers@protonmail.com"> {/* Add this prop */}
                               <BlogAdminPage />
                             </PrivateRoute>
                           }
